@@ -1,0 +1,309 @@
+# SAP IF Design Generation Tool - Translation Template
+# Copyright (C) 2025 SAP IF Design Team
+# This file is distributed under the same license as the if_gen_tool package.
+# FIRST AUTHOR <email@example.com>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: if_gen_tool 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-11 19:36+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Main application messages
+msgid "Data directory not found: {}"
+msgstr ""
+
+msgid "{}h {}m {:.2f}s"
+msgstr ""
+
+msgid "[Project Start Time]: {}"
+msgstr ""
+
+msgid "SAP IF Design Generation Tool"
+msgstr ""
+
+msgid "Process specific Excel file (relative to input directory)"
+msgstr ""
+
+msgid "Set interface language (en, zh, ja)"
+msgstr ""
+
+msgid "Choose AI service provider (overrides environment variable)"
+msgstr ""
+
+msgid "[Step 1] 🔍 Auto-detecting available AI services..."
+msgstr ""
+
+msgid "[Step 2] 📄 Initializing RAG Knowledge..."
+msgstr ""
+
+msgid "[Step 3] 📄 Excel Processing..."
+msgstr ""
+
+msgid "Processing file: {} start time: {}"
+msgstr ""
+
+msgid "Completed: {} ✅"
+msgstr ""
+
+msgid "Processing {} completed at: {}"
+msgstr ""
+
+msgid "File processing time: {}"
+msgstr ""
+
+msgid "Total project time: {}"
+msgstr ""
+
+msgid "❌ Failed to process {}: {}"
+msgstr ""
+
+msgid "File not found: {}"
+msgstr ""
+
+msgid "❌ No Excel files found in data/excel_input/ directory"
+msgstr ""
+
+msgid "❌ Please add Excel files to process or use --file to specify a file"
+msgstr ""
+
+msgid "Found {} Excel file(s) to process:"
+msgstr ""
+
+msgid "\nProcessing: {} start time: {}"
+msgstr ""
+
+msgid "Completed: {} ✅ Available end time: {}"
+msgstr ""
+
+msgid "{}  execution time: {}"
+msgstr ""
+
+msgid "\n🎉 All files processed!"
+msgstr ""
+
+msgid "[Project End Time]: {} ====="
+msgstr ""
+
+msgid "===== Total Time: {} ====="
+msgstr ""
+
+msgid "❌ Application error: {}"
+msgstr ""
+
+# Excel processor messages
+msgid "❌ Input file not found: {}"
+msgstr ""
+
+msgid "Sheet '{}' not found in workbook"
+msgstr ""
+
+msgid "Processed file saved: {} ✅"
+msgstr ""
+
+msgid "No categories for module."
+msgstr ""
+
+msgid "No views for category."
+msgstr ""
+
+msgid "Found {} candidate CDS views."
+msgstr ""
+
+msgid "No views found by LLM."
+msgstr ""
+
+msgid "LLM selected {} CDS views."
+msgstr ""
+
+msgid "No CDS views selected - unable to process this file."
+msgstr ""
+
+msgid "Processing failed: No relevant CDS views found for this interface."
+msgstr ""
+
+msgid "Calling LLM to match result..."
+msgstr ""
+
+msgid "LLM Process Finished"
+msgstr ""
+
+msgid "❌ LLM function call failed: {}"
+msgstr ""
+
+msgid "Failed to process file due to LLM error: {}"
+msgstr ""
+
+msgid "Writing results to file..."
+msgstr ""
+
+# HANA connection messages
+msgid "HANA Cloud connection failed: {}"
+msgstr ""
+
+msgid "Database connection closed."
+msgstr ""
+
+msgid "HANA Cloud not connected."
+msgstr ""
+
+msgid "SQL execution failed: {}"
+msgstr ""
+
+msgid "Database not connected."
+msgstr ""
+
+msgid "SQL error occurred while getting views: {}"
+msgstr ""
+
+msgid "⚠️ Warning: Could not parse CONTENT JSON for view {}"
+msgstr ""
+
+msgid "--- Step 1: Executing vector search for query '{}' ---"
+msgstr ""
+
+msgid "\nVector search results:"
+msgstr ""
+
+msgid "\n--- Step 2: Getting all related CDS views using category string '{}' ---"
+msgstr ""
+
+msgid "\nFound {} CDS views:"
+msgstr ""
+
+msgid "\nVector search returned no results."
+msgstr ""
+
+msgid "\nProgram execution failed: {}"
+msgstr ""
+
+msgid "{} does not exist"
+msgstr ""
+
+msgid "RAG knowledge already exists with {} records ✅ Available"
+msgstr ""
+
+msgid "❌ Error checking existing RAG knowledge: {}"
+msgstr ""
+
+msgid "❌ No CDS views available."
+msgstr ""
+
+msgid "Storing embeddings"
+msgstr ""
+
+msgid "Successfully stored {} view records into {}"
+msgstr ""
+
+msgid "LLM returned {} matches for {} input fields"
+msgstr ""
+
+msgid "⚠️ No LLM match found for row {}, using empty values"
+msgstr ""
+
+msgid "AI Service initialization failed: {}"
+msgstr ""
+
+msgid "[INFO] Using specified AI provider: {}"
+msgstr ""
+
+msgid "Testing {}..."
+msgstr ""
+
+msgid "✅ Available"
+msgstr ""
+
+msgid "Selected AI Provider: {}"
+msgstr ""
+
+msgid "❌ Not available"
+msgstr ""
+
+msgid "❌ Failed: {}"
+msgstr ""
+
+msgid "❌ No AI services are available. Please check your configuration and API keys."
+msgstr ""
+
+msgid "🚀 Testing all AI service providers..."
+msgstr ""
+
+msgid "\n🧪 Testing {}:"
+msgstr ""
+
+msgid "   ✅ Available"
+msgstr ""
+
+msgid "   LLM: {}"
+msgstr ""
+
+msgid "   Embedding: {}"
+msgstr ""
+
+msgid "   ❌ Not available"
+msgstr ""
+
+msgid "   ❌ Error: {}"
+msgstr ""
+
+msgid "\n📊 Summary:"
+msgstr ""
+
+msgid "   Available: {}/{}"
+msgstr ""
+
+msgid "   ✅ Ready: {}"
+msgstr ""
+
+msgid "   🎯 Recommended: {}"
+msgstr ""
+
+msgid "   ❌ No services available"
+msgstr ""
+
+msgid "🧪 Testing {} connectivity..."
+msgstr ""
+
+msgid "✅ {} is ready to use!"
+msgstr ""
+
+msgid "   LLM Model: {}"
+msgstr ""
+
+msgid "   Embedding Model: {}"
+msgstr ""
+
+msgid "❌ {} is not available"
+msgstr ""
+
+msgid "❌ {} test failed: {}"
+msgstr ""
+
+msgid "AI Service Connectivity Test"
+msgstr ""
+
+msgid "Test specific AI service provider"
+msgstr ""
+
+msgid "Test all available AI providers"
+msgstr ""
+
+msgid "🚀 Auto-detecting available AI services..."
+msgstr ""
+
+msgid "\n🎉 Ready to use {}!"
+msgstr ""
+
+msgid "\n✅ Connectivity test completed!"
+msgstr ""
+
+msgid "❌ Test error: {}"
+msgstr ""

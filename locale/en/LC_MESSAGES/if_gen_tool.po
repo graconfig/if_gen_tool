@@ -1,0 +1,307 @@
+# SAP IF Design Generation Tool - English Translation (Source Language)
+# Copyright (C) 2025 SAP IF Design Team
+# This file is distributed under the same license as the if_gen_tool package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: if_gen_tool 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-11 19:47+0800\n"
+"PO-Revision-Date: 2025-09-11 19:47+0800\n"
+"Last-Translator: SAP Team\n"
+"Language-Team: English <>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Main application messages
+msgid "Data directory not found: {}"
+msgstr "Data directory not found: {}"
+
+msgid "{}h {}m {:.2f}s"
+msgstr "{}h {}m {:.2f}s"
+
+msgid "[Project Start Time]: {}"
+msgstr "[Project Start Time]: {}"
+
+msgid "SAP IF Design Generation Tool"
+msgstr "SAP IF Design Generation Tool"
+
+msgid "Process specific Excel file (relative to input directory)"
+msgstr "Process specific Excel file (relative to input directory)"
+
+msgid "Set interface language (en, zh, ja)"
+msgstr "Set interface language (en, zh, ja)"
+
+msgid "Choose AI service provider (overrides environment variable)"
+msgstr "Choose AI service provider (overrides environment variable)"
+
+msgid "[Step 1] 🔍 Auto-detecting available AI services..."
+msgstr "[Step 1] 🔍 Auto-detecting available AI services..."
+
+msgid "[Step 2] 📄 Initializing RAG Knowledge..."
+msgstr "[Step 2] 📄 Initializing RAG Knowledge..."
+
+msgid "[Step 3] 📄 Excel Processing..."
+msgstr "[Step 3] 📄 Excel Processing..."
+
+msgid "Processing file: {} start time: {}"
+msgstr "Processing file: {} start time: {}"
+
+msgid "Completed: {} ✅"
+msgstr "Completed: {} ✅"
+
+msgid "Processing {} completed at: {}"
+msgstr "Processing {} completed at: {}"
+
+msgid "File processing time: {}"
+msgstr "File processing time: {}"
+
+msgid "Total project time: {}"
+msgstr "Total project time: {}"
+
+msgid "❌ Failed to process {}: {}"
+msgstr "❌ Failed to process {}: {}"
+
+msgid "File not found: {}"
+msgstr "File not found: {}"
+
+msgid "❌ No Excel files found in data/excel_input/ directory"
+msgstr "❌ No Excel files found in data/excel_input/ directory"
+
+msgid "❌ Please add Excel files to process or use --file to specify a file"
+msgstr "❌ Please add Excel files to process or use --file to specify a file"
+
+msgid "Found {} Excel file(s) to process:"
+msgstr "Found {} Excel file(s) to process:"
+
+msgid "\nProcessing: {} start time: {}"
+msgstr "\nProcessing: {} start time: {}"
+
+msgid "Completed: {} ✅ Available end time: {}"
+msgstr "Completed: {} ✅ Available end time: {}"
+
+msgid "{}  execution time: {}"
+msgstr "{}  execution time: {}"
+
+msgid "\n🎉 All files processed!"
+msgstr "\n🎉 All files processed!"
+
+msgid "[Project End Time]: {} ====="
+msgstr "[Project End Time]: {} ====="
+
+msgid "===== Total Time: {} ====="
+msgstr "===== Total Time: {} ====="
+
+msgid "❌ Application error: {}"
+msgstr "❌ Application error: {}"
+
+# Excel processor messages
+msgid "❌ Input file not found: {}"
+msgstr "❌ Input file not found: {}"
+
+msgid "Sheet '{}' not found in workbook"
+msgstr "Sheet '{}' not found in workbook"
+
+msgid "Processed file saved: {} ✅"
+msgstr "Processed file saved: {} ✅"
+
+msgid "No categories for module."
+msgstr "No categories for module."
+
+msgid "No views for category."
+msgstr "No views for category."
+
+msgid "Found {} candidate CDS views."
+msgstr "Found {} candidate CDS views."
+
+msgid "No views found by LLM."
+msgstr "No views found by LLM."
+
+msgid "LLM selected {} CDS views."
+msgstr "LLM selected {} CDS views."
+
+msgid "No CDS views selected - unable to process this file."
+msgstr "No CDS views selected - unable to process this file."
+
+msgid "Processing failed: No relevant CDS views found for this interface."
+msgstr "Processing failed: No relevant CDS views found for this interface."
+
+msgid "Calling LLM to match result..."
+msgstr "Calling LLM to match result..."
+
+msgid "LLM Process Finished"
+msgstr "LLM Process Finished"
+
+msgid "❌ LLM function call failed: {}"
+msgstr "❌ LLM function call failed: {}"
+
+msgid "Failed to process file due to LLM error: {}"
+msgstr "Failed to process file due to LLM error: {}"
+
+msgid "Writing results to file..."
+msgstr "Writing results to file..."
+
+# HANA connection messages
+msgid "HANA Cloud connection failed: {}"
+msgstr "HANA Cloud connection failed: {}"
+
+msgid "Database connection closed."
+msgstr "Database connection closed."
+
+msgid "HANA Cloud not connected."
+msgstr "HANA Cloud not connected."
+
+msgid "SQL execution failed: {}"
+msgstr "SQL execution failed: {}"
+
+msgid "Database not connected."
+msgstr "Database not connected."
+
+msgid "SQL error occurred while getting views: {}"
+msgstr "SQL error occurred while getting views: {}"
+
+msgid "⚠️ Warning: Could not parse CONTENT JSON for view {}"
+msgstr "⚠️ Warning: Could not parse CONTENT JSON for view {}"
+
+msgid "--- Step 1: Executing vector search for query '{}' ---"
+msgstr "--- Step 1: Executing vector search for query '{}' ---"
+
+msgid "\nVector search results:"
+msgstr "\nVector search results:"
+
+msgid "\n--- Step 2: Getting all related CDS views using category string '{}' ---"
+msgstr "\n--- Step 2: Getting all related CDS views using category string '{}' ---"
+
+msgid "\nFound {} CDS views:"
+msgstr "\nFound {} CDS views:"
+
+msgid "\nVector search returned no results."
+msgstr "\nVector search returned no results."
+
+msgid "\nProgram execution failed: {}"
+msgstr "\nProgram execution failed: {}"
+
+msgid "{} does not exist"
+msgstr "{} does not exist"
+
+msgid "RAG knowledge already exists with {} records ✅ Available"
+msgstr "RAG knowledge already exists with {} records ✅ Available"
+
+msgid "❌ Error checking existing RAG knowledge: {}"
+msgstr "❌ Error checking existing RAG knowledge: {}"
+
+msgid "❌ No CDS views available."
+msgstr "❌ No CDS views available."
+
+msgid "Storing embeddings"
+msgstr "Storing embeddings"
+
+msgid "Successfully stored {} view records into {}"
+msgstr "Successfully stored {} view records into {}"
+
+msgid "LLM returned {} matches for {} input fields"
+msgstr "LLM returned {} matches for {} input fields"
+
+msgid "⚠️ No LLM match found for row {}, using empty values"
+msgstr "⚠️ No LLM match found for row {}, using empty values"
+
+msgid "AI Service initialization failed: {}"
+msgstr "AI Service initialization failed: {}"
+
+msgid "[INFO] Using specified AI provider: {}"
+msgstr "[INFO] Using specified AI provider: {}"
+
+msgid "Testing {}..."
+msgstr "Testing {}..."
+
+msgid "✅ Available"
+msgstr "✅ Available"
+
+msgid "Selected AI Provider: {}"
+msgstr "Selected AI Provider: {}"
+
+msgid "❌ Not available"
+msgstr "❌ Not available"
+
+msgid "❌ Failed: {}"
+msgstr "❌ Failed: {}"
+
+msgid "❌ No AI services are available. Please check your configuration and API keys."
+msgstr "❌ No AI services are available. Please check your configuration and API keys."
+
+msgid "🚀 Testing all AI service providers..."
+msgstr "🚀 Testing all AI service providers..."
+
+msgid "\n🧪 Testing {}:"
+msgstr "\n🧪 Testing {}:"
+
+msgid "   ✅ Available"
+msgstr "   ✅ Available"
+
+msgid "   LLM: {}"
+msgstr "   LLM: {}"
+
+msgid "   Embedding: {}"
+msgstr "   Embedding: {}"
+
+msgid "   ❌ Not available"
+msgstr "   ❌ Not available"
+
+msgid "   ❌ Error: {}"
+msgstr "   ❌ Error: {}"
+
+msgid "\n📊 Summary:"
+msgstr "\n📊 Summary:"
+
+msgid "   Available: {}/{}"
+msgstr "   Available: {}/{}"
+
+msgid "   ✅ Ready: {}"
+msgstr "   ✅ Ready: {}"
+
+msgid "   🎯 Recommended: {}"
+msgstr "   🎯 Recommended: {}"
+
+msgid "   ❌ No services available"
+msgstr "   ❌ No services available"
+
+msgid "🧪 Testing {} connectivity..."
+msgstr "🧪 Testing {} connectivity..."
+
+msgid "✅ {} is ready to use!"
+msgstr "✅ {} is ready to use!"
+
+msgid "   LLM Model: {}"
+msgstr "   LLM Model: {}"
+
+msgid "   Embedding Model: {}"
+msgstr "   Embedding Model: {}"
+
+msgid "❌ {} is not available"
+msgstr "❌ {} is not available"
+
+msgid "❌ {} test failed: {}"
+msgstr "❌ {} test failed: {}"
+
+msgid "AI Service Connectivity Test"
+msgstr "AI Service Connectivity Test"
+
+msgid "Test specific AI service provider"
+msgstr "Test specific AI service provider"
+
+msgid "Test all available AI providers"
+msgstr "Test all available AI providers"
+
+msgid "🚀 Auto-detecting available AI services..."
+msgstr "🚀 Auto-detecting available AI services..."
+
+msgid "\n🎉 Ready to use {}!"
+msgstr "\n🎉 Ready to use {}!"
+
+msgid "\n✅ Connectivity test completed!"
+msgstr "\n✅ Connectivity test completed!"
+
+msgid "❌ Test error: {}"
+msgstr "❌ Test error: {}"

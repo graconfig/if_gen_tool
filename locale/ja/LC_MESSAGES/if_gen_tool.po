@@ -1,0 +1,307 @@
+# SAP IF Design Generation Tool - Japanese Translation
+# Copyright (C) 2025 SAP IF Design Team
+# This file is distributed under the same license as the if_gen_tool package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: if_gen_tool 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-11 19:36+0800\n"
+"PO-Revision-Date: 2025-09-11 19:36+0800\n"
+"Last-Translator: SAP Team\n"
+"Language-Team: Japanese <>\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Main application messages
+msgid "Data directory not found: {}"
+msgstr "データディレクトリが見つかりません: {}"
+
+msgid "{}h {}m {:.2f}s"
+msgstr "{}時間 {}分 {:.2f}秒"
+
+msgid "[Project Start Time]: {}"
+msgstr "[プロジェクト開始時間]: {}"
+
+msgid "SAP IF Design Generation Tool"
+msgstr "SAP インターフェース設計生成ツール"
+
+msgid "Process specific Excel file (relative to input directory)"
+msgstr "特定のExcelファイルを処理（入力ディレクトリからの相対パス）"
+
+msgid "Set interface language (en, zh, ja)"
+msgstr "インターフェース言語を設定 (en, zh, ja)"
+
+msgid "Choose AI service provider (overrides environment variable)"
+msgstr "AIサービスプロバイダを選択（環境変数を上書き）"
+
+msgid "[Step 1] 🔍 Auto-detecting available AI services..."
+msgstr "[ステップ1] 🔍 利用可能なAIサービスを自動検出中..."
+
+msgid "[Step 2] 📄 Initializing RAG Knowledge..."
+msgstr "[ステップ2] 📄 RAGナレッジベースを初期化中..."
+
+msgid "[Step 3] 📄 Excel Processing..."
+msgstr "[ステップ3] 📄 Excel処理中..."
+
+msgid "Processing file: {} start time: {}"
+msgstr "ファイル処理中: {} 開始時間: {}"
+
+msgid "Completed: {} ✅"
+msgstr "完了: {} ✅"
+
+msgid "Processing {} completed at: {}"
+msgstr "{} の処理が完了しました：{}"
+
+msgid "File processing time: {}"
+msgstr "ファイル処理時間：{}"
+
+msgid "Total project time: {}"
+msgstr "プロジェクト総時間：{}"
+
+msgid "❌ Failed to process {}: {}"
+msgstr "❌ {} の処理に失敗しました: {}"
+
+msgid "File not found: {}"
+msgstr "ファイルが見つかりません: {}"
+
+msgid "❌ No Excel files found in data/excel_input/ directory"
+msgstr "❌ data/excel_input/ ディレクトリにExcelファイルが見つかりません"
+
+msgid "❌ Please add Excel files to process or use --file to specify a file"
+msgstr "❌ 処理するExcelファイルを追加するか、--file でファイルを指定してください"
+
+msgid "Found {} Excel file(s) to process:"
+msgstr "処理する {} 個のExcelファイルが見つかりました："
+
+msgid "\nProcessing: {} start time: {}"
+msgstr "\n処理中: {} 開始時間: {}"
+
+msgid "Completed: {} ✅ Available end time: {}"
+msgstr "完了: {} ✅ 終了時間: {}"
+
+msgid "{}  execution time: {}"
+msgstr "{} 実行時間：{}"
+
+msgid "\n🎉 All files processed!"
+msgstr "\n🎉 すべてのファイルの処理が完了しました！"
+
+msgid "[Project End Time]: {} ====="
+msgstr "[プロジェクト終了時間]: {} ====="
+
+msgid "===== Total Time: {} ====="
+msgstr "===== 総時間: {} ====="
+
+msgid "❌ Application error: {}"
+msgstr "❌ アプリケーションエラー: {}"
+
+# Excel processor messages
+msgid "❌ Input file not found: {}"
+msgstr "❌ 入力ファイルが見つかりません: {}"
+
+msgid "Sheet '{}' not found in workbook"
+msgstr "ワークブックにシート '{}' が見つかりません"
+
+msgid "Processed file saved: {} ✅"
+msgstr "処理済みファイルが保存されました: {} ✅"
+
+msgid "No categories for module."
+msgstr "モジュールのカテゴリがありません。"
+
+msgid "No views for category."
+msgstr "カテゴリのビューがありません。"
+
+msgid "Found {} candidate CDS views."
+msgstr "{} 個の候補CDSビューが見つかりました。"
+
+msgid "No views found by LLM."
+msgstr "LLMによってビューが見つかりませんでした。"
+
+msgid "LLM selected {} CDS views."
+msgstr "LLMが {} 個のCDSビューを選択しました。"
+
+msgid "No CDS views selected - unable to process this file."
+msgstr "CDSビューが選択されませんでした - このファイルを処理できません。"
+
+msgid "Processing failed: No relevant CDS views found for this interface."
+msgstr "処理失敗：このインターフェースに関連するCDSビューが見つかりませんでした。"
+
+msgid "Calling LLM to match result..."
+msgstr "LLMを呼び出して結果をマッチング中..."
+
+msgid "LLM Process Finished"
+msgstr "LLM処理完了"
+
+msgid "❌ LLM function call failed: {}"
+msgstr "❌ LLM関数呼び出しに失敗しました: {}"
+
+msgid "Failed to process file due to LLM error: {}"
+msgstr "LLMエラーによりファイル処理に失敗しました: {}"
+
+msgid "Writing results to file..."
+msgstr "結果をファイルに書き込み中..."
+
+# HANA connection messages
+msgid "HANA Cloud connection failed: {}"
+msgstr "HANA Cloud接続に失敗しました：{}"
+
+msgid "Database connection closed."
+msgstr "データベース接続が閉じられました。"
+
+msgid "HANA Cloud not connected."
+msgstr "HANA Cloudに接続されていません。"
+
+msgid "SQL execution failed: {}"
+msgstr "SQL実行に失敗しました：{}"
+
+msgid "Database not connected."
+msgstr "データベースに接続されていません。"
+
+msgid "SQL error occurred while getting views: {}"
+msgstr "ビュー取得中にSQLエラーが発生しました：{}"
+
+msgid "⚠️ Warning: Could not parse CONTENT JSON for view {}"
+msgstr "⚠️ 警告：ビュー {} のCONTENT JSONを解析できませんでした"
+
+msgid "--- Step 1: Executing vector search for query '{}' ---"
+msgstr "--- ステップ 1：クエリ '{}' のベクター検索を実行中 ---"
+
+msgid "\nVector search results:"
+msgstr "\nベクター検索結果："
+
+msgid "\n--- Step 2: Getting all related CDS views using category string '{}' ---"
+msgstr "\n--- ステップ 2：カテゴリ文字列 '{}' を使用して関連するすべてのCDSビューを取得中 ---"
+
+msgid "\nFound {} CDS views:"
+msgstr "\n{}個のCDSビューが見つかりました："
+
+msgid "\nVector search returned no results."
+msgstr "\nベクター検索で結果が返されませんでした。"
+
+msgid "\nProgram execution failed: {}"
+msgstr "\nプログラム実行に失敗しました：{}"
+
+msgid "{} does not exist"
+msgstr "{} が存在しません"
+
+msgid "RAG knowledge already exists with {} records ✅ Available"
+msgstr "RAGナレッジベースはすでに存在し、{} 件のレコードがあります ✅ 利用可能"
+
+msgid "❌ Error checking existing RAG knowledge: {}"
+msgstr "❌ 既存のRAGナレッジの確認中にエラーが発生しました：{}"
+
+msgid "❌ No CDS views available."
+msgstr "❌ 利用可能なCDSビューがありません。"
+
+msgid "Storing embeddings"
+msgstr "埋め込みベクターを保存中"
+
+msgid "Successfully stored {} view records into {}"
+msgstr "{}  個のビューレコードを {} に正常に保存しました"
+
+msgid "LLM returned {} matches for {} input fields"
+msgstr "LLMが {} 個の入力フィールドに対して {} 個のマッチを返しました"
+
+msgid "⚠️ No LLM match found for row {}, using empty values"
+msgstr "⚠️ 行 {} のLLMマッチが見つからなかったため、空の値を使用します"
+
+msgid "AI Service initialization failed: {}"
+msgstr "AIサービスの初期化に失敗しました：{}"
+
+msgid "[INFO] Using specified AI provider: {}"
+msgstr "[情報] 指定されたAIプロバイダーを使用します：{}"
+
+msgid "Testing {}..."
+msgstr "{} をテスト中..."
+
+msgid "✅ Available"
+msgstr "✅ 利用可能"
+
+msgid "Selected AI Provider: {}"
+msgstr "選択されたAIプロバイダー：{}"
+
+msgid "❌ Not available"
+msgstr "❌ 利用不可"
+
+msgid "❌ Failed: {}"
+msgstr "❌ 失敗：{}"
+
+msgid "❌ No AI services are available. Please check your configuration and API keys."
+msgstr "❌ 利用可能なAIサービスがありません。設定とAPIキーを確認してください。"
+
+msgid "🚀 Testing all AI service providers..."
+msgstr "🚀 すべてのAIサービスプロバイダーをテスト中..."
+
+msgid "\n🧪 Testing {}:"
+msgstr "\n🧪 {} をテスト中："
+
+msgid "   ✅ Available"
+msgstr "   ✅ 利用可能"
+
+msgid "   LLM: {}"
+msgstr "   LLM：{}"
+
+msgid "   Embedding: {}"
+msgstr "   埋め込み：{}"
+
+msgid "   ❌ Not available"
+msgstr "   ❌ 利用不可"
+
+msgid "   ❌ Error: {}"
+msgstr "   ❌ エラー：{}"
+
+msgid "\n📊 Summary:"
+msgstr "\n📊 概要："
+
+msgid "   Available: {}/{}"
+msgstr "   利用可能：{}/{}"
+
+msgid "   ✅ Ready: {}"
+msgstr "   ✅ 準備完了：{}"
+
+msgid "   🎯 Recommended: {}"
+msgstr "   🎯 推奨：{}"
+
+msgid "   ❌ No services available"
+msgstr "   ❌ 利用可能なサービスなし"
+
+msgid "🧪 Testing {} connectivity..."
+msgstr "🧪 {} の接続をテスト中..."
+
+msgid "✅ {} is ready to use!"
+msgstr "✅ {} は使用準備完了です！"
+
+msgid "   LLM Model: {}"
+msgstr "   LLMモデル：{}"
+
+msgid "   Embedding Model: {}"
+msgstr "   埋め込みモデル：{}"
+
+msgid "❌ {} is not available"
+msgstr "❌ {} は利用不可です"
+
+msgid "❌ {} test failed: {}"
+msgstr "❌ {} テスト失敗：{}"
+
+msgid "AI Service Connectivity Test"
+msgstr "AIサービス接続テスト"
+
+msgid "Test specific AI service provider"
+msgstr "特定のAIサービスプロバイダーをテスト"
+
+msgid "Test all available AI providers"
+msgstr "すべての利用可能AIプロバイダーをテスト"
+
+msgid "🚀 Auto-detecting available AI services..."
+msgstr "🚀 利用可能なAIサービスを自動検出中..."
+
+msgid "\n🎉 Ready to use {}!"
+msgstr "\n🎉 {} の使用準備完了！"
+
+msgid "\n✅ Connectivity test completed!"
+msgstr "\n✅ 接続テスト完了！"
+
+msgid "❌ Test error: {}"
+msgstr "❌ テストエラー：{}"

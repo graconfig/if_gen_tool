@@ -1,0 +1,19 @@
+{
+  "session_id": "20250914_125003",
+  "usage": {
+    "embedding_tokens": 0,
+    "llm_input_tokens": 54777,
+    "llm_output_tokens": 7941
+  },
+  "provider_usage": {
+    "SAP AICore Claude": {
+      "embedding_tokens": 0,
+      "llm_input_tokens": 0,
+      "llm_output_tokens": 0
+    }
+  },
+  "timestamp": "2025-09-14T12:54:06.230274",
+  "ai_provider": "SAP AICore Claude",
+  "processed_files": [],
+  "total_files": 1
+}
