@@ -57,7 +57,7 @@ class ClaudeSchemas:
                                                     "type": "string",
                                                     "description": "Whether the field is a key field - use 'X' if true from context, empty string otherwise",
                                                 },
-                                                "match_confidence": {
+                                                "match": {
                                                     "type": "integer",
                                                     "description": "Match confidence percentage (0-100)",
                                                 },

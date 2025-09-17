@@ -57,7 +57,7 @@ class ClaudeSchemas:
                                                     "type": "string",
                                                     "description": "フィールドがキーフィールドかどうか - コンテキストから真の場合は'X'を使用、そうでなければ空文字列",
                                                 },
-                                                "match_confidence": {
+                                                "match": {
                                                     "type": "integer",
                                                     "description": "マッチング信頼度パーセンテージ（0-100）",
                                                 },

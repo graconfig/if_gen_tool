@@ -1,307 +1,544 @@
 # SAP IF Design Generation Tool - Chinese Translation
 # Copyright (C) 2025 SAP IF Design Team
-# This file is distributed under the same license as the if_gen_tool package.
+# This file is distributed under the same license as the if_gen_tool
+# package.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: if_gen_tool 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-11 19:36+0800\n"
+"POT-Creation-Date: 2025-09-17 14:33+0800\n"
 "PO-Revision-Date: 2025-09-11 19:36+0800\n"
 "Last-Translator: SAP Team\n"
-"Language-Team: Chinese <>\n"
 "Language: zh\n"
+"Language-Team: Chinese <>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
 
 # Main application messages
+#: main.py:36
+#, python-brace-format
 msgid "Data directory not found: {}"
 msgstr "数据目录未找到: {}"
 
+#: main.py:62
+#, python-brace-format
 msgid "{}h {}m {:.2f}s"
 msgstr "{}小时 {}分钟 {:.2f}秒"
 
+#: main.py:69
+#, python-brace-format
 msgid "[Project Start Time]: {}"
 msgstr "[项目开始执行时间]: {}"
 
+#: main.py:72
 msgid "SAP IF Design Generation Tool"
 msgstr "SAP 接口设计生成工具"
 
+#: main.py:76
 msgid "Process specific Excel file (relative to input directory)"
 msgstr "处理指定的Excel文件（相对于输入目录）"
 
+#: main.py:83
 msgid "Set interface language (en, zh, ja)"
 msgstr "设置界面语言 (en, zh, ja)"
 
-msgid "Choose AI service provider (overrides environment variable)"
-msgstr "选择AI服务提供商（覆盖环境变量）"
+#: main.py:90
+msgid "Choose AI provider (claude, gemini, openai) - all via AI Core"
+msgstr ""
 
+#: main.py:112
 msgid "[Step 1] 🔍 Auto-detecting available AI services..."
 msgstr "[步骤1] 🔍 自动检测可用的AI服务..."
 
-msgid "[Step 2] 📄 Initializing RAG Knowledge..."
-msgstr "[步骤2] 📄 初始化RAG知识库..."
-
-msgid "[Step 3] 📄 Excel Processing..."
+#: main.py:121
+#, fuzzy
+msgid "[Step 2] 📄 Excel Processing..."
 msgstr "[步骤3] 📄 Excel处理..."
 
+#: main.py:132
+#, python-brace-format
 msgid "Processing file: {} start time: {}"
 msgstr "处理文件: {} 开始时间: {}"
 
+#: main.py:138
+#, python-brace-format
 msgid "Completed: {} ✅"
 msgstr "完成: {} ✅"
 
+#: main.py:147
+#, python-brace-format
 msgid "Processing {} completed at: {}"
 msgstr "处理 {} 完成时间：{}"
 
+#: main.py:149
+#, python-brace-format
 msgid "File processing time: {}"
 msgstr "文件单独用时：{}"
 
+#: main.py:150
+#, python-brace-format
 msgid "Total project time: {}"
 msgstr "项目累计用时：{}"
 
+#: main.py:153
+#, python-brace-format
 msgid "❌ Failed to process {}: {}"
 msgstr "❌ 处理 {} 失败: {}"
 
+#: main.py:156
+#, python-brace-format
 msgid "File not found: {}"
 msgstr "文件未找到: {}"
 
+#: main.py:163
 msgid "❌ No Excel files found in data/excel_input/ directory"
 msgstr "❌ 在 data/excel_input/ 目录中未找到Excel文件"
 
+#: main.py:164
 msgid "❌ Please add Excel files to process or use --file to specify a file"
 msgstr "❌ 请添加Excel文件进行处理或使用 --file 指定文件"
 
+#: main.py:167
+#, python-brace-format
 msgid "Found {} Excel file(s) to process:"
 msgstr "找到 {} 个Excel文件需要处理："
 
-msgid "\nProcessing: {} start time: {}"
-msgstr "\n处理: {} 开始时间: {}"
+#: main.py:175
+#, python-brace-format
+msgid ""
+"\n"
+"Processing: {} start time: {}"
+msgstr ""
+"\n"
+"处理: {} 开始时间: {}"
 
+#: main.py:181
+#, python-brace-format
 msgid "Completed: {} ✅ Available end time: {}"
 msgstr "完成: {} ✅ 结束时间: {}"
 
+#: main.py:191
+#, python-brace-format
 msgid "{}  execution time: {}"
 msgstr "{} 执行时间：{}"
 
-msgid "\n🎉 All files processed!"
-msgstr "\n🎉 所有文件处理完成！"
+#: main.py:203
+#, fuzzy, python-brace-format
+msgid "❌ Failed 456 to process {}: {}"
+msgstr "❌ 处理 {} 失败: {}"
 
+#: main.py:206
+msgid ""
+"\n"
+"🎉 All files processed!"
+msgstr ""
+"\n"
+"🎉 所有文件处理完成！"
+
+#: main.py:221
+#, python-brace-format
 msgid "[Project End Time]: {} ====="
 msgstr "[项目执行结束时间]: {} ====="
 
+#: main.py:222
+#, python-brace-format
 msgid "===== Total Time: {} ====="
 msgstr "===== 总用时: {} ====="
 
+#: main.py:224
+#, python-brace-format
 msgid "❌ Application error: {}"
 msgstr "❌ 应用程序错误: {}"
 
 # Excel processor messages
+#: excel/excel_processor.py:37
+#, python-brace-format
 msgid "❌ Input file not found: {}"
 msgstr "❌ 输入文件未找到: {}"
 
+#: excel/excel_processor.py:56
+#, python-brace-format
 msgid "Sheet '{}' not found in workbook"
 msgstr "工作簿中未找到工作表 '{}'"
 
+#: excel/excel_processor.py:61
+#, python-brace-format
 msgid "Processed file saved: {} ✅"
 msgstr "处理后的文件已保存: {} ✅"
 
+#: excel/excel_processor.py:65
+msgid "Source file moved to archive folder."
+msgstr ""
+
+#: excel/excel_processor.py:69
+msgid ""
+"⚠️ Warning: Could not archive source file, but processing completed "
+"successfully."
+msgstr ""
+
+#: excel/excel_processor.py:88
 msgid "No categories for module."
 msgstr "模块没有类别。"
 
+#: excel/excel_processor.py:94
 msgid "No views for category."
 msgstr "类别没有视图。"
 
+#: excel/excel_processor.py:96
+#, python-brace-format
 msgid "Found {} candidate CDS views."
 msgstr "找到 {} 个候选CDS视图。"
 
+#: excel/excel_processor.py:102
 msgid "No views found by LLM."
 msgstr "LLM未找到视图。"
 
+#: excel/excel_processor.py:104
+#, python-brace-format
 msgid "LLM selected {} CDS views."
 msgstr "LLM选择了 {} 个CDS视图。"
 
+#: excel/excel_processor.py:108
 msgid "No CDS views selected - unable to process this file."
 msgstr "未选择任何CDS视图 - 无法处理此文件。"
 
+#: excel/excel_processor.py:111
 msgid "Processing failed: No relevant CDS views found for this interface."
 msgstr "处理失败：未找到与此接口相关的CDS视图。"
 
+#: excel/excel_processor.py:158
 msgid "Calling LLM to match result..."
 msgstr "调用LLM匹配结果..."
 
+#: excel/excel_processor.py:163
 msgid "LLM Process Finished"
 msgstr "LLM处理完成"
 
+#: excel/excel_processor.py:165
+#, python-brace-format
 msgid "❌ LLM function call failed: {}"
 msgstr "❌ LLM函数调用失败: {}"
 
+#: excel/excel_processor.py:167
+#, python-brace-format
 msgid "Failed to process file due to LLM error: {}"
 msgstr "由于LLM错误处理文件失败: {}"
 
+#: excel/excel_processor.py:175
 msgid "Writing results to file..."
 msgstr "将结果写入文件..."
 
-# HANA connection messages
-msgid "HANA Cloud connection failed: {}"
-msgstr "HANA Cloud连接失败：{}"
-
-msgid "Database connection closed."
-msgstr "数据库连接已关闭。"
-
-msgid "HANA Cloud not connected."
-msgstr "HANA Cloud未连接。"
-
-msgid "SQL execution failed: {}"
-msgstr "SQL执行失败：{}"
-
-msgid "Database not connected."
-msgstr "数据库未连接。"
-
-msgid "SQL error occurred while getting views: {}"
-msgstr "获取视图时发生SQL错误：{}"
-
-msgid "⚠️ Warning: Could not parse CONTENT JSON for view {}"
-msgstr "⚠️ 警告：无法解析视图 {} 的CONTENT JSON"
-
-msgid "--- Step 1: Executing vector search for query '{}' ---"
-msgstr "--- 步骤 1：为查询 '{}' 执行向量搜索 ---"
-
-msgid "\nVector search results:"
-msgstr "\n向量搜索结果："
-
-msgid "\n--- Step 2: Getting all related CDS views using category string '{}' ---"
-msgstr "\n--- 步骤 2：使用类别字符串 '{}' 获取所有相关 CDS 视图 ---"
-
-msgid "\nFound {} CDS views:"
-msgstr "\n找到 {} 个CDS视图："
-
-msgid "\nVector search returned no results."
-msgstr "\n向量搜索未返回任何结果。"
-
-msgid "\nProgram execution failed: {}"
-msgstr "\n程序运行失败：{}"
-
-msgid "{} does not exist"
-msgstr "{} 不存在"
-
-msgid "RAG knowledge already exists with {} records ✅ Available"
-msgstr "RAG知识库已存在，包含 {} 条记录 ✅ 可用"
-
-msgid "❌ Error checking existing RAG knowledge: {}"
-msgstr "❌ 检查现有RAG知识库时出错：{}"
-
-msgid "❌ No CDS views available."
-msgstr "❌ 没有可用的CDS视图。"
-
-msgid "Storing embeddings"
-msgstr "存储嵌入向量"
-
-msgid "Successfully stored {} view records into {}"
-msgstr "成功将 {} 个视图记录存储到 {}"
-
+#: excel/excel_processor.py:386
+#, python-brace-format
 msgid "LLM returned {} matches for {} input fields"
 msgstr "LLM为 {} 个输入字段返回了 {} 个匹配项"
 
+#: excel/excel_processor.py:409
+#, python-brace-format
 msgid "⚠️ No LLM match found for row {}, using empty values"
 msgstr "⚠️ 未找到第 {} 行的LLM匹配项，使用空值"
 
+#: excel/excel_processor.py:527
+#, python-brace-format
+msgid "File archived: {} → {}"
+msgstr ""
+
+#: excel/excel_processor.py:535
+#, fuzzy, python-brace-format
+msgid "❌ Failed to archive file {}: {}"
+msgstr "❌ 处理 {} 失败: {}"
+
+# HANA connection messages
+#: hana/hana_conn.py:42
+#, python-brace-format
+msgid "HANA Cloud connection failed: {}"
+msgstr "HANA Cloud连接失败：{}"
+
+#: hana/hana_conn.py:49
+msgid "Database connection closed."
+msgstr "数据库连接已关闭。"
+
+#: hana/hana_conn.py:71
+msgid "HANA Cloud not connected."
+msgstr "HANA Cloud未连接。"
+
+#: hana/hana_conn.py:90
+#, python-brace-format
+msgid "SQL execution failed: {}"
+msgstr "SQL执行失败：{}"
+
+#: hana/hana_conn.py:95 hana/hana_conn.py:126
+msgid "Database not connected."
+msgstr "数据库未连接。"
+
+#: hana/hana_conn.py:114
+#, python-brace-format
+msgid "SQL error occurred while getting views: {}"
+msgstr "获取视图时发生SQL错误：{}"
+
+#: hana/hana_conn.py:155
+msgid "Applying fields filtering..."
+msgstr ""
+
+#: hana/hana_conn.py:224
+#, python-brace-format
+msgid "⚠️ Warning: Could not parse CONTENT JSON for view {}"
+msgstr "⚠️ 警告：无法解析视图 {} 的CONTENT JSON"
+
+#: hana/hana_conn.py:351
+#, python-brace-format
+msgid "--- Step 1: Executing vector search for query '{}' ---"
+msgstr "--- 步骤 1：为查询 '{}' 执行向量搜索 ---"
+
+#: hana/hana_conn.py:357
+msgid ""
+"\n"
+"Vector search results:"
+msgstr ""
+"\n"
+"向量搜索结果："
+
+#: hana/hana_conn.py:365
+#, python-brace-format
+msgid ""
+"\n"
+"--- Step 2: Getting all related CDS views using category string '{}' ---"
+msgstr ""
+"\n"
+"--- 步骤 2：使用类别字符串 '{}' 获取所有相关 CDS 视图 ---"
+
+#: hana/hana_conn.py:372
+#, python-brace-format
+msgid ""
+"\n"
+"Found {} CDS views:"
+msgstr ""
+"\n"
+"找到 {} 个CDS视图："
+
+#: hana/hana_conn.py:376
+msgid ""
+"\n"
+"Vector search returned no results."
+msgstr ""
+"\n"
+"向量搜索未返回任何结果。"
+
+#: hana/hana_conn.py:378
+#, python-brace-format
+msgid ""
+"\n"
+"Program execution failed: {}"
+msgstr ""
+"\n"
+"程序运行失败：{}"
+
+#: utils/ai_connectivity_test.py:67
+#, python-brace-format
 msgid "AI Service initialization failed: {}"
 msgstr "AI服务初始化失败：{}"
 
+#: utils/ai_connectivity_test.py:81
+#, python-brace-format
 msgid "[INFO] Using specified AI provider: {}"
 msgstr "[信息] 使用指定AI提供商：{}"
 
+#: utils/ai_connectivity_test.py:101
+#, fuzzy, python-brace-format
+msgid "[INFO] Using configured default AI provider: {}"
+msgstr "[信息] 使用指定AI提供商：{}"
+
+#: utils/ai_connectivity_test.py:113
+msgid "[INFO] No default AI provider configured, testing in priority order"
+msgstr ""
+
+#: utils/ai_connectivity_test.py:120
+#, python-brace-format
 msgid "Testing {}..."
 msgstr "正在测试 {}..."
 
+#: utils/ai_connectivity_test.py:126
 msgid "✅ Available"
 msgstr "✅ 可用"
 
+#: utils/ai_connectivity_test.py:127
+#, python-brace-format
 msgid "Selected AI Provider: {}"
 msgstr "已选择AI提供商：{}"
 
+#: utils/ai_connectivity_test.py:130
 msgid "❌ Not available"
 msgstr "❌ 不可用"
 
+#: utils/ai_connectivity_test.py:132
+#, python-brace-format
 msgid "❌ Failed: {}"
 msgstr "❌ 失败：{}"
 
-msgid "❌ No AI services are available. Please check your configuration and API keys."
+#: utils/ai_connectivity_test.py:137
+msgid ""
+"❌ No AI services are available. Please check your configuration and API "
+"keys."
 msgstr "❌ 没有可用的AI服务。请检查您的配置和API密钥。"
 
-msgid "🚀 Testing all AI service providers..."
+#: utils/ai_connectivity_test.py:149
+#, fuzzy
+msgid "🚀 Testing all AI providers via AI Core..."
 msgstr "🚀 正在测试所有AI服务提供商..."
 
-msgid "\n🧪 Testing {}:"
-msgstr "\n🧪 正在测试 {}:"
+#: utils/ai_connectivity_test.py:156
+#, python-brace-format
+msgid ""
+"\n"
+"🧪 Testing {}:"
+msgstr ""
+"\n"
+"🧪 正在测试 {}:"
 
+#: utils/ai_connectivity_test.py:166
 msgid "   ✅ Available"
 msgstr "   ✅ 可用"
 
+#: utils/ai_connectivity_test.py:167
+#, python-brace-format
 msgid "   LLM: {}"
 msgstr "   LLM：{}"
 
+#: utils/ai_connectivity_test.py:168
+#, python-brace-format
 msgid "   Embedding: {}"
 msgstr "   嵌入模型：{}"
 
+#: utils/ai_connectivity_test.py:171
 msgid "   ❌ Not available"
 msgstr "   ❌ 不可用"
 
+#: utils/ai_connectivity_test.py:175
+#, python-brace-format
 msgid "   ❌ Error: {}"
 msgstr "   ❌ 错误：{}"
 
-msgid "\n📊 Summary:"
-msgstr "\n📊 总结："
+#: utils/ai_connectivity_test.py:179
+msgid ""
+"\n"
+"📊 Summary:"
+msgstr ""
+"\n"
+"📊 总结："
 
+#: utils/ai_connectivity_test.py:180
+#, python-brace-format
 msgid "   Available: {}/{}"
 msgstr "   可用：{}/{}"
 
+#: utils/ai_connectivity_test.py:183
+#, python-brace-format
 msgid "   ✅ Ready: {}"
 msgstr "   ✅ 就绪：{}"
 
+#: utils/ai_connectivity_test.py:185
+#, python-brace-format
 msgid "   🎯 Recommended: {}"
 msgstr "   🎯 推荐：{}"
 
+#: utils/ai_connectivity_test.py:190
 msgid "   ❌ No services available"
 msgstr "   ❌ 无可用服务"
 
+#: utils/ai_connectivity_test.py:205
+#, python-brace-format
 msgid "🧪 Testing {} connectivity..."
 msgstr "🧪 正在测试 {} 连通性..."
 
+#: utils/ai_connectivity_test.py:212
+#, python-brace-format
 msgid "✅ {} is ready to use!"
 msgstr "✅ {} 已准备好！"
 
+#: utils/ai_connectivity_test.py:213
+#, python-brace-format
 msgid "   LLM Model: {}"
 msgstr "   LLM模型：{}"
 
+#: utils/ai_connectivity_test.py:214
+#, python-brace-format
 msgid "   Embedding Model: {}"
 msgstr "   嵌入模型：{}"
 
+#: utils/ai_connectivity_test.py:217
+#, python-brace-format
 msgid "❌ {} is not available"
 msgstr "❌ {} 不可用"
 
+#: utils/ai_connectivity_test.py:221
+#, python-brace-format
 msgid "❌ {} test failed: {}"
 msgstr "❌ {} 测试失败：{}"
 
+#: utils/ai_connectivity_test.py:230
 msgid "AI Service Connectivity Test"
 msgstr "AI服务连通性测试"
 
-msgid "Test specific AI service provider"
+#: utils/ai_connectivity_test.py:235
+#, fuzzy
+msgid "Test specific AI provider via AI Core"
 msgstr "测试特定AI服务提供商"
 
+#: utils/ai_connectivity_test.py:240
 msgid "Test all available AI providers"
 msgstr "测试所有可用AI提供商"
 
+#: utils/ai_connectivity_test.py:260
 msgid "🚀 Auto-detecting available AI services..."
 msgstr "🚀 正在自动检测可用AI服务..."
 
-msgid "\n🎉 Ready to use {}!"
-msgstr "\n🎉 {} 已准备好！"
+#: utils/ai_connectivity_test.py:264
+#, python-brace-format
+msgid ""
+"\n"
+"🎉 Ready to use {}!"
+msgstr ""
+"\n"
+"🎉 {} 已准备好！"
 
-msgid "\n✅ Connectivity test completed!"
-msgstr "\n✅ 连通性测试完成！"
+#: utils/ai_connectivity_test.py:269
+msgid ""
+"\n"
+"✅ Connectivity test completed!"
+msgstr ""
+"\n"
+"✅ 连通性测试完成！"
 
+#: utils/ai_connectivity_test.py:272
+#, python-brace-format
 msgid "❌ Test error: {}"
 msgstr "❌ 测试错误：{}"
+
+#~ msgid "Choose AI service provider (overrides environment variable)"
+#~ msgstr "选择AI服务提供商（覆盖环境变量）"
+
+#~ msgid "[Step 2] 📄 Initializing RAG Knowledge..."
+#~ msgstr "[步骤2] 📄 初始化RAG知识库..."
+
+#~ msgid "{} does not exist"
+#~ msgstr "{} 不存在"
+
+#~ msgid "RAG knowledge already exists with {} records ✅ Available"
+#~ msgstr "RAG知识库已存在，包含 {} 条记录 ✅ 可用"
+
+#~ msgid "❌ Error checking existing RAG knowledge: {}"
+#~ msgstr "❌ 检查现有RAG知识库时出错：{}"
+
+#~ msgid "❌ No CDS views available."
+#~ msgstr "❌ 没有可用的CDS视图。"
+
+#~ msgid "Storing embeddings"
+#~ msgstr "存储嵌入向量"
+
+#~ msgid "Successfully stored {} view records into {}"
+#~ msgstr "成功将 {} 个视图记录存储到 {}"
+

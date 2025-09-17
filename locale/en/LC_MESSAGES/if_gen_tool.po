@@ -1,307 +1,546 @@
 # SAP IF Design Generation Tool - English Translation (Source Language)
 # Copyright (C) 2025 SAP IF Design Team
-# This file is distributed under the same license as the if_gen_tool package.
+# This file is distributed under the same license as the if_gen_tool
+# package.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: if_gen_tool 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-11 19:47+0800\n"
+"POT-Creation-Date: 2025-09-17 14:33+0800\n"
 "PO-Revision-Date: 2025-09-11 19:47+0800\n"
 "Last-Translator: SAP Team\n"
-"Language-Team: English <>\n"
 "Language: en\n"
+"Language-Team: English <>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
 
 # Main application messages
+#: main.py:36
+#, python-brace-format
 msgid "Data directory not found: {}"
 msgstr "Data directory not found: {}"
 
+#: main.py:62
+#, python-brace-format
 msgid "{}h {}m {:.2f}s"
 msgstr "{}h {}m {:.2f}s"
 
+#: main.py:69
+#, python-brace-format
 msgid "[Project Start Time]: {}"
 msgstr "[Project Start Time]: {}"
 
+#: main.py:72
 msgid "SAP IF Design Generation Tool"
 msgstr "SAP IF Design Generation Tool"
 
+#: main.py:76
 msgid "Process specific Excel file (relative to input directory)"
 msgstr "Process specific Excel file (relative to input directory)"
 
+#: main.py:83
 msgid "Set interface language (en, zh, ja)"
 msgstr "Set interface language (en, zh, ja)"
 
-msgid "Choose AI service provider (overrides environment variable)"
-msgstr "Choose AI service provider (overrides environment variable)"
+#: main.py:90
+msgid "Choose AI provider (claude, gemini, openai) - all via AI Core"
+msgstr ""
 
+#: main.py:112
 msgid "[Step 1] 🔍 Auto-detecting available AI services..."
 msgstr "[Step 1] 🔍 Auto-detecting available AI services..."
 
-msgid "[Step 2] 📄 Initializing RAG Knowledge..."
-msgstr "[Step 2] 📄 Initializing RAG Knowledge..."
-
-msgid "[Step 3] 📄 Excel Processing..."
+#: main.py:121
+#, fuzzy
+msgid "[Step 2] 📄 Excel Processing..."
 msgstr "[Step 3] 📄 Excel Processing..."
 
+#: main.py:132
+#, python-brace-format
 msgid "Processing file: {} start time: {}"
 msgstr "Processing file: {} start time: {}"
 
+#: main.py:138
+#, python-brace-format
 msgid "Completed: {} ✅"
 msgstr "Completed: {} ✅"
 
+#: main.py:147
+#, python-brace-format
 msgid "Processing {} completed at: {}"
 msgstr "Processing {} completed at: {}"
 
+#: main.py:149
+#, python-brace-format
 msgid "File processing time: {}"
 msgstr "File processing time: {}"
 
+#: main.py:150
+#, python-brace-format
 msgid "Total project time: {}"
 msgstr "Total project time: {}"
 
+#: main.py:153
+#, python-brace-format
 msgid "❌ Failed to process {}: {}"
 msgstr "❌ Failed to process {}: {}"
 
+#: main.py:156
+#, python-brace-format
 msgid "File not found: {}"
 msgstr "File not found: {}"
 
+#: main.py:163
 msgid "❌ No Excel files found in data/excel_input/ directory"
 msgstr "❌ No Excel files found in data/excel_input/ directory"
 
+#: main.py:164
 msgid "❌ Please add Excel files to process or use --file to specify a file"
 msgstr "❌ Please add Excel files to process or use --file to specify a file"
 
+#: main.py:167
+#, python-brace-format
 msgid "Found {} Excel file(s) to process:"
 msgstr "Found {} Excel file(s) to process:"
 
-msgid "\nProcessing: {} start time: {}"
-msgstr "\nProcessing: {} start time: {}"
+#: main.py:175
+#, python-brace-format
+msgid ""
+"\n"
+"Processing: {} start time: {}"
+msgstr ""
+"\n"
+"Processing: {} start time: {}"
 
+#: main.py:181
+#, python-brace-format
 msgid "Completed: {} ✅ Available end time: {}"
 msgstr "Completed: {} ✅ Available end time: {}"
 
+#: main.py:191
+#, python-brace-format
 msgid "{}  execution time: {}"
 msgstr "{}  execution time: {}"
 
-msgid "\n🎉 All files processed!"
-msgstr "\n🎉 All files processed!"
+#: main.py:203
+#, fuzzy, python-brace-format
+msgid "❌ Failed 456 to process {}: {}"
+msgstr "❌ Failed to process {}: {}"
 
+#: main.py:206
+msgid ""
+"\n"
+"🎉 All files processed!"
+msgstr ""
+"\n"
+"🎉 All files processed!"
+
+#: main.py:221
+#, python-brace-format
 msgid "[Project End Time]: {} ====="
 msgstr "[Project End Time]: {} ====="
 
+#: main.py:222
+#, python-brace-format
 msgid "===== Total Time: {} ====="
 msgstr "===== Total Time: {} ====="
 
+#: main.py:224
+#, python-brace-format
 msgid "❌ Application error: {}"
 msgstr "❌ Application error: {}"
 
 # Excel processor messages
+#: excel/excel_processor.py:37
+#, python-brace-format
 msgid "❌ Input file not found: {}"
 msgstr "❌ Input file not found: {}"
 
+#: excel/excel_processor.py:56
+#, python-brace-format
 msgid "Sheet '{}' not found in workbook"
 msgstr "Sheet '{}' not found in workbook"
 
+#: excel/excel_processor.py:61
+#, python-brace-format
 msgid "Processed file saved: {} ✅"
 msgstr "Processed file saved: {} ✅"
 
+#: excel/excel_processor.py:65
+msgid "Source file moved to archive folder."
+msgstr ""
+
+#: excel/excel_processor.py:69
+msgid ""
+"⚠️ Warning: Could not archive source file, but processing completed "
+"successfully."
+msgstr ""
+
+#: excel/excel_processor.py:88
 msgid "No categories for module."
 msgstr "No categories for module."
 
+#: excel/excel_processor.py:94
 msgid "No views for category."
 msgstr "No views for category."
 
+#: excel/excel_processor.py:96
+#, python-brace-format
 msgid "Found {} candidate CDS views."
 msgstr "Found {} candidate CDS views."
 
+#: excel/excel_processor.py:102
 msgid "No views found by LLM."
 msgstr "No views found by LLM."
 
+#: excel/excel_processor.py:104
+#, python-brace-format
 msgid "LLM selected {} CDS views."
 msgstr "LLM selected {} CDS views."
 
+#: excel/excel_processor.py:108
 msgid "No CDS views selected - unable to process this file."
 msgstr "No CDS views selected - unable to process this file."
 
+#: excel/excel_processor.py:111
 msgid "Processing failed: No relevant CDS views found for this interface."
 msgstr "Processing failed: No relevant CDS views found for this interface."
 
+#: excel/excel_processor.py:158
 msgid "Calling LLM to match result..."
 msgstr "Calling LLM to match result..."
 
+#: excel/excel_processor.py:163
 msgid "LLM Process Finished"
 msgstr "LLM Process Finished"
 
+#: excel/excel_processor.py:165
+#, python-brace-format
 msgid "❌ LLM function call failed: {}"
 msgstr "❌ LLM function call failed: {}"
 
+#: excel/excel_processor.py:167
+#, python-brace-format
 msgid "Failed to process file due to LLM error: {}"
 msgstr "Failed to process file due to LLM error: {}"
 
+#: excel/excel_processor.py:175
 msgid "Writing results to file..."
 msgstr "Writing results to file..."
 
-# HANA connection messages
-msgid "HANA Cloud connection failed: {}"
-msgstr "HANA Cloud connection failed: {}"
-
-msgid "Database connection closed."
-msgstr "Database connection closed."
-
-msgid "HANA Cloud not connected."
-msgstr "HANA Cloud not connected."
-
-msgid "SQL execution failed: {}"
-msgstr "SQL execution failed: {}"
-
-msgid "Database not connected."
-msgstr "Database not connected."
-
-msgid "SQL error occurred while getting views: {}"
-msgstr "SQL error occurred while getting views: {}"
-
-msgid "⚠️ Warning: Could not parse CONTENT JSON for view {}"
-msgstr "⚠️ Warning: Could not parse CONTENT JSON for view {}"
-
-msgid "--- Step 1: Executing vector search for query '{}' ---"
-msgstr "--- Step 1: Executing vector search for query '{}' ---"
-
-msgid "\nVector search results:"
-msgstr "\nVector search results:"
-
-msgid "\n--- Step 2: Getting all related CDS views using category string '{}' ---"
-msgstr "\n--- Step 2: Getting all related CDS views using category string '{}' ---"
-
-msgid "\nFound {} CDS views:"
-msgstr "\nFound {} CDS views:"
-
-msgid "\nVector search returned no results."
-msgstr "\nVector search returned no results."
-
-msgid "\nProgram execution failed: {}"
-msgstr "\nProgram execution failed: {}"
-
-msgid "{} does not exist"
-msgstr "{} does not exist"
-
-msgid "RAG knowledge already exists with {} records ✅ Available"
-msgstr "RAG knowledge already exists with {} records ✅ Available"
-
-msgid "❌ Error checking existing RAG knowledge: {}"
-msgstr "❌ Error checking existing RAG knowledge: {}"
-
-msgid "❌ No CDS views available."
-msgstr "❌ No CDS views available."
-
-msgid "Storing embeddings"
-msgstr "Storing embeddings"
-
-msgid "Successfully stored {} view records into {}"
-msgstr "Successfully stored {} view records into {}"
-
+#: excel/excel_processor.py:386
+#, python-brace-format
 msgid "LLM returned {} matches for {} input fields"
 msgstr "LLM returned {} matches for {} input fields"
 
+#: excel/excel_processor.py:409
+#, python-brace-format
 msgid "⚠️ No LLM match found for row {}, using empty values"
 msgstr "⚠️ No LLM match found for row {}, using empty values"
 
+#: excel/excel_processor.py:527
+#, python-brace-format
+msgid "File archived: {} → {}"
+msgstr ""
+
+#: excel/excel_processor.py:535
+#, fuzzy, python-brace-format
+msgid "❌ Failed to archive file {}: {}"
+msgstr "❌ Failed to process {}: {}"
+
+# HANA connection messages
+#: hana/hana_conn.py:42
+#, python-brace-format
+msgid "HANA Cloud connection failed: {}"
+msgstr "HANA Cloud connection failed: {}"
+
+#: hana/hana_conn.py:49
+msgid "Database connection closed."
+msgstr "Database connection closed."
+
+#: hana/hana_conn.py:71
+msgid "HANA Cloud not connected."
+msgstr "HANA Cloud not connected."
+
+#: hana/hana_conn.py:90
+#, python-brace-format
+msgid "SQL execution failed: {}"
+msgstr "SQL execution failed: {}"
+
+#: hana/hana_conn.py:95 hana/hana_conn.py:126
+msgid "Database not connected."
+msgstr "Database not connected."
+
+#: hana/hana_conn.py:114
+#, python-brace-format
+msgid "SQL error occurred while getting views: {}"
+msgstr "SQL error occurred while getting views: {}"
+
+#: hana/hana_conn.py:155
+msgid "Applying fields filtering..."
+msgstr ""
+
+#: hana/hana_conn.py:224
+#, python-brace-format
+msgid "⚠️ Warning: Could not parse CONTENT JSON for view {}"
+msgstr "⚠️ Warning: Could not parse CONTENT JSON for view {}"
+
+#: hana/hana_conn.py:351
+#, python-brace-format
+msgid "--- Step 1: Executing vector search for query '{}' ---"
+msgstr "--- Step 1: Executing vector search for query '{}' ---"
+
+#: hana/hana_conn.py:357
+msgid ""
+"\n"
+"Vector search results:"
+msgstr ""
+"\n"
+"Vector search results:"
+
+#: hana/hana_conn.py:365
+#, python-brace-format
+msgid ""
+"\n"
+"--- Step 2: Getting all related CDS views using category string '{}' ---"
+msgstr ""
+"\n"
+"--- Step 2: Getting all related CDS views using category string '{}' ---"
+
+#: hana/hana_conn.py:372
+#, python-brace-format
+msgid ""
+"\n"
+"Found {} CDS views:"
+msgstr ""
+"\n"
+"Found {} CDS views:"
+
+#: hana/hana_conn.py:376
+msgid ""
+"\n"
+"Vector search returned no results."
+msgstr ""
+"\n"
+"Vector search returned no results."
+
+#: hana/hana_conn.py:378
+#, python-brace-format
+msgid ""
+"\n"
+"Program execution failed: {}"
+msgstr ""
+"\n"
+"Program execution failed: {}"
+
+#: utils/ai_connectivity_test.py:67
+#, python-brace-format
 msgid "AI Service initialization failed: {}"
 msgstr "AI Service initialization failed: {}"
 
+#: utils/ai_connectivity_test.py:81
+#, python-brace-format
 msgid "[INFO] Using specified AI provider: {}"
 msgstr "[INFO] Using specified AI provider: {}"
 
+#: utils/ai_connectivity_test.py:101
+#, fuzzy, python-brace-format
+msgid "[INFO] Using configured default AI provider: {}"
+msgstr "[INFO] Using specified AI provider: {}"
+
+#: utils/ai_connectivity_test.py:113
+msgid "[INFO] No default AI provider configured, testing in priority order"
+msgstr ""
+
+#: utils/ai_connectivity_test.py:120
+#, python-brace-format
 msgid "Testing {}..."
 msgstr "Testing {}..."
 
+#: utils/ai_connectivity_test.py:126
 msgid "✅ Available"
 msgstr "✅ Available"
 
+#: utils/ai_connectivity_test.py:127
+#, python-brace-format
 msgid "Selected AI Provider: {}"
 msgstr "Selected AI Provider: {}"
 
+#: utils/ai_connectivity_test.py:130
 msgid "❌ Not available"
 msgstr "❌ Not available"
 
+#: utils/ai_connectivity_test.py:132
+#, python-brace-format
 msgid "❌ Failed: {}"
 msgstr "❌ Failed: {}"
 
-msgid "❌ No AI services are available. Please check your configuration and API keys."
-msgstr "❌ No AI services are available. Please check your configuration and API keys."
+#: utils/ai_connectivity_test.py:137
+msgid ""
+"❌ No AI services are available. Please check your configuration and API "
+"keys."
+msgstr ""
+"❌ No AI services are available. Please check your configuration and API "
+"keys."
 
-msgid "🚀 Testing all AI service providers..."
+#: utils/ai_connectivity_test.py:149
+#, fuzzy
+msgid "🚀 Testing all AI providers via AI Core..."
 msgstr "🚀 Testing all AI service providers..."
 
-msgid "\n🧪 Testing {}:"
-msgstr "\n🧪 Testing {}:"
+#: utils/ai_connectivity_test.py:156
+#, python-brace-format
+msgid ""
+"\n"
+"🧪 Testing {}:"
+msgstr ""
+"\n"
+"🧪 Testing {}:"
 
+#: utils/ai_connectivity_test.py:166
 msgid "   ✅ Available"
 msgstr "   ✅ Available"
 
+#: utils/ai_connectivity_test.py:167
+#, python-brace-format
 msgid "   LLM: {}"
 msgstr "   LLM: {}"
 
+#: utils/ai_connectivity_test.py:168
+#, python-brace-format
 msgid "   Embedding: {}"
 msgstr "   Embedding: {}"
 
+#: utils/ai_connectivity_test.py:171
 msgid "   ❌ Not available"
 msgstr "   ❌ Not available"
 
+#: utils/ai_connectivity_test.py:175
+#, python-brace-format
 msgid "   ❌ Error: {}"
 msgstr "   ❌ Error: {}"
 
-msgid "\n📊 Summary:"
-msgstr "\n📊 Summary:"
+#: utils/ai_connectivity_test.py:179
+msgid ""
+"\n"
+"📊 Summary:"
+msgstr ""
+"\n"
+"📊 Summary:"
 
+#: utils/ai_connectivity_test.py:180
+#, python-brace-format
 msgid "   Available: {}/{}"
 msgstr "   Available: {}/{}"
 
+#: utils/ai_connectivity_test.py:183
+#, python-brace-format
 msgid "   ✅ Ready: {}"
 msgstr "   ✅ Ready: {}"
 
+#: utils/ai_connectivity_test.py:185
+#, python-brace-format
 msgid "   🎯 Recommended: {}"
 msgstr "   🎯 Recommended: {}"
 
+#: utils/ai_connectivity_test.py:190
 msgid "   ❌ No services available"
 msgstr "   ❌ No services available"
 
+#: utils/ai_connectivity_test.py:205
+#, python-brace-format
 msgid "🧪 Testing {} connectivity..."
 msgstr "🧪 Testing {} connectivity..."
 
+#: utils/ai_connectivity_test.py:212
+#, python-brace-format
 msgid "✅ {} is ready to use!"
 msgstr "✅ {} is ready to use!"
 
+#: utils/ai_connectivity_test.py:213
+#, python-brace-format
 msgid "   LLM Model: {}"
 msgstr "   LLM Model: {}"
 
+#: utils/ai_connectivity_test.py:214
+#, python-brace-format
 msgid "   Embedding Model: {}"
 msgstr "   Embedding Model: {}"
 
+#: utils/ai_connectivity_test.py:217
+#, python-brace-format
 msgid "❌ {} is not available"
 msgstr "❌ {} is not available"
 
+#: utils/ai_connectivity_test.py:221
+#, python-brace-format
 msgid "❌ {} test failed: {}"
 msgstr "❌ {} test failed: {}"
 
+#: utils/ai_connectivity_test.py:230
 msgid "AI Service Connectivity Test"
 msgstr "AI Service Connectivity Test"
 
-msgid "Test specific AI service provider"
+#: utils/ai_connectivity_test.py:235
+#, fuzzy
+msgid "Test specific AI provider via AI Core"
 msgstr "Test specific AI service provider"
 
+#: utils/ai_connectivity_test.py:240
 msgid "Test all available AI providers"
 msgstr "Test all available AI providers"
 
+#: utils/ai_connectivity_test.py:260
 msgid "🚀 Auto-detecting available AI services..."
 msgstr "🚀 Auto-detecting available AI services..."
 
-msgid "\n🎉 Ready to use {}!"
-msgstr "\n🎉 Ready to use {}!"
+#: utils/ai_connectivity_test.py:264
+#, python-brace-format
+msgid ""
+"\n"
+"🎉 Ready to use {}!"
+msgstr ""
+"\n"
+"🎉 Ready to use {}!"
 
-msgid "\n✅ Connectivity test completed!"
-msgstr "\n✅ Connectivity test completed!"
+#: utils/ai_connectivity_test.py:269
+msgid ""
+"\n"
+"✅ Connectivity test completed!"
+msgstr ""
+"\n"
+"✅ Connectivity test completed!"
 
+#: utils/ai_connectivity_test.py:272
+#, python-brace-format
 msgid "❌ Test error: {}"
 msgstr "❌ Test error: {}"
+
+#~ msgid "Choose AI service provider (overrides environment variable)"
+#~ msgstr "Choose AI service provider (overrides environment variable)"
+
+#~ msgid "[Step 2] 📄 Initializing RAG Knowledge..."
+#~ msgstr "[Step 2] 📄 Initializing RAG Knowledge..."
+
+#~ msgid "{} does not exist"
+#~ msgstr "{} does not exist"
+
+#~ msgid "RAG knowledge already exists with {} records ✅ Available"
+#~ msgstr "RAG knowledge already exists with {} records ✅ Available"
+
+#~ msgid "❌ Error checking existing RAG knowledge: {}"
+#~ msgstr "❌ Error checking existing RAG knowledge: {}"
+
+#~ msgid "❌ No CDS views available."
+#~ msgstr "❌ No CDS views available."
+
+#~ msgid "Storing embeddings"
+#~ msgstr "Storing embeddings"
+
+#~ msgid "Successfully stored {} view records into {}"
+#~ msgstr "Successfully stored {} view records into {}"
+

@@ -57,7 +57,7 @@ class ClaudeSchemas:
                                                     "type": "string",
                                                     "description": "该字段是否为键字段 - 如果来自上下文为真则使用'X'，否则为空字符串",
                                                 },
-                                                "match_confidence": {
+                                                "match": {
                                                     "type": "integer",
                                                     "description": "匹配置信度百分比（0-100）",
                                                 },

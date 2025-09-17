@@ -302,11 +302,11 @@ class ExcelProcessor:
                 worksheet[f"{output_columns['length_dec']}{row}"] = match_result.get(
                     "length_dec", ""
                 )
-                worksheet[f"{output_columns['match_percentage']}{row}"] = (
-                    match_result.get("match_percentage", "")
+                worksheet[f"{output_columns['match']}{row}"] = (
+                    match_result.get("match", "")
                 )
-                worksheet[f"{output_columns['notes_description']}{row}"] = (
-                    match_result.get("notes_description", "")
+                worksheet[f"{output_columns['notes']}{row}"] = (
+                    match_result.get("notes", "")
                 )
                 worksheet[f"{output_columns['sample_value']}{row}"] = match_result.get(
                     "sample_value", ""
@@ -451,8 +451,8 @@ class ExcelProcessor:
                     "length_dec": match_result.get("length_dec", ""),
                     "field_desc": match_result.get("field_desc", ""),
                     "sample_value": sample_value,
-                    "match_percentage": match_percentage,
-                    "notes_description": notes_description,
+                    "match": match_result.get("match"),
+                    "notes": match_result.get("notes", ""),
                 }
             )
 

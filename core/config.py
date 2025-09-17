@@ -39,8 +39,8 @@ class ConfigurationManager:
                 "length_total": "Y",
                 "length_dec": "Z",
                 "sample_value": "AA",
-                "match_percentage": "AB",
-                "notes_description": "AC",
+                "match": "AB",
+                "notes": "AC",
             },
         }
 

@@ -8,6 +8,7 @@ from hana_ml import ConnectionContext
 from hdbcli.dbapi import Error as HanaDbError
 
 from core.i18n import _, get_current_language
+import re
 
 load_dotenv()
 
@@ -271,8 +272,9 @@ class HANADBClient:
                         continue
 
                     try:
-                        # 2. 解析JSON字符串
-                        parsed_fields = json.loads(content_str)
+                        # 2. 解析字段
+                        content_str_re = self.parse_fields(content_str)
+                        parsed_fields = json.loads(content_str_re)
 
                         # 3. 将解析后的列表转换为结构化的字典列表
                         for field_data in parsed_fields:
@@ -289,15 +291,57 @@ class HANADBClient:
                                 "length_dec": field_data[6],
                             }
                             results[view_name].append(field_dict)
-                    except json.JSONDecodeError:
+                    except json.JSONDecodeError as e:
                         print(
-                            f"⚠️ Warning: Could not parse CONTENT JSON for view {view_name}"
+                            f"⚠️ Warning: Could not parse CONTENT JSON for view {view_name} error: {e}"
                         )
                         continue
+                    except Exception as e:
+                        print(f"Error parse fields:{e}")
             return results
         except HanaDbError as e:
             print(f"{e}")
             return []
+
+    @staticmethod
+    def parse_fields(content_str: str) -> str:
+        result_chars = []
+        in_string = False
+        i = 0
+        s_len = len(content_str)
+
+        while i < s_len:
+            char = content_str[i]
+
+            if char == '"':
+                if not in_string:
+                    # 字符串开头
+                    in_string = True
+                    result_chars.append(char)
+                else:
+                    # 字符串内部遇到了一个引号。
+                    # 查找下一个非空白字符
+                    next_char_index = i + 1
+                    while next_char_index < s_len and content_str[next_char_index].isspace():
+                        next_char_index += 1
+
+                    # 如果字符串后面就是逗号、方括号或字符串结尾，
+                    # 那么这个引号是合法的结束符。
+                    if next_char_index == s_len or content_str[next_char_index] in [',', ']', '}']:
+                        in_string = False
+                        result_chars.append(char)
+                    else:
+                        # 否则，这绝对是一个需要转义的内部引号。
+                        result_chars.append('\\"')
+            else:
+                # 对于所有其他字符，直接添加
+                result_chars.append(char)
+
+            i += 1
+
+        repaired_string = "".join(result_chars)
+
+        return repaired_string
 
 if __name__ == "__main__":
     query_text = "purchase"
