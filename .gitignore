@@ -5,3 +5,5 @@
 # 如果你也想忽略 .pyc 文件，可以添加以下行
 *.py[cod]
 $py.class
+tokens
+data
