@@ -5,3 +5,7 @@ $py.class
 data
 logs
 tokens
+.idea
+main.spec
+build
+dist

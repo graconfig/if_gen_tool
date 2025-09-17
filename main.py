@@ -19,11 +19,22 @@ from utils.token_statistics import (
 )
 
 
+def get_base_path() -> Path:
+    """
+    Get the base path for the application, accommodating both script and frozen exe.
+    """
+    if getattr(sys, 'frozen', False):
+        # If the application is run as a bundle (e.g., by PyInstaller)
+        return Path(sys.executable).parent
+    else:
+        # If the application is run as a script
+        return Path(__file__).parent
+
 def setup_directories() -> Path:
     """Setup and validate application directories."""
     from core.consts import Directories
 
-    base_dir = Path(__file__).parent
+    base_dir = get_base_path()
     data_dir = base_dir / "data"
 
     # Create required directories if they don't exist
