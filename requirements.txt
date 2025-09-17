@@ -5,6 +5,7 @@ protobuf==6.32.0
 sap-ai-sdk-gen==5.4.5
 openai==1.102.0
 google-genai==1.32.0
-hdbcli==2.25.31
 hana-ml==2.25.25080800
 pandas==2.3.2
+google-api-core==2.25.1
+google-cloud-aiplatform==1.114.0

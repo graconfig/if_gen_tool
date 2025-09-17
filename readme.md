@@ -42,14 +42,15 @@ python -m venv venv
 # Activate virtual environment | 激活虚拟环境
 # Windows:
 venv\Scripts\activate
-# macOS/Linux:
+
+# MacOS/Linux:
 source venv/bin/activate
 ```
 
 ### 2.安装依赖
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt # 如遇报错，单独安装相关依赖
 ```
 
 ### 3. 配置AI Core和HANA Cloud连接
@@ -57,45 +58,43 @@ pip install -r requirements.txt
 **复制并编辑.env.example**
 
 ```bash
-# Copy environment template | 复制环境变量模板
 cp .env.example .env
 ```
 
 编辑 `.env` 文件配置所有设置，包括AI模型配置：
 
 ```bash
-# SAP AI Core Configuration | SAP AI Core配置
+# SAP AI Core配置
 AICORE_AUTH_URL="https://***.authentication.sap.hana.ondemand.com"
 AICORE_CLIENT_ID="your_client_id"
 AICORE_CLIENT_SECRET="your_client_secret"
 AICORE_BASE_URL="https://api.ai.***.cfapps.sap.hana.ondemand.com/v2"
 AICORE_RESOURCE_GROUP="default"
 
-# HANA Cloud Configuration | HANA Cloud配置
+# HANA Cloud配置
 HANA_ADDRESS="***.hanacloud.ondemand.com"
 HANA_PORT="443"
 HANA_USER="your_user"
 HANA_PASSWORD="your_password"
 HANA_SCHEMA="your_schema"
 
-# AI Provider Selection | AI提供商选择
+# Default AI Provider 
 AI_PROVIDER="claude"
 
-# Language Configuration
-# Options: en (English), zh (Chinese), ja (Japanese)  
+# Language Options: en (English), zh (Chinese), ja (Japanese)  
 # If not set, will auto-detect from OS language or default to English
 LANGUAGE="en"
 
-# AI Model Configurations | AI模型配置
-# OpenAI Models via AI Core | 通过AI Core的OpenAI模型
+# AI模型配置
+# OpenAI
 OPENAI_LLM_MODEL="gpt-4o"
 OPENAI_EMBEDDING_MODEL="text-embedding-ada-002"
 
-# Claude Models via AI Core | 通过AI Core的Claude模型
+# Claude
 CLAUDE_LLM_MODEL="anthropic--claude-3-5-sonnet"
 CLAUDE_EMBEDDING_MODEL="text-embedding-ada-002"
 
-# Gemini Models via AI Core | 通过AI Core的Gemini模型
+# Gemini
 GEMINI_LLM_MODEL="gemini-1.5-pro"
 GEMINI_EMBEDDING_MODEL="text-embedding-004"
 ```
@@ -119,33 +118,28 @@ python main.py --langu zh
 python main.py --langu ja --provider gemini --file "my_interface.xlsx"
 ```
 
-
 ## 📝 使用说明
 
 ### 数据准备
 
-1. **Input Files    | 输入文件**：将待处理的接口定义Excel文件放入 `data/excel_input/` 目录
-2. **Output Results | 输出结果**:处理完成的文件将保存在`data/excel_output/` 目录
-3. **Archived Files | 归档文件**: 成功处理的源文件会自动移动到 `data/excel_archive/` 目录
+1. **输入文件**：将待处理的接口定义Excel文件放入 `data/excel_input/` 目录
+2. **输出结果**:处理完成的文件将保存在`data/excel_output/` 目录
+3. **归档文件**: 成功处理的源文件会自动移动到 `data/excel_archive/` 目录
 
-### 工作流程
+### 执行流程
 
-1. **Automatic File Detection | 自动检测文件**: 系统自动扫描 `data/excel_input/` 目录下的Excel文件
-2. **Batch Processing         | 批量处理**: 自动处理所有Excel文件，生成字段映射结果
-3. **Enhanced Output          | 增强输出**: 结果包含匹配结果的百分比分数和详细结果描述
-4. **Automatic Archiving      | 自动归档**: 成功处理的文件会移动到归档文件夹以防止重复处理
-5. **Token Statistics Report  | Token统计报告**: 自动生成并显示token使用统计报告
+1. **检测文件**: 系统自动扫描 `data/excel_input/` 目录下的Excel文件
+2. **批量处理**: 自动处理所有Excel文件，生成字段映射结果
+3. **结果输出**: 结果包含匹配结果的百分比分数和详细结果描述
+4. **自动归档**: 成功处理的文件会移动到归档文件夹以防止重复处理
+5. **Token统计**: 自动生成并显示token使用统计报告
 
-##  AI服务说明
+###  AI服务说明
 
 所有AI模型现在通过统一的SAP AI Core平台访问，提供：
-
-### 支持的模型
-
 - **SAP AI Core Claude** (`claude`)
 - **SAP AI Core Gemini** (`gemini`) 
-- **SAP AI Core OpenAI** (`openai`) 
-
+- **SAP AI Core OpenAI** (`openai`)
 
 ### Token使用统计
 
