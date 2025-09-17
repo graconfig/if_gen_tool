@@ -6,14 +6,15 @@ from typing import Tuple
 
 from core.config import ConfigurationManager
 from core.consts import AIProvider
-from core.i18n import _
+from utils.i18n import _
+from utils.sap_logger import logger, if_gen_logging
 from services.aicore_claude_service import AICoreClaudeService
 from services.aicore_gemini_service import AICoreGeminiService
 from services.aicore_openai_service import AICoreOpenAIService
 
 
 def create_ai_service_by_provider(
-        config_manager: ConfigurationManager, provider: str, language: str = "en"
+    config_manager: ConfigurationManager, provider: str, language: str = "en"
 ):
     """Create AI service based on provider type.
 
@@ -56,7 +57,9 @@ def create_ai_service_by_provider(
     )
 
 
-def test_ai_service_connectivity(ai_service, provider_name: str) -> bool:
+def test_ai_service_connectivity(
+    ai_service, provider_name: str, log_filename: str = None
+) -> bool:
     """Test AI service connectivity"""
     try:
         # Basic connectivity test for all AI Core services
@@ -64,21 +67,28 @@ def test_ai_service_connectivity(ai_service, provider_name: str) -> bool:
         _ = ai_service.embedding_model
         return True
     except Exception as e:
-        print(_("AI Service initialization failed: {}").format(str(e)[:100] + "..."))
+        logger.error(
+            _("AI Service initialization failed: {}...").format(str(e)[:100]),
+            log_filename,
+        )
         return False
 
 
 def auto_select_ai_service(
-        config_manager: ConfigurationManager,
-        provider_override: str = None,
-        language: str = "en",
+    config_manager: ConfigurationManager,
+    provider_override: str = None,
+    language: str = "en",
+    log_filename: str = None,
 ) -> Tuple[object, str]:
     """Automatically select available AI service"""
     from core.consts import AIProvider
 
     # If provider is specified, use it directly
     if provider_override:
-        print(_("[INFO] Using specified AI provider: {}").format(provider_override))
+        logger.info(
+            _("Using specified AI provider: {}").format(provider_override),
+            log_filename,
+        )
         if provider_override in AIProvider.ALL_PROVIDERS:
             ai_service = create_ai_service_by_provider(
                 config_manager, provider_override, language=language
@@ -97,10 +107,9 @@ def auto_select_ai_service(
     # Determine providers_to_test order
     if default_provider and default_provider in AIProvider.ALL_PROVIDERS:
         # First try the configured default provider, then fallback to the priority order
-        print(
-            _("[INFO] Using configured default AI provider: {}").format(
-                default_provider
-            )
+        logger.info(
+            _("Using configured default AI provider: {}").format(default_provider),
+            log_filename,
         )
         providers_to_test = [default_provider]
         # Add remaining providers in fallback order (claude -> gemini -> openai)
@@ -110,28 +119,48 @@ def auto_select_ai_service(
                 providers_to_test.append(provider)
     else:
         # No default configured, use priority order: Claude -> Gemini -> OpenAI
-        print(_("[INFO] No default AI provider configured, testing in priority order"))
+        logger.info(
+            _("No default AI provider configured, testing in priority order"),
+            log_filename,
+        )
         providers_to_test = [AIProvider.CLAUDE, AIProvider.GEMINI, AIProvider.OPENAI]
 
     for provider in providers_to_test:
         try:
             provider_config = config_manager.get_model_config()[provider]
             service_name = provider_config["provider_name"]
-            print(_("Testing {}...").format(service_name), end=" ")
+            logger.info(
+                _("Testing {}...").format(service_name),
+                log_filename,
+            )
             ai_service = create_ai_service_by_provider(
                 config_manager, provider, language=language
             )
 
-            if test_ai_service_connectivity(ai_service, provider):
-                print(_("✅ Available"))
-                print(_("Selected AI Provider: {}").format(service_name))
+            if test_ai_service_connectivity(ai_service, provider, log_filename):
+                logger.info(
+                    _("Selected AI Provider: {}").format(service_name),
+                    log_filename,
+                )
                 return ai_service, service_name
             else:
-                print(_("❌ Not available"))
+                logger.error(
+                    _("❌ Not available"),
+                    log_filename,
+                )
         except Exception as e:
-            print(_("❌ Failed: {}").format(str(e)[:50] + "..."))
+            logger.error(
+                _("❌ Failed: {}").format(str(e)[:50] + "..."),
+                log_filename,
+            )
 
     # If no available service, throw error
+    logger.error(
+        _(
+            "❌ No AI services are available. Please check your configuration and API keys."
+        ),
+        log_filename,
+    )
     raise RuntimeError(
         _(
             "❌ No AI services are available. Please check your configuration and API keys."
@@ -139,60 +168,63 @@ def auto_select_ai_service(
     )
 
 
-def test_all_providers(config_manager: ConfigurationManager) -> dict:
+def test_all_providers(
+    config_manager: ConfigurationManager, log_filename: str = None
+) -> dict:
     """Test all AI providers via AI Core"""
     from core.consts import AIProvider
 
     providers = AIProvider.ALL_PROVIDERS
     results = {}
 
-    print(_("🚀 Testing all AI providers via AI Core..."))
-    print("=" * 50)
+    logger.info(_("🚀 Testing all AI providers via AI Core..."), log_filename)
+    logger.info("-" * 80, log_filename)
 
     for provider in providers:
         try:
             provider_config = config_manager.get_model_config()[provider]
             service_name = provider_config["provider_name"]
-            print(_("\n🧪 Testing {}:").format(service_name))
+            logger.info(_("\n🧪 Testing {}:").format(service_name), log_filename)
             ai_service = create_ai_service_by_provider(config_manager, provider)
 
-            if test_ai_service_connectivity(ai_service, provider):
+            if test_ai_service_connectivity(ai_service, provider, log_filename):
                 results[provider] = {
                     "status": "available",
                     "llm_model": ai_service.llm_model,
                     "embedding_model": ai_service.embedding_model,
                     "provider_name": service_name,
                 }
-                print(_("   ✅ Available"))
-                print(_("   LLM: {}").format(ai_service.llm_model))
-                print(_("   Embedding: {}").format(ai_service.embedding_model))
+                logger.info(_("   ✅ Available"), log_filename)
+                logger.info(_("   LLM: {}").format(ai_service.llm_model), log_filename)
+                logger.info(_("   Embedding: {}").format(ai_service.embedding_model), log_filename)
             else:
                 results[provider] = {"status": "unavailable"}
-                print(_("   ❌ Not available"))
+                logger.warning(_("   ❌ Not available"), log_filename)
 
         except Exception as e:
             results[provider] = {"status": "error", "error": str(e)}
-            print(_("   ❌ Error: {}").format(str(e)[:50] + "..."))
+            logger.error(_("   ❌ Error: {}").format(str(e)[:50] + "..."), log_filename)
 
     # Print summary
     available = [k for k, r in results.items() if r["status"] == "available"]
-    print(_("\n📊 Summary:"))
-    print(_("   Available: {}/{}").format(len(available), len(providers)))
+    logger.info(_("\n📊 Summary:"), log_filename)
+    logger.info(_("   Available: {}/{}").format(len(available), len(providers)), log_filename)
     if available:
         provider_names = [results[p].get("provider_name", p) for p in available]
-        print(_("   ✅ Ready: {}").format(", ".join(provider_names)))
-        print(
+        logger.info(_("   ✅ Ready: {}").format(", ".join(provider_names)), log_filename)
+        logger.info(
             _("   🎯 Recommended: {}").format(
                 results[available[0]].get("provider_name", available[0])
-            )
+            ),
+            log_filename,
         )
     else:
-        print(_("   ❌ No services available"))
+        logger.warning(_("   ❌ No services available"), log_filename)
 
     return results
 
 
-def test_specific_provider(config_manager: ConfigurationManager, provider: str) -> bool:
+def test_specific_provider(config_manager: ConfigurationManager, provider: str, log_filename: str = None) -> bool:
     """Test specific AI provider via AI Core"""
     try:
         provider_config = config_manager.get_model_config()[provider]
@@ -202,23 +234,23 @@ def test_specific_provider(config_manager: ConfigurationManager, provider: str) 
             f"Unknown provider: {provider}. Supported providers: {AIProvider.ALL_PROVIDERS}"
         )
 
-    print(_("🧪 Testing {} connectivity...").format(service_name))
-    print("=" * 40)
+    logger.info(_("🧪 Testing {} connectivity...").format(service_name), log_filename)
+    logger.info("=" * 40, log_filename)
 
     try:
         ai_service = create_ai_service_by_provider(config_manager, provider)
 
-        if test_ai_service_connectivity(ai_service, provider):
-            print(_("✅ {} is ready to use!").format(service_name))
-            print(_("   LLM Model: {}").format(ai_service.llm_model))
-            print(_("   Embedding Model: {}").format(ai_service.embedding_model))
+        if test_ai_service_connectivity(ai_service, provider, log_filename):
+            logger.info(_("✅ {} is ready to use!").format(service_name), log_filename)
+            logger.info(_("   LLM Model: {}").format(ai_service.llm_model), log_filename)
+            logger.info(_("   Embedding Model: {}").format(ai_service.embedding_model), log_filename)
             return True
         else:
-            print(_("❌ {} is not available").format(service_name))
+            logger.warning(_("❌ {} is not available").format(service_name), log_filename)
             return False
 
     except Exception as e:
-        print(_("❌ {} test failed: {}").format(service_name, e))
+        logger.error(_("❌ {} test failed: {}").format(service_name, e), log_filename)
         return False
 
 
@@ -257,19 +289,19 @@ def main():
                 sys.exit(1)
         else:
             # Default auto-selection test
-            print(_("🚀 Auto-detecting available AI services..."))
-            print("=" * 50)
+            logger.info(_("🚀 Auto-detecting available AI services..."))
+            logger.info("-" * 80)
             try:
                 ai_service, service_name = auto_select_ai_service(config_manager)
-                print(_("\n🎉 Ready to use {}!").format(service_name))
+                logger.info(_("\n🎉 Ready to use {}!").format(service_name))
             except RuntimeError as e:
-                print(f"\n{e}")
+                logger.error(f"\n{e}")
                 sys.exit(1)
 
-        print(_("\n✅ Connectivity test completed!"))
+        logger.info(_("\n✅ Connectivity test completed!"))
 
     except Exception as e:
-        print(_("❌ Test error: {}").format(e))
+        logger.error(_("❌ Test error: {}").format(e))
         sys.exit(1)
 
 

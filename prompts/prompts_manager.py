@@ -7,7 +7,7 @@ from typing import Dict, List, Any, Type
 
 import pandas as pd
 
-from core.i18n import get_current_language
+from utils.i18n import get_current_language
 # Import all template classes
 from prompts.prompts_en import EnPromptTemplates
 from prompts.prompts_jp import JapanesePromptTemplates

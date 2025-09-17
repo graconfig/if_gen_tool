@@ -32,7 +32,7 @@ class EnPromptTemplates:
             "4.length/precision alignment (5%)",
             "Note: Semantic meaning > technical attributes; fuzzy match for descriptions.",
             "",
-            "Input Fields to Match (row_index:field_name;field_desc;key_flag;data_type;length_total):",
+            "Input Fields to Match (row_index:field_name;field_desc;key_flag;data_type;field_id;length_total):",
         ]
 
         # Add input fields with enhanced details
@@ -42,9 +42,10 @@ class EnPromptTemplates:
             field_text = getattr(field, "field_text", "")
             is_key = getattr(field, 'key_flag')
             data_type = getattr(field, "data_type", "")
+            field_id  = getattr(field, "field_id", "")
             length_total = getattr(field, "length_total", "")
             prompt_parts.append(
-                f"{row_idx};{field_name};{field_text};{is_key};{data_type};{length_total}")
+                f"{row_idx};{field_name};{field_text};{is_key};{data_type};{field_id};{length_total}")
 
         prompt_parts.append("")
         prompt_parts.extend(
@@ -132,7 +133,8 @@ class EnPromptTemplates:
                     f"-**Interface Name:** {if_name}",
                     f"-**Interface Description:** {if_desc}",
                     "",
-                    "**Required Fields for the Interface:**",
+                    "Required Fields for the Interface:",
+                    "format:field_name,field_description",
                 ]
             )
 
@@ -140,22 +142,22 @@ class EnPromptTemplates:
                 field_name = getattr(field, "field_name", "N/A")
                 field_text = getattr(field, "field_text", "N/A")
                 prompt_parts.append(
-                    f"-**Field:** {field_name} | **Description:** {field_text}"
+                    f"{field_name},{field_text}"
                 )
 
         prompt_parts.extend(
             [
                 "",
                 "**Candidate CDS Views:**",
-                "Here is a list of candidate CDS views. Please select the most relevant ones.",
-                "",
+                "Here is a list of candidate CDS views. Please select the most relevant ones."
+                "format:CDSViewName,CDSViewDescription",
             ]
         )
 
         for _, row in candidate_views_df.iterrows():
             view_name = row["VIEWNAME"]
             view_desc = row["VIEWDESC"]
-            prompt_parts.append(f"-**CDS View Name:** {view_name}; **CDS View Description**:{view_desc}")
+            prompt_parts.append(f"{view_name},{view_desc}")
 
         prompt_parts.extend(
             [

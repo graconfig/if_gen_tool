@@ -1,8 +1,9 @@
+
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-09-17 14:14+0800\n"
+"POT-Creation-Date: 2025-09-17 17:20+0800\n"
 "PO-Revision-Date: 2025-09-17 14:16+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -13,280 +14,270 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: main.py:36
+#: main.py:41
 #, python-brace-format
 msgid "Data directory not found: {}"
 msgstr "データディレクトリが見つかりません: {}"
 
-#: main.py:62
+#: main.py:68
 #, python-brace-format
 msgid "{}h {}m {:.2f}s"
 msgstr "{}時間 {}分 {:.2f}秒"
 
-#: main.py:69
-#, python-brace-format
-msgid "[Project Start Time]: {}"
-msgstr "[プロジェクト開始時間]: {}"
-
-#: main.py:72
+#: main.py:75
 msgid "SAP IF Design Generation Tool"
 msgstr "SAP IF設計生成ツール"
 
-#: main.py:76
+#: main.py:79
 msgid "Process specific Excel file (relative to input directory)"
 msgstr "特定のExcelファイルを処理する（入力ディレクトリからの相対パス）"
 
-#: main.py:83
+#: main.py:86
 msgid "Set interface language (en, zh, ja)"
 msgstr "インターフェース言語を設定する（en、zh、ja）"
 
-#: main.py:90
+#: main.py:93
 msgid "Choose AI provider (claude, gemini, openai) - all via AI Core"
 msgstr "AIプロバイダを選択する（claude、gemini、openai）- すべてAI Core経由"
 
-#: main.py:112
-msgid "[Step 1] 🔍 Auto-detecting available AI services..."
+#: main.py:123 main.py:275 main.py:300
+#, python-brace-format
+msgid "Language: {}"
+msgstr "言語: {}"
+
+#: main.py:131 main.py:308
+msgid "[Step 1]: Detecting available AI services..."
 msgstr "[ステップ1] 🔍 使用可能なAIサービスを自動検出中..."
 
-#: main.py:121
-msgid "[Step 2] 📄 Excel Processing..."
+#: main.py:147 main.py:329
+msgid "[Step 2]: Excel Processing..."
 msgstr "[ステップ2] 📄 Excel処理実行中..."
 
-#: main.py:132
-#, python-brace-format
-msgid "Processing file: {} start time: {}"
-msgstr "ファイル処理: {} 開始時間: {}"
-
-#: main.py:138
-#, python-brace-format
-msgid "Completed: {} ✅"
-msgstr "完了: {} ✅"
-
-#: main.py:147
-#, python-brace-format
-msgid "Processing {} completed at: {}"
-msgstr "{}の処理が完了しました: {}"
-
-#: main.py:149
-#, python-brace-format
-msgid "File processing time: {}"
-msgstr "ファイル処理時間: {}"
-
-#: main.py:150
-#, python-brace-format
-msgid "Total project time: {}"
-msgstr "プロジェクト総時間: {}"
-
-#: main.py:153
-#, python-brace-format
-msgid "❌ Failed to process {}: {}"
-msgstr "❌ {}の処理に失敗しました: {}"
-
-#: main.py:156
-#, python-brace-format
-msgid "File not found: {}"
-msgstr "ファイルが見つかりません: {}"
-
-#: main.py:163
-msgid "❌ No Excel files found in data/excel_input/ directory"
-msgstr "❌ data/excel_input/ディレクトリにExcelファイルが見つかりません"
-
-#: main.py:164
-msgid "❌ Please add Excel files to process or use --file to specify a file"
-msgstr "❌ 処理するExcelファイルを追加するか、--fileでファイルを指定してください"
-
-#: main.py:167
-#, python-brace-format
-msgid "Found {} Excel file(s) to process:"
-msgstr "処理対象のExcelファイルを{}件発見しました:"
-
-#: main.py:175
-#, python-brace-format
-msgid ""
-"\n"
-"Processing: {} start time: {}"
+#: main.py:157
+msgid "Processing specific file: {}"
 msgstr ""
 "\n"
 "処理中: {} 開始時間: {}"
 
-#: main.py:181
-#, python-brace-format
-msgid "Completed: {} ✅ Available end time: {}"
-msgstr "完了: {} ✅ 利用可能な終了時間: {}"
+#: main.py:161
+msgid "Log file created: {}"
+msgstr "❌ 失敗: {}"
 
-#: main.py:191
+#: main.py:168
 #, python-brace-format
-msgid "{}  execution time: {}"
-msgstr "{} 実行時間: {}"
+msgid "Processing file: {} start time: {}"
+msgstr "ファイル処理: {} 開始時間: {}"
 
-#: main.py:203
+#: main.py:179
 #, python-brace-format
-msgid "❌ Failed 456 to process {}: {}"
-msgstr "❌ 456エラー: {}の処理に失敗しました: {}"
+msgid "Completed: {} ✅"
+msgstr "完了: {} ✅"
+
+#: main.py:193
+#, python-brace-format
+msgid "Processing {} completed at: {}"
+msgstr "{}の処理が完了しました: {}"
+
+#: main.py:200
+#, python-brace-format
+msgid "File processing time: {}"
+msgstr "ファイル処理時間: {}"
 
 #: main.py:206
-msgid ""
-"\n"
-"🎉 All files processed!"
-msgstr ""
-"\n"
-"🎉 すべてのファイルが処理されました！"
+#, python-brace-format
+msgid "Total project time: {}"
+msgstr "プロジェクト総時間: {}"
 
-#: main.py:221
+#: main.py:218 main.py:245
 #, python-brace-format
 msgid "[Project End Time]: {} ====="
 msgstr "[プロジェクト終了時間]: {} ====="
 
-#: main.py:222
+#: main.py:224 main.py:251 main.py:387 main.py:427
 #, python-brace-format
 msgid "===== Total Time: {} ====="
 msgstr "===== 総時間: {} ====="
 
-#: main.py:224
+#: main.py:230
+msgid "Application completed successfully"
+msgstr "アプリケーションは正常に完了しました"
+
+#: main.py:262
+#, python-brace-format
+msgid "File not found: {}"
+msgstr "ファイルが見つかりません: {}"
+
+#: main.py:279
+msgid "❌ No Excel files found in data/excel_input/ directory"
+msgstr "❌ data/excel_input/ディレクトリにExcelファイルが見つかりません"
+
+#: main.py:284
+msgid "❌ Please add Excel files to process or use --file to specify a file"
+msgstr "❌ 処理するExcelファイルを追加するか、--fileでファイルを指定してください"
+
+#: main.py:289
+msgid "Application ended - No files to process"
+msgstr "処理対象のExcelファイルを{}件発見しました:"
+
+#: main.py:339
+msgid "Processing file {} of {}: {}"
+msgstr "{}の処理が完了しました: {}"
+
+#: main.py:381 main.py:421
+msgid "[File End Time]: {} ====="
+msgstr "[プロジェクト終了時間]: {} ====="
+
+#: main.py:393
+msgid "File processing completed successfully"
+msgstr "⚠️ 警告: ソースファイルをアーカイブできませんでしたが、処理は正常に完了しました。"
+
+#: main.py:439
 #, python-brace-format
 msgid "❌ Application error: {}"
 msgstr "❌ アプリケーションエラー: {}"
 
-#: excel/excel_processor.py:37
+#: main.py:443
+msgid "Application error occurred: {}"
+msgstr "❌ アプリケーションエラー: {}"
+
+#: main.py:447
+msgid "Error timestamp: {}"
+msgstr "   ❌ エラー: {}"
+
+#: excel/excel_processor.py:38
 #, python-brace-format
 msgid "❌ Input file not found: {}"
 msgstr "❌ 入力ファイルが見つかりません: {}"
 
-#: excel/excel_processor.py:56
+#: excel/excel_processor.py:57
 #, python-brace-format
 msgid "Sheet '{}' not found in workbook"
 msgstr "ワークブック内にシート'{}'が見つかりません"
 
-#: excel/excel_processor.py:61
+#: excel/excel_processor.py:63
 #, python-brace-format
 msgid "Processed file saved: {} ✅"
 msgstr "処理済みファイルを保存しました: {} ✅"
 
-#: excel/excel_processor.py:65
+#: excel/excel_processor.py:70
 msgid "Source file moved to archive folder."
 msgstr "ソースファイルをアーカイブフォルダに移動しました。"
 
-#: excel/excel_processor.py:69
+#: excel/excel_processor.py:76
 msgid ""
 "⚠️ Warning: Could not archive source file, but processing completed "
 "successfully."
-msgstr ""
-"⚠️ 警告: ソースファイルをアーカイブできませんでしたが、処理は正常に完了しました。"
+msgstr "⚠️ 警告: ソースファイルをアーカイブできませんでしたが、処理は正常に完了しました。"
 
-#: excel/excel_processor.py:88
+#: excel/excel_processor.py:103
 msgid "No categories for module."
 msgstr "モジュールのカテゴリがありません。"
 
-#: excel/excel_processor.py:94
+#: excel/excel_processor.py:114
 msgid "No views for category."
 msgstr "カテゴリのビューがありません。"
 
-#: excel/excel_processor.py:96
-#, python-brace-format
-msgid "Found {} candidate CDS views."
+#: excel/excel_processor.py:122
+msgid "Found {} candidate CDS views"
 msgstr "候補のCDSビューを{}件発見しました。"
 
-#: excel/excel_processor.py:102
+#: excel/excel_processor.py:131
 msgid "No views found by LLM."
 msgstr "LLMによってビューが見つかりませんでした。"
 
-#: excel/excel_processor.py:104
+#: excel/excel_processor.py:136
 #, python-brace-format
 msgid "LLM selected {} CDS views."
 msgstr "LLMが{}件のCDSビューを選択しました。"
 
-#: excel/excel_processor.py:108
+#: excel/excel_processor.py:143
 msgid "No CDS views selected - unable to process this file."
 msgstr "CDSビューが選択されていません - このファイルを処理できません。"
 
-#: excel/excel_processor.py:111
+#: excel/excel_processor.py:148
 msgid "Processing failed: No relevant CDS views found for this interface."
 msgstr "処理に失敗しました: このインターフェースに関連するCDSビューが見つかりません。"
 
-#: excel/excel_processor.py:158
+#: excel/excel_processor.py:201
 msgid "Calling LLM to match result..."
 msgstr "結果を一致させるためにLLMを呼び出しています..."
 
-#: excel/excel_processor.py:163
+#: excel/excel_processor.py:209
 msgid "LLM Process Finished"
 msgstr "LLM処理が完了しました"
 
-#: excel/excel_processor.py:165
-#, python-brace-format
-msgid "❌ LLM function call failed: {}"
-msgstr "❌ LLM関数呼び出しに失敗しました: {}"
-
-#: excel/excel_processor.py:167
+#: excel/excel_processor.py:218
 #, python-brace-format
 msgid "Failed to process file due to LLM error: {}"
 msgstr "LLMエラーのため、ファイルの処理に失敗しました: {}"
 
-#: excel/excel_processor.py:175
+#: excel/excel_processor.py:230
 msgid "Writing results to file..."
 msgstr "結果をファイルに書き込んでいます..."
 
-#: excel/excel_processor.py:386
-#, python-brace-format
-msgid "LLM returned {} matches for {} input fields"
-msgstr "LLMは{}個の入力フィールドに対して{}個の一致を返しました"
-
-#: excel/excel_processor.py:409
-#, python-brace-format
-msgid "⚠️ No LLM match found for row {}, using empty values"
-msgstr "⚠️ 行{}にLLMの一致が見つかりませんでした。空の値を使用しています"
-
-#: excel/excel_processor.py:527
-#, python-brace-format
-msgid "File archived: {} → {}"
-msgstr "ファイルをアーカイブしました: {} → {}"
-
-#: excel/excel_processor.py:535
-#, python-brace-format
-msgid "❌ Failed to archive file {}: {}"
-msgstr "❌ ファイル{}のアーカイブに失敗しました: {}"
-
-#: hana/hana_conn.py:41
+#: hana/hana_conn.py:43
 #, python-brace-format
 msgid "HANA Cloud connection failed: {}"
 msgstr "HANA Cloud接続に失敗しました: {}"
 
-#: hana/hana_conn.py:48
+#: hana/hana_conn.py:50
 msgid "Database connection closed."
 msgstr "データベース接続を閉じました。"
 
-#: hana/hana_conn.py:70
+#: hana/hana_conn.py:73
 msgid "HANA Cloud not connected."
 msgstr "HANA Cloudに接続されていません。"
 
-#: hana/hana_conn.py:89
+#: hana/hana_conn.py:94
 #, python-brace-format
 msgid "SQL execution failed: {}"
 msgstr "SQL実行に失敗しました: {}"
 
-#: hana/hana_conn.py:94 hana/hana_conn.py:125
+#: hana/hana_conn.py:99 hana/hana_conn.py:137
 msgid "Database not connected."
 msgstr "データベースに接続されていません。"
 
-#: hana/hana_conn.py:113
+#: hana/hana_conn.py:105
+msgid "No valid categories provided"
+msgstr "モジュールのカテゴリがありません。"
+
+#: hana/hana_conn.py:123
 #, python-brace-format
 msgid "SQL error occurred while getting views: {}"
 msgstr "ビューを取得中にSQLエラーが発生しました: {}"
 
-#: hana/hana_conn.py:154
+#: hana/hana_conn.py:168
 msgid "Applying fields filtering..."
 msgstr "フィールドフィルタリングを適用しています..."
 
-#: hana/hana_conn.py:223
+#: hana/hana_conn.py:243
 #, python-brace-format
 msgid "⚠️ Warning: Could not parse CONTENT JSON for view {}"
 msgstr "⚠️ 警告: ビュー{}のCONTENT JSONを解析できませんでした"
 
-#: hana/hana_conn.py:307
+#: hana/hana_conn.py:264
+msgid "SQL error in get_fields: {}"
+msgstr "ビューを取得中にSQLエラーが発生しました: {}"
+
+#: hana/hana_conn.py:317
+msgid "⚠️ Warning: Could not parse CONTENT JSON for view {} error: {}"
+msgstr "⚠️ 警告: ビュー{}のCONTENT JSONを解析できませんでした"
+
+#: hana/hana_conn.py:323
+#, python-brace-format
+msgid "Error parse fields:{}"
+msgstr "フィールド解析エラー:{}"
+
+#: hana/hana_conn.py:326
+msgid "Error: {}"
+msgstr "   ❌ エラー: {}"
+
+#: hana/hana_conn.py:382
 #, python-brace-format
 msgid "--- Step 1: Executing vector search for query '{}' ---"
 msgstr "--- ステップ1: クエリ'{}'のベクトル検索を実行中 ---"
 
-#: hana/hana_conn.py:313
+#: hana/hana_conn.py:388
 msgid ""
 "\n"
 "Vector search results:"
@@ -294,7 +285,7 @@ msgstr ""
 "\n"
 "ベクトル検索結果:"
 
-#: hana/hana_conn.py:321
+#: hana/hana_conn.py:396
 #, python-brace-format
 msgid ""
 "\n"
@@ -303,7 +294,7 @@ msgstr ""
 "\n"
 "--- ステップ2: カテゴリ文字列'{}'を使用して関連するすべてのCDSビューを取得中 ---"
 
-#: hana/hana_conn.py:328
+#: hana/hana_conn.py:404
 #, python-brace-format
 msgid ""
 "\n"
@@ -312,7 +303,7 @@ msgstr ""
 "\n"
 "{}件のCDSビューを発見しました:"
 
-#: hana/hana_conn.py:332
+#: hana/hana_conn.py:409
 msgid ""
 "\n"
 "Vector search returned no results."
@@ -320,7 +311,7 @@ msgstr ""
 "\n"
 "ベクトル検索に結果が返されませんでした。"
 
-#: hana/hana_conn.py:334
+#: hana/hana_conn.py:411
 #, python-brace-format
 msgid ""
 "\n"
@@ -329,60 +320,52 @@ msgstr ""
 "\n"
 "プログラムの実行に失敗しました: {}"
 
-#: utils/ai_connectivity_test.py:67
-#, python-brace-format
-msgid "AI Service initialization failed: {}"
+#: utils/ai_connectivity_test.py:71
+msgid "AI Service initialization failed: {}..."
 msgstr "AIサービスの初期化に失敗しました: {}"
 
-#: utils/ai_connectivity_test.py:81
-#, python-brace-format
-msgid "[INFO] Using specified AI provider: {}"
+#: utils/ai_connectivity_test.py:89
+msgid "Using specified AI provider: {}"
 msgstr "[情報] 指定されたAIプロバイダを使用しています: {}"
 
-#: utils/ai_connectivity_test.py:101
-#, python-brace-format
-msgid "[INFO] Using configured default AI provider: {}"
+#: utils/ai_connectivity_test.py:111
+msgid "Using configured default AI provider: {}"
 msgstr "[情報] 設定されたデフォルトのAIプロバイダを使用しています: {}"
 
-#: utils/ai_connectivity_test.py:113
-msgid "[INFO] No default AI provider configured, testing in priority order"
+#: utils/ai_connectivity_test.py:123
+msgid "No default AI provider configured, testing in priority order"
 msgstr "[情報] デフォルトのAIプロバイダが設定されていません。優先順位でテストを実行しています"
 
-#: utils/ai_connectivity_test.py:120
+#: utils/ai_connectivity_test.py:133
 #, python-brace-format
 msgid "Testing {}..."
 msgstr "{}をテスト中..."
 
-#: utils/ai_connectivity_test.py:126
-msgid "✅ Available"
-msgstr "✅ 使用可能"
-
-#: utils/ai_connectivity_test.py:127
+#: utils/ai_connectivity_test.py:142
 #, python-brace-format
 msgid "Selected AI Provider: {}"
 msgstr "選択されたAIプロバイダ: {}"
 
-#: utils/ai_connectivity_test.py:130
+#: utils/ai_connectivity_test.py:148
 msgid "❌ Not available"
 msgstr "❌ 使用不可"
 
-#: utils/ai_connectivity_test.py:132
+#: utils/ai_connectivity_test.py:153
 #, python-brace-format
 msgid "❌ Failed: {}"
 msgstr "❌ 失敗: {}"
 
-#: utils/ai_connectivity_test.py:137
+#: utils/ai_connectivity_test.py:160 utils/ai_connectivity_test.py:166
 msgid ""
 "❌ No AI services are available. Please check your configuration and API "
 "keys."
-msgstr ""
-"❌ 使用可能なAIサービスがありません。設定とAPIキーを確認してください。"
+msgstr "❌ 使用可能なAIサービスがありません。設定とAPIキーを確認してください。"
 
-#: utils/ai_connectivity_test.py:149
+#: utils/ai_connectivity_test.py:180
 msgid "🚀 Testing all AI providers via AI Core..."
 msgstr "🚀 AI Core経由ですべてのAIプロバイダをテスト中..."
 
-#: utils/ai_connectivity_test.py:156
+#: utils/ai_connectivity_test.py:187
 #, python-brace-format
 msgid ""
 "\n"
@@ -391,30 +374,30 @@ msgstr ""
 "\n"
 "🧪 {}をテスト中:"
 
-#: utils/ai_connectivity_test.py:166
+#: utils/ai_connectivity_test.py:197
 msgid "   ✅ Available"
 msgstr "   ✅ 使用可能"
 
-#: utils/ai_connectivity_test.py:167
+#: utils/ai_connectivity_test.py:198
 #, python-brace-format
 msgid "   LLM: {}"
 msgstr "   LLM: {}"
 
-#: utils/ai_connectivity_test.py:168
+#: utils/ai_connectivity_test.py:199
 #, python-brace-format
 msgid "   Embedding: {}"
 msgstr "   埋め込み: {}"
 
-#: utils/ai_connectivity_test.py:171
+#: utils/ai_connectivity_test.py:202
 msgid "   ❌ Not available"
 msgstr "   ❌ 使用不可"
 
-#: utils/ai_connectivity_test.py:175
+#: utils/ai_connectivity_test.py:206
 #, python-brace-format
 msgid "   ❌ Error: {}"
 msgstr "   ❌ エラー: {}"
 
-#: utils/ai_connectivity_test.py:179
+#: utils/ai_connectivity_test.py:210
 msgid ""
 "\n"
 "📊 Summary:"
@@ -422,72 +405,72 @@ msgstr ""
 "\n"
 "📊 サマリー:"
 
-#: utils/ai_connectivity_test.py:180
+#: utils/ai_connectivity_test.py:211
 #, python-brace-format
 msgid "   Available: {}/{}"
 msgstr "   使用可能: {}/{}"
 
-#: utils/ai_connectivity_test.py:183
+#: utils/ai_connectivity_test.py:214
 #, python-brace-format
 msgid "   ✅ Ready: {}"
 msgstr "   ✅ 準備完了: {}"
 
-#: utils/ai_connectivity_test.py:185
+#: utils/ai_connectivity_test.py:216
 #, python-brace-format
 msgid "   🎯 Recommended: {}"
 msgstr "   🎯 推奨: {}"
 
-#: utils/ai_connectivity_test.py:190
+#: utils/ai_connectivity_test.py:222
 msgid "   ❌ No services available"
 msgstr "   ❌ 使用可能なサービスがありません"
 
-#: utils/ai_connectivity_test.py:205
+#: utils/ai_connectivity_test.py:237
 #, python-brace-format
 msgid "🧪 Testing {} connectivity..."
 msgstr "🧪 {}の接続性をテスト中..."
 
-#: utils/ai_connectivity_test.py:212
+#: utils/ai_connectivity_test.py:244
 #, python-brace-format
 msgid "✅ {} is ready to use!"
 msgstr "✅ {}は使用準備が完了しています！"
 
-#: utils/ai_connectivity_test.py:213
+#: utils/ai_connectivity_test.py:245
 #, python-brace-format
 msgid "   LLM Model: {}"
 msgstr "   LLMモデル: {}"
 
-#: utils/ai_connectivity_test.py:214
+#: utils/ai_connectivity_test.py:246
 #, python-brace-format
 msgid "   Embedding Model: {}"
 msgstr "   埋め込みモデル: {}"
 
-#: utils/ai_connectivity_test.py:217
+#: utils/ai_connectivity_test.py:249
 #, python-brace-format
 msgid "❌ {} is not available"
 msgstr "❌ {}は使用できません"
 
-#: utils/ai_connectivity_test.py:221
+#: utils/ai_connectivity_test.py:253
 #, python-brace-format
 msgid "❌ {} test failed: {}"
 msgstr "❌ {}のテストに失敗しました: {}"
 
-#: utils/ai_connectivity_test.py:230
+#: utils/ai_connectivity_test.py:262
 msgid "AI Service Connectivity Test"
 msgstr "AIサービス接続性テスト"
 
-#: utils/ai_connectivity_test.py:235
+#: utils/ai_connectivity_test.py:267
 msgid "Test specific AI provider via AI Core"
 msgstr "AI Core経由で特定のAIプロバイダをテストする"
 
-#: utils/ai_connectivity_test.py:240
+#: utils/ai_connectivity_test.py:272
 msgid "Test all available AI providers"
 msgstr "使用可能なすべてのAIプロバイダをテストする"
 
-#: utils/ai_connectivity_test.py:260
+#: utils/ai_connectivity_test.py:292
 msgid "🚀 Auto-detecting available AI services..."
 msgstr "🚀 使用可能なAIサービスを自動検出中..."
 
-#: utils/ai_connectivity_test.py:264
+#: utils/ai_connectivity_test.py:296
 #, python-brace-format
 msgid ""
 "\n"
@@ -496,7 +479,7 @@ msgstr ""
 "\n"
 "🎉 {}を使用する準備ができました！"
 
-#: utils/ai_connectivity_test.py:269
+#: utils/ai_connectivity_test.py:301
 msgid ""
 "\n"
 "✅ Connectivity test completed!"
@@ -504,7 +487,67 @@ msgstr ""
 "\n"
 "✅ 接続性テストが完了しました！"
 
-#: utils/ai_connectivity_test.py:272
+#: utils/ai_connectivity_test.py:304
 #, python-brace-format
 msgid "❌ Test error: {}"
 msgstr "❌ テストエラー: {}"
+
+#: utils/sap_logger.py:200
+msgid "SAP IF Design Generation Tool - Processing Log"
+msgstr "SAP IF設計生成ツール - 処理ログ"
+
+#: utils/sap_logger.py:203
+msgid "Application Log"
+msgstr "アプリケーションログ"
+
+#: utils/sap_logger.py:205
+#, python-brace-format
+msgid "Excel File: {}"
+msgstr "Excelファイル: {}"
+
+#: utils/sap_logger.py:207
+#, python-brace-format
+msgid "Start Time: {}"
+msgstr "開始時刻: {}"
+
+#: utils/token_statistics.py:106
+msgid "TOKEN USAGE SUMMARY"
+msgstr "トークン使用量サマリー"
+
+#: utils/token_statistics.py:108
+msgid "Session: {}"
+msgstr "セッション: {}"
+
+#: utils/token_statistics.py:109
+msgid "Embedding: {:,}"
+msgstr "   埋め込み: {}"
+
+#: utils/token_statistics.py:110
+msgid "LLM Input: {:,}"
+msgstr "   LLM: {}"
+
+#: utils/token_statistics.py:111
+msgid "LLM Output: {:,}"
+msgstr "   LLMモデル: {}"
+
+#: utils/token_statistics.py:112
+#,  python-brace-format
+msgid "LLM Total: {:,}"
+msgstr "   LLMモデル: {}"
+
+#: utils/token_statistics.py:114
+#, python-brace-format
+msgid "Total: {:,}"
+msgstr "合計: {:,}"
+
+#: utils/token_statistics.py:122
+msgid "🤖 By Provider:"
+msgstr "プロバイダ別:"
+
+#: utils/token_statistics.py:129
+#, python-brace-format
+msgid "  {}: {:,}"
+msgstr "  {}: {:,}"
+
+
+

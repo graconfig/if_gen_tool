@@ -9,6 +9,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional
 
+# Import translation function
+from utils.i18n import _
+
 
 @dataclass
 class TokenUsage:
@@ -20,30 +23,42 @@ class TokenUsage:
     def add_embedding(self, tokens: int):
         self.embedding_tokens += tokens
 
-    def add_llm(self, input_tokens: int = 0, output_tokens: int = 0, total_tokens: int = 0):
+    def add_llm(
+        self, input_tokens: int = 0, output_tokens: int = 0, total_tokens: int = 0
+    ):
         self.llm_input_tokens += input_tokens
         self.llm_output_tokens += output_tokens
+        if total_tokens == 0:
+            total_tokens = input_tokens + output_tokens
+
         self.llm_total_tokens += total_tokens
 
 
 class TokenTracker:
-
     def __init__(self, base_dir: Path):
         self.token_dir = base_dir / "tokens"
         self.token_dir.mkdir(exist_ok=True)
         self._lock = threading.Lock()
 
-        self.session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.usage = TokenUsage()
         self.provider_usage = {}
+        self.file_usage = {}  # Track usage per file
 
         self.current_provider = None
+        self.current_file = None  # Track current file being processed
 
     def set_provider(self, provider: str, model: str = None):
         with self._lock:
             self.current_provider = provider
             if provider not in self.provider_usage:
                 self.provider_usage[provider] = TokenUsage()
+
+    def set_current_file(self, filename: str):
+        """Set the current file being processed for per-file token tracking."""
+        with self._lock:
+            self.current_file = filename
+            if filename not in self.file_usage:
+                self.file_usage[filename] = TokenUsage()
 
     def track_embedding(self, tokens: int, provider: str = None):
         if tokens <= 0:
@@ -54,8 +69,17 @@ class TokenTracker:
             self.usage.add_embedding(tokens)
             if provider and provider in self.provider_usage:
                 self.provider_usage[provider].add_embedding(tokens)
+            # Track per-file usage
+            if self.current_file and self.current_file in self.file_usage:
+                self.file_usage[self.current_file].add_embedding(tokens)
 
-    def track_llm(self, input_tokens: int = 0, output_tokens: int = 0, total_tokens:int = 0, provider: str = None):
+    def track_llm(
+        self,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+        total_tokens: int = 0,
+        provider: str = None,
+    ):
         if input_tokens <= 0 and output_tokens <= 0:
             return
 
@@ -64,14 +88,19 @@ class TokenTracker:
             self.usage.add_llm(input_tokens, output_tokens, total_tokens)
             if provider and provider in self.provider_usage:
                 self.provider_usage[provider].add_llm(input_tokens, output_tokens)
+            # Track per-file usage
+            if self.current_file and self.current_file in self.file_usage:
+                self.file_usage[self.current_file].add_llm(input_tokens, output_tokens)
 
     def get_usage(self) -> Dict[str, Any]:
         with self._lock:
             return {
-                "session_id": self.session_id,
                 "usage": asdict(self.usage),
-                "provider_usage": {k: asdict(v) for k, v in self.provider_usage.items()},
-                "timestamp": datetime.now().isoformat()
+                "provider_usage": {
+                    k: asdict(v) for k, v in self.provider_usage.items()
+                },
+                "file_usage": {k: asdict(v) for k, v in self.file_usage.items()},
+                "timestamp": datetime.now().isoformat(),
             }
 
     def save_usage(self, additional_info: Dict[str, Any] = None) -> Path:
@@ -79,34 +108,44 @@ class TokenTracker:
         if additional_info:
             data.update(additional_info)
 
-        session_file = self.token_dir / f"session_{self.session_id}.json"
-        with open(session_file, 'w', encoding='utf-8') as f:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        session_file = self.token_dir / f"session_{timestamp}.json"
+        with open(session_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
         return session_file
 
-    def print_summary(self):
-        """打印使用摘要"""
-        data = self.get_usage()
-        usage = data['usage']
-
-        print("\n" + "=" * 50)
-        print("📊 TOKEN USAGE SUMMARY")
-        print("=" * 50)
-        print(f"Session: {data['session_id']}")
-        print(f"Embedding: {usage['embedding_tokens']:,}")
-        print(f"LLM Input: {usage['llm_input_tokens']:,}")
-        print(f"LLM Output: {usage['llm_output_tokens']:,}")
-        print(f"LLM Total: {usage['llm_total_tokens']:,}")
-        print(f"Total: {usage['llm_input_tokens'] + usage['llm_output_tokens'] + usage['embedding_tokens']:,}")
-
-        if data['provider_usage']:
-            print("\n🤖 By Provider:")
-            for provider, p_usage in data['provider_usage'].items():
-                total = p_usage['embedding_tokens'] + p_usage['llm_input_tokens'] + p_usage['llm_output_tokens']
-                print(f"  {provider}: {total:,}")
-
-        print("=" * 50)
+    # def print_summary(self):
+    #     """打印使用摘要"""
+    #     data = self.get_usage()
+    #     usage = data["usage"]
+    #
+    #     print("\n" + "=" * 50)
+    #     print(_("📊 TOKEN USAGE SUMMARY"))
+    #     print("=" * 50)
+    #     print(_("Embedding: {:,}").format(usage["embedding_tokens"]))
+    #     print(_("LLM Input: {:,}").format(usage["llm_input_tokens"]))
+    #     print(_("LLM Output: {:,}").format(usage["llm_output_tokens"]))
+    #     print(_("LLM Total: {:,}").format(usage["llm_total_tokens"]))
+    #     print(
+    #         _("Total: {:,}").format(
+    #             usage["llm_input_tokens"]
+    #             + usage["llm_output_tokens"]
+    #             + usage["embedding_tokens"]
+    #         )
+    #     )
+    #
+    #     if data["provider_usage"]:
+    #         print("\n" + _("🤖 By Provider:"))
+    #         for provider, p_usage in data["provider_usage"].items():
+    #             total = (
+    #                 p_usage["embedding_tokens"]
+    #                 + p_usage["llm_input_tokens"]
+    #                 + p_usage["llm_output_tokens"]
+    #             )
+    #             print(_("  {}: {:,}").format(provider, total))
+    #
+    #     print("=" * 50)
 
 
 _tracker: Optional[TokenTracker] = None
@@ -123,12 +162,23 @@ def set_current_provider(provider: str, model: str = None):
         _tracker.set_provider(provider, model)
 
 
+def set_current_file(filename: str):
+    """Set the current file being processed for per-file token tracking."""
+    if _tracker:
+        _tracker.set_current_file(filename)
+
+
 def track_embedding_tokens(tokens: int, provider: str = None):
     if _tracker:
         _tracker.track_embedding(tokens, provider)
 
 
-def track_llm_tokens(input_tokens: int = 0, output_tokens: int = 0, total_tokens: int = 0, provider: str = None):
+def track_llm_tokens(
+    input_tokens: int = 0,
+    output_tokens: int = 0,
+    total_tokens: int = 0,
+    provider: str = None,
+):
     if _tracker:
         _tracker.track_llm(input_tokens, output_tokens, total_tokens, provider)
 
@@ -138,4 +188,35 @@ def save_and_print_usage(additional_info: Dict[str, Any] = None) -> Optional[Pat
         file_path = _tracker.save_usage(additional_info)
         # _tracker.print_summary()
         return file_path
+    return None
+
+
+def save_file_token_usage(
+    filename: str, additional_info: Dict[str, Any] = None
+) -> Optional[Path]:
+    """Save token usage for a specific file."""
+    if _tracker:
+        with _tracker._lock:
+            # Get the file-specific usage
+            if filename in _tracker.file_usage:
+                file_usage = _tracker.file_usage[filename]
+
+                # Create file-specific data
+                data = {
+                    "usage": asdict(file_usage),
+                    "timestamp": datetime.now().isoformat(),
+                }
+
+                if additional_info:
+                    data.update(additional_info)
+
+                # Save to file-specific token file
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                file_token_file = (
+                    _tracker.token_dir / f"{filename}_{timestamp}.json"
+                )
+                with open(file_token_file, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+
+                return file_token_file
     return None

@@ -85,7 +85,7 @@ class ClaudeSchemas:
                 {
                     "toolSpec": {
                         "name": "select_relevant_views",
-                        "description": "Selects the top 3-5 most relevant CDS view names from a list based on the user's required interface fields and business context.",
+                        "description": "Selects the top 3-10 most relevant CDS view names from a list based on the user's required interface fields and business context.",
                         "inputSchema": {
                             "json": {
                                 "type": "object",

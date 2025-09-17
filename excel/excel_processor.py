@@ -11,7 +11,8 @@ from typing import List, Dict, Any, Tuple, Optional
 import openpyxl
 import pandas as pd
 
-from core.i18n import _, get_current_language
+from utils.i18n import _
+from utils.sap_logger import logger
 from hana.hana_conn import HANADBClient
 from models.data_models import InterfaceField
 
@@ -55,22 +56,31 @@ class ExcelProcessor:
         if sheet_name not in workbook.sheetnames:
             raise ValueError(_("Sheet '{}' not found in workbook").format(sheet_name))
 
-        self._process_worksheet(workbook, sheet_name)
+        self._process_worksheet(workbook, sheet_name, file_path.name)
 
         workbook.save(output_path)
-        print(_("Processed file saved: {} ✅").format(output_filename))
+        logger.info(
+            _("Processed file saved: {} ✅").format(output_filename),
+            logger.get_excel_log_filename(file_path.name),
+        )
 
         # Archive the source file after successful processing
         if self._archive_processed_file(file_path):
-            print(_("Source file moved to archive folder."))
+            logger.info(
+                _("Source file moved to archive folder."),
+                logger.get_excel_log_filename(file_path.name),
+            )
         else:
-            print(
+            logger.warning(
                 _(
                     "⚠️ Warning: Could not archive source file, but processing completed successfully."
-                )
+                ),
+                logger.get_excel_log_filename(file_path.name),
             )
 
-    def _process_worksheet(self, workbook: openpyxl.Workbook, sheet_name: str) -> None:
+    def _process_worksheet(
+        self, workbook: openpyxl.Workbook, sheet_name: str, excel_filename: str
+    ) -> None:
         worksheet = workbook[sheet_name]
 
         # 提前输入列的字段
@@ -80,39 +90,71 @@ class ExcelProcessor:
 
         # 1、根据输入内容查找视图
         final_context_for_llm = []
-        module_query = batch_input_fields[0].module
+        module = batch_input_fields[0].module
+        if_name = batch_input_fields[0].if_name
+        if_desc = batch_input_fields[0].if_desc
+        module_query = ",".join([module, if_name, if_desc])
 
         with HANADBClient() as hana_client:
-            cat_find_by_module = hana_client.run_vector_search(query=module_query, k=3)
+            log_filename = logger.get_excel_log_filename(excel_filename)
+
+            cat_find_by_module = hana_client.run_vector_search(
+                query=module_query, k=3, log_filename=log_filename
+            )
             if cat_find_by_module.empty:
-                print(_("No categories for module."))
+                logger.warning(
+                    _("No categories for module."),
+                    logger.get_excel_log_filename(excel_filename),
+                )
                 return
 
             category_string = cat_find_by_module.iloc[0]["VIEWCATEGORY"]
-            views_find_by_cat = hana_client.get_views(category=category_string)
+            views_find_by_cat = hana_client.get_views(
+                category=category_string, log_filename=log_filename
+            )
             if views_find_by_cat.empty:
-                print(_("No views for category."))
-            print("-" * 50)
-            print(_("Found {} candidate CDS views.").format(len(views_find_by_cat)))
+                logger.warning(
+                    _("No views for category."),
+                    logger.get_excel_log_filename(excel_filename),
+                )
+            logger.info(
+                "-" * 80,
+                logger.get_excel_log_filename(excel_filename),
+            )
+            logger.info(
+                _("Found {} candidate CDS views").format(len(views_find_by_cat)),
+                logger.get_excel_log_filename(excel_filename),
+            )
             # 根据输入内容查找最相关的视图
             llm_return_views = self._select_relevant_views(
-                views_find_by_cat, batch_input_fields
+                views_find_by_cat, batch_input_fields, excel_filename
             )
             if not llm_return_views:
-                print(_("No views found by LLM."))
+                logger.warning(
+                    _("No views found by LLM."),
+                    logger.get_excel_log_filename(excel_filename),
+                )
 
-            print(_("LLM selected {} CDS views.").format(len(llm_return_views)))
+            logger.info(
+                _("LLM selected {} CDS views.").format(len(llm_return_views)),
+                logger.get_excel_log_filename(excel_filename),
+            )
 
             # If no views were selected, treat as processing failure and skip this file
             if not llm_return_views:
-                print(_("No CDS views selected - unable to process this file."))
+                logger.error(
+                    _("No CDS views selected - unable to process this file."),
+                    logger.get_excel_log_filename(excel_filename),
+                )
                 raise RuntimeError(
                     _(
                         "Processing failed: No relevant CDS views found for this interface."
                     )
                 )
             # 获取视图的字段
-            llm_return_views_fields = hana_client.get_fields(cds_views=llm_return_views)
+            llm_return_views_fields = hana_client.get_fields(
+                cds_views=llm_return_views, log_filename=log_filename
+            )
 
             # Create query string from input fields
             # input_query_parts = []
@@ -152,27 +194,41 @@ class ExcelProcessor:
                 llm_return_views_fields, llm_return_views_df
             )
 
-            print("-" * 50)
+            logger.info(
+                "-" * 80,
+                logger.get_excel_log_filename(excel_filename),
+            )
 
             # 根据查找的视图和字段调用LLM匹配
-            print(_("Calling LLM to match result..."))
+            logger.info(
+                _("Calling LLM to match result..."),
+                logger.get_excel_log_filename(excel_filename),
+            )
             try:
                 batch_results = self._match_fields(
-                    batch_input_fields, final_context_for_llm
+                    batch_input_fields, final_context_for_llm, excel_filename
                 )
-                print(_("LLM Process Finished"))
             except Exception as e:
-                print(_("❌ LLM function call failed: {}").format(e))
+                logger.error(
+                    f"❌ LLM function call failed: {e}",
+                    logger.get_excel_log_filename(excel_filename),
+                )
                 raise RuntimeError(
                     _("Failed to process file due to LLM error: {}").format(e)
                 ) from e
-            print("-" * 50)
+            logger.info(
+                "-" * 80,
+                logger.get_excel_log_filename(excel_filename),
+            )
 
             # 输入输出组合，方便后续解析映射
             final_results = list(zip(input_fields, batch_results))
 
             # Write results
-            print(_("Writing results to file..."))
+            logger.info(
+                _("Writing results to file..."),
+                logger.get_excel_log_filename(excel_filename),
+            )
             self.write_results(worksheet, final_results)
 
     def extract_fields(self, worksheet) -> List[InterfaceField]:
@@ -201,17 +257,13 @@ class ExcelProcessor:
                 if_desc=if_desc,
                 field_name=str(field_name).strip(),
                 key_flag=worksheet[f"{input_row_cols['key_flag']}{row}"].value or "",
-                obligatory=worksheet[f"{input_row_cols['obligatory']}{row}"].value
-                or "",
+                obligatory=worksheet[f"{input_row_cols['obligatory']}{row}"].value or "",
                 data_type=worksheet[f"{input_row_cols['data_type']}{row}"].value or "",
-                length_total=worksheet[f"{input_row_cols['length_total']}{row}"].value
-                or "",
-                length_dec=worksheet[f"{input_row_cols['length_dec']}{row}"].value
-                or "",
-                field_text=worksheet[f"{input_row_cols['field_text']}{row}"].value
-                or "",
-                sample_value=worksheet[f"{input_row_cols['sample_value']}{row}"].value
-                or "",
+                field_id=worksheet[f"{input_row_cols['field_id']}{row}"].value or "",
+                length_total=worksheet[f"{input_row_cols['length_total']}{row}"].value or "",
+                length_dec=worksheet[f"{input_row_cols['length_dec']}{row}"].value or "",
+                field_text=worksheet[f"{input_row_cols['field_text']}{row}"].value or "",
+                sample_value=worksheet[f"{input_row_cols['sample_value']}{row}"].value or "",
                 row_index=row,
             )
 
@@ -220,7 +272,10 @@ class ExcelProcessor:
         return input_fields
 
     def _select_relevant_views(
-        self, candidate_views_df: pd.DataFrame, input_fields: List[InterfaceField]
+        self,
+        candidate_views_df: pd.DataFrame,
+        input_fields: List[InterfaceField],
+        excel_filename: str,
     ) -> List[str]:
         views_prompt = self.ai_service.get_view_selection_prompt(
             candidate_views_df, input_fields
@@ -238,7 +293,10 @@ class ExcelProcessor:
             else:
                 return []
         except Exception as e:
-            print(f"select relevant views failed:{e}")
+            logger.debug(
+                f"select relevant views failed:{e}",
+                logger.get_excel_log_filename(excel_filename),
+            )
             return []
 
     def _prepare_llm_context(
@@ -302,11 +360,11 @@ class ExcelProcessor:
                 worksheet[f"{output_columns['length_dec']}{row}"] = match_result.get(
                     "length_dec", ""
                 )
-                worksheet[f"{output_columns['match']}{row}"] = (
-                    match_result.get("match", "")
+                worksheet[f"{output_columns['match']}{row}"] = match_result.get(
+                    "match", ""
                 )
-                worksheet[f"{output_columns['notes']}{row}"] = (
-                    match_result.get("notes", "")
+                worksheet[f"{output_columns['notes']}{row}"] = match_result.get(
+                    "notes", ""
                 )
                 worksheet[f"{output_columns['sample_value']}{row}"] = match_result.get(
                     "sample_value", ""
@@ -320,7 +378,10 @@ class ExcelProcessor:
     # ========== Field Matching Logic ==========
 
     def _match_fields(
-        self, input_fields: List, context: Optional[List[Dict[str, Any]]] = None
+        self,
+        input_fields: List,
+        context: Optional[List[Dict[str, Any]]] = None,
+        excel_filename: str = None,
     ) -> List[Dict[str, Any]]:
         """Field matching using AI services with HANA context"""
         if not input_fields:
@@ -329,10 +390,13 @@ class ExcelProcessor:
         if context is None:
             return []
 
-        return self._match_fields_with_context(input_fields, context)
+        return self._match_fields_with_context(input_fields, context, excel_filename)
 
     def _match_fields_with_context(
-        self, input_fields: List, context: List[Dict[str, Any]]
+        self,
+        input_fields: List,
+        context: List[Dict[str, Any]],
+        excel_filename: str = None,
     ) -> List[Dict[str, Any]]:
         all_fields_context = self._extract_fields_from_context(context)
 
@@ -346,7 +410,18 @@ class ExcelProcessor:
             resulsts_prompt, results_function_schema
         )
 
-        return self._parse_llm_response(results_response, input_fields)
+        # Check if results_response is empty or None
+        if not results_response:
+            error_msg = _("LLM returned empty response for field matching")
+            logger.error(
+                error_msg,
+                logger.get_excel_log_filename(excel_filename)
+                if excel_filename
+                else None,
+            )
+            raise RuntimeError(error_msg)
+
+        return self._parse_llm_response(results_response, input_fields, excel_filename)
 
     def _extract_fields_from_context(
         self, context: List[Dict[str, Any]]
@@ -363,6 +438,7 @@ class ExcelProcessor:
                     "field_desc": str(field_detail.get("field_desc", "")),
                     "is_key": bool(field_detail.get("is_key", False)),
                     "data_type": str(field_detail.get("data_type", "")),
+                    "field_id": str(field_detail.get("field_id", "")),
                     "length_total": str(field_detail.get("length_total", "")),
                     "length_dec": str(field_detail.get("length_dec", "")),
                 }
@@ -371,7 +447,10 @@ class ExcelProcessor:
         return all_fields_context
 
     def _parse_llm_response(
-        self, function_response: Dict[str, Any], input_fields: List
+        self,
+        function_response: Dict[str, Any],
+        input_fields: List,
+        excel_filename: str = None,
     ) -> List[Dict[str, Any]]:
         results = []
         matches = function_response.get("review", [])
@@ -382,10 +461,9 @@ class ExcelProcessor:
         }
 
         # Log matching info for debugging
-        print(
-            _("LLM returned {} matches for {} input fields").format(
-                len(matches), len(input_fields)
-            )
+        logger.debug(
+            f"LLM returned {len(matches)} matches for {len(input_fields)} input fields",
+            logger.get_excel_log_filename(excel_filename) if excel_filename else None,
         )
 
         for input_field in input_fields:
@@ -405,10 +483,11 @@ class ExcelProcessor:
 
             # If no exact row match found, log warning
             if not match_result:
-                print(
-                    _("⚠️ No LLM match found for row {}, using empty values").format(
-                        row_index
-                    )
+                logger.warning(
+                    f"⚠️ No LLM match found for row {row_index}, using empty values",
+                    logger.get_excel_log_filename(excel_filename)
+                    if excel_filename
+                    else None,
                 )
 
             key_flag_raw = match_result.get("key_flag", "")
@@ -523,15 +602,15 @@ class ExcelProcessor:
             # Move the file to archive
             shutil.move(str(source_file_path), str(archive_path))
 
-            print(
-                _("File archived: {} → {}").format(
-                    source_file_path.name, archive_filename
-                )
+            logger.info(
+                f"File archived: {source_file_path.name} → {archive_filename}",
+                logger.get_excel_log_filename(source_file_path.name),
             )
             return True
 
         except Exception as e:
-            print(
-                _("❌ Failed to archive file {}: {}").format(source_file_path.name, e)
+            logger.error(
+                f"❌ Failed to archive file {source_file_path.name}: {e}",
+                logger.get_excel_log_filename(source_file_path.name),
             )
             return False

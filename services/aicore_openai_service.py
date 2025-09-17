@@ -12,6 +12,7 @@ from gen_ai_hub.proxy.native.openai import chat, embeddings
 from prompts.prompts_manager import PromptTemplateManager
 from prompts.schemas_manager import FunctionSchemas
 from utils.token_statistics import track_embedding_tokens, track_llm_tokens
+from utils.i18n import _
 
 load_dotenv()
 
@@ -20,12 +21,12 @@ class AICoreOpenAIService:
     """SAP AI Core OpenAI服务实现"""
 
     def __init__(
-            self,
-            llm_model: str,
-            embedding_model: str,
-            language: str = "en",
-            llm_deployment_id: str = None,
-            embedding_deployment_id: str = None,
+        self,
+        llm_model: str,
+        embedding_model: str,
+        language: str = "en",
+        llm_deployment_id: str = None,
+        embedding_deployment_id: str = None,
     ):
         self.llm_model = llm_model
         self.embedding_model = embedding_model
@@ -36,7 +37,7 @@ class AICoreOpenAIService:
         self._llm_client = None
 
     def call_with_function(
-            self, prompt: str, function_schema: Dict[str, Any]
+        self, prompt: str, function_schema: Dict[str, Any]
     ) -> Dict[str, Any]:
         messages = [{"role": "user", "content": prompt}]
 
@@ -95,29 +96,33 @@ class AICoreOpenAIService:
 
             return [emb.embedding for emb in response.data]
         except Exception as e:
-            self.logger.error(f"Failed to generate embeddings: {e}")
+            self.logger.error(_("Failed to generate embeddings: {}").format(e))
             return []
 
     def get_rag_matching_prompt(
-            self, input_fields: List[Dict[str, Any]], context: List[Dict[str, Any]]
+        self, input_fields: List[Dict[str, Any]], context: List[Dict[str, Any]]
     ) -> str:
         return PromptTemplateManager.get_field_matching_prompt(
-            input_fields, context, 'en'
+            input_fields,
+            context,
+            "en",
             # input_fields, context, self.language
         )
 
     def get_view_selection_prompt(
-            self, candidate_views_df, input_fields: List[Dict[str, Any]]
+        self, candidate_views_df, input_fields: List[Dict[str, Any]]
     ) -> str:
         return PromptTemplateManager.get_view_selection_prompt(
-            candidate_views_df, input_fields, 'en'
+            candidate_views_df,
+            input_fields,
+            "en",
             # candidate_views_df, input_fields, self.language
         )
 
     def get_view_selection_schema(self) -> Dict[str, Any]:
         """Get OpenAI-specific view selection schema."""
-        return FunctionSchemas.get_view_selection_schema("openai","en")
+        return FunctionSchemas.get_view_selection_schema("openai", "en")
 
     def get_field_matching_schema(self) -> Dict[str, Any]:
         """Get OpenAI-specific field matching schema."""
-        return FunctionSchemas.get_field_matching_schema("openai","en")
+        return FunctionSchemas.get_field_matching_schema("openai", "en")

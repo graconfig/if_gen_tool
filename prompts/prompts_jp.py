@@ -194,13 +194,14 @@ class JapanesePromptTemplates:
             "",
             "**候補CDSビュー：**",
             "以下は候補CDSビューのリストです。最も関連性の高いものを選択してください。",
+            "フォーマット：CDS ビュー名,CDS ビュー説明"
             ""
         ])
 
         for _, row in candidate_views_df.iterrows():
             view_name = row["VIEWNAME"]
             view_desc = row["VIEWDESC"]
-            prompt_parts.append(f"  - **ビュー名：** {view_name}; **説明：** {view_desc}")
+            prompt_parts.append(f"{view_name},{view_desc}")
 
         prompt_parts.extend([
             "",

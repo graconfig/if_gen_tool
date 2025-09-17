@@ -309,7 +309,7 @@ class GeminiSchemas:
             "function_declarations": [
                 {
                     "name": "select_relevant_views",
-                    "description": "ユーザーの必要なインターフェースフィールドとビジネスコンテキストに基づいて、最も関連性の高いCDSビュー名のトップ3-5を選択する。",
+                    "description": "ユーザーの必要なインターフェースフィールドとビジネスコンテキストに基づいて、最も関連性の高いCDSビュー名のトップ3-10を選択する。",
                     "parameters": {
                         "type": "object",
                         "properties": {

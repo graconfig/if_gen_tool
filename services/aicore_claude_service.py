@@ -69,7 +69,7 @@ class AICoreClaudeService:
                 "anthropic_version":"bedrock-2023-05-31",
                 "messages":invoke_messages,
                 "tools":invoke_model_tools,
-                "max_tokens":16384,
+                "max_tokens":64000,
                 # "betas":["context-1m-2025-08-07"],
             }
 

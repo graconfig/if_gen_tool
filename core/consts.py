@@ -29,7 +29,7 @@ class Languages:
     JA = "ja"
 
     SUPPORTED = [EN, ZH, JA]
-    DEFAULT = EN
+    DEFAULT = JA  # Changed default to Japanese
 
 
 # File Extensions

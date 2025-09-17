@@ -5,7 +5,7 @@ Defines the structure for AI function calling capabilities.
 
 from typing import Dict, Any
 
-from core.i18n import get_current_language
+from utils.i18n import get_current_language
 
 
 class FunctionSchemas:

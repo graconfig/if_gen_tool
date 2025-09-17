@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: if_gen_tool 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-17 14:33+0800\n"
+"POT-Creation-Date: 2025-09-17 17:20+0800\n"
 "PO-Revision-Date: 2025-09-11 19:36+0800\n"
 "Last-Translator: SAP Team\n"
 "Language: zh\n"
@@ -19,282 +19,294 @@ msgstr ""
 "Generated-By: Babel 2.17.0\n"
 
 # Main application messages
-#: main.py:36
+#: main.py:41
 #, python-brace-format
 msgid "Data directory not found: {}"
 msgstr "数据目录未找到: {}"
 
-#: main.py:62
+#: main.py:68
 #, python-brace-format
 msgid "{}h {}m {:.2f}s"
 msgstr "{}小时 {}分钟 {:.2f}秒"
 
-#: main.py:69
-#, python-brace-format
-msgid "[Project Start Time]: {}"
-msgstr "[项目开始执行时间]: {}"
-
-#: main.py:72
+#: main.py:75
 msgid "SAP IF Design Generation Tool"
 msgstr "SAP 接口设计生成工具"
 
-#: main.py:76
+#: main.py:79
 msgid "Process specific Excel file (relative to input directory)"
 msgstr "处理指定的Excel文件（相对于输入目录）"
 
-#: main.py:83
+#: main.py:86
 msgid "Set interface language (en, zh, ja)"
 msgstr "设置界面语言 (en, zh, ja)"
 
-#: main.py:90
+#: main.py:93
 msgid "Choose AI provider (claude, gemini, openai) - all via AI Core"
 msgstr ""
 
-#: main.py:112
-msgid "[Step 1] 🔍 Auto-detecting available AI services..."
+#: main.py:123 main.py:275 main.py:300
+#, python-brace-format
+msgid "Language: {}"
+msgstr ""
+
+#: main.py:131 main.py:308
+#, fuzzy
+msgid "[Step 1]: Detecting available AI services..."
 msgstr "[步骤1] 🔍 自动检测可用的AI服务..."
 
-#: main.py:121
+#: main.py:147 main.py:329
 #, fuzzy
-msgid "[Step 2] 📄 Excel Processing..."
+msgid "[Step 2]: Excel Processing..."
 msgstr "[步骤3] 📄 Excel处理..."
 
-#: main.py:132
-#, python-brace-format
-msgid "Processing file: {} start time: {}"
-msgstr "处理文件: {} 开始时间: {}"
-
-#: main.py:138
-#, python-brace-format
-msgid "Completed: {} ✅"
-msgstr "完成: {} ✅"
-
-#: main.py:147
-#, python-brace-format
-msgid "Processing {} completed at: {}"
-msgstr "处理 {} 完成时间：{}"
-
-#: main.py:149
-#, python-brace-format
-msgid "File processing time: {}"
-msgstr "文件单独用时：{}"
-
-#: main.py:150
-#, python-brace-format
-msgid "Total project time: {}"
-msgstr "项目累计用时：{}"
-
-#: main.py:153
-#, python-brace-format
-msgid "❌ Failed to process {}: {}"
-msgstr "❌ 处理 {} 失败: {}"
-
-#: main.py:156
-#, python-brace-format
-msgid "File not found: {}"
-msgstr "文件未找到: {}"
-
-#: main.py:163
-msgid "❌ No Excel files found in data/excel_input/ directory"
-msgstr "❌ 在 data/excel_input/ 目录中未找到Excel文件"
-
-#: main.py:164
-msgid "❌ Please add Excel files to process or use --file to specify a file"
-msgstr "❌ 请添加Excel文件进行处理或使用 --file 指定文件"
-
-#: main.py:167
-#, python-brace-format
-msgid "Found {} Excel file(s) to process:"
-msgstr "找到 {} 个Excel文件需要处理："
-
-#: main.py:175
-#, python-brace-format
-msgid ""
-"\n"
-"Processing: {} start time: {}"
+#: main.py:157
+#, fuzzy, python-brace-format
+msgid "Processing specific file: {}"
 msgstr ""
 "\n"
 "处理: {} 开始时间: {}"
 
-#: main.py:181
-#, python-brace-format
-msgid "Completed: {} ✅ Available end time: {}"
-msgstr "完成: {} ✅ 结束时间: {}"
-
-#: main.py:191
-#, python-brace-format
-msgid "{}  execution time: {}"
-msgstr "{} 执行时间：{}"
-
-#: main.py:203
+#: main.py:161
 #, fuzzy, python-brace-format
-msgid "❌ Failed 456 to process {}: {}"
-msgstr "❌ 处理 {} 失败: {}"
+msgid "Log file created: {}"
+msgstr "❌ 失败：{}"
+
+#: main.py:168
+#, python-brace-format
+msgid "Processing file: {} start time: {}"
+msgstr "处理文件: {} 开始时间: {}"
+
+#: main.py:179
+#, python-brace-format
+msgid "Completed: {} ✅"
+msgstr "完成: {} ✅"
+
+#: main.py:193
+#, python-brace-format
+msgid "Processing {} completed at: {}"
+msgstr "处理 {} 完成时间：{}"
+
+#: main.py:200
+#, python-brace-format
+msgid "File processing time: {}"
+msgstr "文件单独用时：{}"
 
 #: main.py:206
-msgid ""
-"\n"
-"🎉 All files processed!"
-msgstr ""
-"\n"
-"🎉 所有文件处理完成！"
+#, python-brace-format
+msgid "Total project time: {}"
+msgstr "项目累计用时：{}"
 
-#: main.py:221
+#: main.py:218 main.py:245
 #, python-brace-format
 msgid "[Project End Time]: {} ====="
 msgstr "[项目执行结束时间]: {} ====="
 
-#: main.py:222
+#: main.py:224 main.py:251 main.py:387 main.py:427
 #, python-brace-format
 msgid "===== Total Time: {} ====="
 msgstr "===== 总用时: {} ====="
 
-#: main.py:224
+#: main.py:230
+msgid "Application completed successfully"
+msgstr ""
+
+#: main.py:262
+#, python-brace-format
+msgid "File not found: {}"
+msgstr "文件未找到: {}"
+
+#: main.py:279
+msgid "❌ No Excel files found in data/excel_input/ directory"
+msgstr "❌ 在 data/excel_input/ 目录中未找到Excel文件"
+
+#: main.py:284
+msgid "❌ Please add Excel files to process or use --file to specify a file"
+msgstr "❌ 请添加Excel文件进行处理或使用 --file 指定文件"
+
+#: main.py:289
+#, fuzzy, python-brace-format
+msgid "Application ended - No files to process"
+msgstr "找到 {} 个Excel文件需要处理："
+
+#: main.py:339
+#, fuzzy, python-brace-format
+msgid "Processing file {} of {}: {}"
+msgstr "处理 {} 完成时间：{}"
+
+#: main.py:381 main.py:421
+#, fuzzy, python-brace-format
+msgid "[File End Time]: {} ====="
+msgstr "[项目执行结束时间]: {} ====="
+
+#: main.py:393
+#, fuzzy, python-brace-format
+msgid "File processing completed successfully"
+msgstr "处理 {} 完成时间：{}"
+
+#: main.py:439
 #, python-brace-format
 msgid "❌ Application error: {}"
 msgstr "❌ 应用程序错误: {}"
 
+#: main.py:443
+#, fuzzy, python-brace-format
+msgid "Application error occurred: {}"
+msgstr "❌ 应用程序错误: {}"
+
+#: main.py:447
+#, fuzzy, python-brace-format
+msgid "Error timestamp: {}"
+msgstr "   ❌ 错误：{}"
+
 # Excel processor messages
-#: excel/excel_processor.py:37
+#: excel/excel_processor.py:38
 #, python-brace-format
 msgid "❌ Input file not found: {}"
 msgstr "❌ 输入文件未找到: {}"
 
-#: excel/excel_processor.py:56
+#: excel/excel_processor.py:57
 #, python-brace-format
 msgid "Sheet '{}' not found in workbook"
 msgstr "工作簿中未找到工作表 '{}'"
 
-#: excel/excel_processor.py:61
+#: excel/excel_processor.py:63
 #, python-brace-format
 msgid "Processed file saved: {} ✅"
 msgstr "处理后的文件已保存: {} ✅"
 
-#: excel/excel_processor.py:65
+#: excel/excel_processor.py:70
 msgid "Source file moved to archive folder."
 msgstr ""
 
-#: excel/excel_processor.py:69
+#: excel/excel_processor.py:76
 msgid ""
 "⚠️ Warning: Could not archive source file, but processing completed "
 "successfully."
 msgstr ""
 
-#: excel/excel_processor.py:88
+#: excel/excel_processor.py:103
 msgid "No categories for module."
 msgstr "模块没有类别。"
 
-#: excel/excel_processor.py:94
+#: excel/excel_processor.py:114
 msgid "No views for category."
 msgstr "类别没有视图。"
 
-#: excel/excel_processor.py:96
-#, python-brace-format
-msgid "Found {} candidate CDS views."
+#: excel/excel_processor.py:122
+#, fuzzy, python-brace-format
+msgid "Found {} candidate CDS views"
 msgstr "找到 {} 个候选CDS视图。"
 
-#: excel/excel_processor.py:102
+#: excel/excel_processor.py:131
 msgid "No views found by LLM."
 msgstr "LLM未找到视图。"
 
-#: excel/excel_processor.py:104
+#: excel/excel_processor.py:136
 #, python-brace-format
 msgid "LLM selected {} CDS views."
 msgstr "LLM选择了 {} 个CDS视图。"
 
-#: excel/excel_processor.py:108
+#: excel/excel_processor.py:143
 msgid "No CDS views selected - unable to process this file."
 msgstr "未选择任何CDS视图 - 无法处理此文件。"
 
-#: excel/excel_processor.py:111
+#: excel/excel_processor.py:148
 msgid "Processing failed: No relevant CDS views found for this interface."
 msgstr "处理失败：未找到与此接口相关的CDS视图。"
 
-#: excel/excel_processor.py:158
+#: excel/excel_processor.py:201
 msgid "Calling LLM to match result..."
 msgstr "调用LLM匹配结果..."
 
-#: excel/excel_processor.py:163
+#: excel/excel_processor.py:209
 msgid "LLM Process Finished"
 msgstr "LLM处理完成"
 
-#: excel/excel_processor.py:165
-#, python-brace-format
-msgid "❌ LLM function call failed: {}"
-msgstr "❌ LLM函数调用失败: {}"
-
-#: excel/excel_processor.py:167
+#: excel/excel_processor.py:218
 #, python-brace-format
 msgid "Failed to process file due to LLM error: {}"
 msgstr "由于LLM错误处理文件失败: {}"
 
-#: excel/excel_processor.py:175
+#: excel/excel_processor.py:230
 msgid "Writing results to file..."
 msgstr "将结果写入文件..."
 
-#: excel/excel_processor.py:386
-#, python-brace-format
-msgid "LLM returned {} matches for {} input fields"
-msgstr "LLM为 {} 个输入字段返回了 {} 个匹配项"
-
-#: excel/excel_processor.py:409
-#, python-brace-format
-msgid "⚠️ No LLM match found for row {}, using empty values"
-msgstr "⚠️ 未找到第 {} 行的LLM匹配项，使用空值"
-
-#: excel/excel_processor.py:527
-#, python-brace-format
-msgid "File archived: {} → {}"
-msgstr ""
-
-#: excel/excel_processor.py:535
-#, fuzzy, python-brace-format
-msgid "❌ Failed to archive file {}: {}"
-msgstr "❌ 处理 {} 失败: {}"
-
 # HANA connection messages
-#: hana/hana_conn.py:42
+#: hana/hana_conn.py:43
 #, python-brace-format
 msgid "HANA Cloud connection failed: {}"
 msgstr "HANA Cloud连接失败：{}"
 
-#: hana/hana_conn.py:49
+#: hana/hana_conn.py:50
 msgid "Database connection closed."
 msgstr "数据库连接已关闭。"
 
-#: hana/hana_conn.py:71
+#: hana/hana_conn.py:73
 msgid "HANA Cloud not connected."
 msgstr "HANA Cloud未连接。"
 
-#: hana/hana_conn.py:90
+#: hana/hana_conn.py:94
 #, python-brace-format
 msgid "SQL execution failed: {}"
 msgstr "SQL执行失败：{}"
 
-#: hana/hana_conn.py:95 hana/hana_conn.py:126
+#: hana/hana_conn.py:99 hana/hana_conn.py:137
 msgid "Database not connected."
 msgstr "数据库未连接。"
 
-#: hana/hana_conn.py:114
+#: hana/hana_conn.py:105
+#, fuzzy
+msgid "No valid categories provided"
+msgstr "模块没有类别。"
+
+#: hana/hana_conn.py:123
 #, python-brace-format
 msgid "SQL error occurred while getting views: {}"
 msgstr "获取视图时发生SQL错误：{}"
 
-#: hana/hana_conn.py:155
+#: hana/hana_conn.py:168
 msgid "Applying fields filtering..."
 msgstr ""
 
-#: hana/hana_conn.py:224
+#: hana/hana_conn.py:243
 #, python-brace-format
 msgid "⚠️ Warning: Could not parse CONTENT JSON for view {}"
 msgstr "⚠️ 警告：无法解析视图 {} 的CONTENT JSON"
 
-#: hana/hana_conn.py:351
+#: hana/hana_conn.py:256
+#, python-brace-format, python-format
+msgid ""
+"After filtering: {} fields selected from {} total fields ({:.1f}% "
+"reduction)"
+msgstr ""
+
+#: hana/hana_conn.py:264
+#, fuzzy, python-brace-format
+msgid "SQL error in get_fields: {}"
+msgstr "获取视图时发生SQL错误：{}"
+
+#: hana/hana_conn.py:317
+#, fuzzy, python-brace-format
+msgid "⚠️ Warning: Could not parse CONTENT JSON for view {} error: {}"
+msgstr "⚠️ 警告：无法解析视图 {} 的CONTENT JSON"
+
+#: hana/hana_conn.py:323
+#, python-brace-format
+msgid "Error parse fields:{}"
+msgstr ""
+
+#: hana/hana_conn.py:326
+#, fuzzy, python-brace-format
+msgid "Error: {}"
+msgstr "   ❌ 错误：{}"
+
+#: hana/hana_conn.py:382
 #, python-brace-format
 msgid "--- Step 1: Executing vector search for query '{}' ---"
 msgstr "--- 步骤 1：为查询 '{}' 执行向量搜索 ---"
 
-#: hana/hana_conn.py:357
+#: hana/hana_conn.py:388
 msgid ""
 "\n"
 "Vector search results:"
@@ -302,7 +314,7 @@ msgstr ""
 "\n"
 "向量搜索结果："
 
-#: hana/hana_conn.py:365
+#: hana/hana_conn.py:396
 #, python-brace-format
 msgid ""
 "\n"
@@ -311,7 +323,7 @@ msgstr ""
 "\n"
 "--- 步骤 2：使用类别字符串 '{}' 获取所有相关 CDS 视图 ---"
 
-#: hana/hana_conn.py:372
+#: hana/hana_conn.py:404
 #, python-brace-format
 msgid ""
 "\n"
@@ -320,7 +332,7 @@ msgstr ""
 "\n"
 "找到 {} 个CDS视图："
 
-#: hana/hana_conn.py:376
+#: hana/hana_conn.py:409
 msgid ""
 "\n"
 "Vector search returned no results."
@@ -328,7 +340,7 @@ msgstr ""
 "\n"
 "向量搜索未返回任何结果。"
 
-#: hana/hana_conn.py:378
+#: hana/hana_conn.py:411
 #, python-brace-format
 msgid ""
 "\n"
@@ -337,60 +349,61 @@ msgstr ""
 "\n"
 "程序运行失败：{}"
 
-#: utils/ai_connectivity_test.py:67
+#: services/aicore_gemini_service.py:123 services/aicore_openai_service.py:99
 #, python-brace-format
-msgid "AI Service initialization failed: {}"
-msgstr "AI服务初始化失败：{}"
-
-#: utils/ai_connectivity_test.py:81
-#, python-brace-format
-msgid "[INFO] Using specified AI provider: {}"
-msgstr "[信息] 使用指定AI提供商：{}"
-
-#: utils/ai_connectivity_test.py:101
-#, fuzzy, python-brace-format
-msgid "[INFO] Using configured default AI provider: {}"
-msgstr "[信息] 使用指定AI提供商：{}"
-
-#: utils/ai_connectivity_test.py:113
-msgid "[INFO] No default AI provider configured, testing in priority order"
+msgid "Failed to generate embeddings: {}"
 msgstr ""
 
-#: utils/ai_connectivity_test.py:120
+#: utils/ai_connectivity_test.py:71
+#, fuzzy, python-brace-format
+msgid "AI Service initialization failed: {}..."
+msgstr "AI服务初始化失败：{}"
+
+#: utils/ai_connectivity_test.py:89
+#, fuzzy, python-brace-format
+msgid "Using specified AI provider: {}"
+msgstr "[信息] 使用指定AI提供商：{}"
+
+#: utils/ai_connectivity_test.py:111
+#, fuzzy, python-brace-format
+msgid "Using configured default AI provider: {}"
+msgstr "[信息] 使用指定AI提供商：{}"
+
+#: utils/ai_connectivity_test.py:123
+msgid "No default AI provider configured, testing in priority order"
+msgstr ""
+
+#: utils/ai_connectivity_test.py:133
 #, python-brace-format
 msgid "Testing {}..."
 msgstr "正在测试 {}..."
 
-#: utils/ai_connectivity_test.py:126
-msgid "✅ Available"
-msgstr "✅ 可用"
-
-#: utils/ai_connectivity_test.py:127
+#: utils/ai_connectivity_test.py:142
 #, python-brace-format
 msgid "Selected AI Provider: {}"
 msgstr "已选择AI提供商：{}"
 
-#: utils/ai_connectivity_test.py:130
+#: utils/ai_connectivity_test.py:148
 msgid "❌ Not available"
 msgstr "❌ 不可用"
 
-#: utils/ai_connectivity_test.py:132
+#: utils/ai_connectivity_test.py:153
 #, python-brace-format
 msgid "❌ Failed: {}"
 msgstr "❌ 失败：{}"
 
-#: utils/ai_connectivity_test.py:137
+#: utils/ai_connectivity_test.py:160 utils/ai_connectivity_test.py:166
 msgid ""
 "❌ No AI services are available. Please check your configuration and API "
 "keys."
 msgstr "❌ 没有可用的AI服务。请检查您的配置和API密钥。"
 
-#: utils/ai_connectivity_test.py:149
+#: utils/ai_connectivity_test.py:180
 #, fuzzy
 msgid "🚀 Testing all AI providers via AI Core..."
 msgstr "🚀 正在测试所有AI服务提供商..."
 
-#: utils/ai_connectivity_test.py:156
+#: utils/ai_connectivity_test.py:187
 #, python-brace-format
 msgid ""
 "\n"
@@ -399,30 +412,30 @@ msgstr ""
 "\n"
 "🧪 正在测试 {}:"
 
-#: utils/ai_connectivity_test.py:166
+#: utils/ai_connectivity_test.py:197
 msgid "   ✅ Available"
 msgstr "   ✅ 可用"
 
-#: utils/ai_connectivity_test.py:167
+#: utils/ai_connectivity_test.py:198
 #, python-brace-format
 msgid "   LLM: {}"
 msgstr "   LLM：{}"
 
-#: utils/ai_connectivity_test.py:168
+#: utils/ai_connectivity_test.py:199
 #, python-brace-format
 msgid "   Embedding: {}"
 msgstr "   嵌入模型：{}"
 
-#: utils/ai_connectivity_test.py:171
+#: utils/ai_connectivity_test.py:202
 msgid "   ❌ Not available"
 msgstr "   ❌ 不可用"
 
-#: utils/ai_connectivity_test.py:175
+#: utils/ai_connectivity_test.py:206
 #, python-brace-format
 msgid "   ❌ Error: {}"
 msgstr "   ❌ 错误：{}"
 
-#: utils/ai_connectivity_test.py:179
+#: utils/ai_connectivity_test.py:210
 msgid ""
 "\n"
 "📊 Summary:"
@@ -430,73 +443,73 @@ msgstr ""
 "\n"
 "📊 总结："
 
-#: utils/ai_connectivity_test.py:180
+#: utils/ai_connectivity_test.py:211
 #, python-brace-format
 msgid "   Available: {}/{}"
 msgstr "   可用：{}/{}"
 
-#: utils/ai_connectivity_test.py:183
+#: utils/ai_connectivity_test.py:214
 #, python-brace-format
 msgid "   ✅ Ready: {}"
 msgstr "   ✅ 就绪：{}"
 
-#: utils/ai_connectivity_test.py:185
+#: utils/ai_connectivity_test.py:216
 #, python-brace-format
 msgid "   🎯 Recommended: {}"
 msgstr "   🎯 推荐：{}"
 
-#: utils/ai_connectivity_test.py:190
+#: utils/ai_connectivity_test.py:222
 msgid "   ❌ No services available"
 msgstr "   ❌ 无可用服务"
 
-#: utils/ai_connectivity_test.py:205
+#: utils/ai_connectivity_test.py:237
 #, python-brace-format
 msgid "🧪 Testing {} connectivity..."
 msgstr "🧪 正在测试 {} 连通性..."
 
-#: utils/ai_connectivity_test.py:212
+#: utils/ai_connectivity_test.py:244
 #, python-brace-format
 msgid "✅ {} is ready to use!"
 msgstr "✅ {} 已准备好！"
 
-#: utils/ai_connectivity_test.py:213
+#: utils/ai_connectivity_test.py:245
 #, python-brace-format
 msgid "   LLM Model: {}"
 msgstr "   LLM模型：{}"
 
-#: utils/ai_connectivity_test.py:214
+#: utils/ai_connectivity_test.py:246
 #, python-brace-format
 msgid "   Embedding Model: {}"
 msgstr "   嵌入模型：{}"
 
-#: utils/ai_connectivity_test.py:217
+#: utils/ai_connectivity_test.py:249
 #, python-brace-format
 msgid "❌ {} is not available"
 msgstr "❌ {} 不可用"
 
-#: utils/ai_connectivity_test.py:221
+#: utils/ai_connectivity_test.py:253
 #, python-brace-format
 msgid "❌ {} test failed: {}"
 msgstr "❌ {} 测试失败：{}"
 
-#: utils/ai_connectivity_test.py:230
+#: utils/ai_connectivity_test.py:262
 msgid "AI Service Connectivity Test"
 msgstr "AI服务连通性测试"
 
-#: utils/ai_connectivity_test.py:235
+#: utils/ai_connectivity_test.py:267
 #, fuzzy
 msgid "Test specific AI provider via AI Core"
 msgstr "测试特定AI服务提供商"
 
-#: utils/ai_connectivity_test.py:240
+#: utils/ai_connectivity_test.py:272
 msgid "Test all available AI providers"
 msgstr "测试所有可用AI提供商"
 
-#: utils/ai_connectivity_test.py:260
+#: utils/ai_connectivity_test.py:292
 msgid "🚀 Auto-detecting available AI services..."
 msgstr "🚀 正在自动检测可用AI服务..."
 
-#: utils/ai_connectivity_test.py:264
+#: utils/ai_connectivity_test.py:296
 #, python-brace-format
 msgid ""
 "\n"
@@ -505,7 +518,7 @@ msgstr ""
 "\n"
 "🎉 {} 已准备好！"
 
-#: utils/ai_connectivity_test.py:269
+#: utils/ai_connectivity_test.py:301
 msgid ""
 "\n"
 "✅ Connectivity test completed!"
@@ -513,32 +526,71 @@ msgstr ""
 "\n"
 "✅ 连通性测试完成！"
 
-#: utils/ai_connectivity_test.py:272
+#: utils/ai_connectivity_test.py:304
 #, python-brace-format
 msgid "❌ Test error: {}"
 msgstr "❌ 测试错误：{}"
 
-#~ msgid "Choose AI service provider (overrides environment variable)"
-#~ msgstr "选择AI服务提供商（覆盖环境变量）"
+#: utils/sap_logger.py:200
+#, fuzzy
+msgid "SAP IF Design Generation Tool - Processing Log"
+msgstr "SAP 接口设计生成工具"
 
-#~ msgid "[Step 2] 📄 Initializing RAG Knowledge..."
-#~ msgstr "[步骤2] 📄 初始化RAG知识库..."
+#: utils/sap_logger.py:203
+#, fuzzy, python-brace-format
+msgid "Application Log"
+msgstr "❌ 应用程序错误: {}"
 
-#~ msgid "{} does not exist"
-#~ msgstr "{} 不存在"
+#: utils/sap_logger.py:205
+#, fuzzy, python-brace-format
+msgid "Excel File: {}"
+msgstr "❌ 失败：{}"
 
-#~ msgid "RAG knowledge already exists with {} records ✅ Available"
-#~ msgstr "RAG知识库已存在，包含 {} 条记录 ✅ 可用"
+#: utils/sap_logger.py:207
+#, fuzzy, python-brace-format
+msgid "Start Time: {}"
+msgstr "[项目开始执行时间]: {}"
 
-#~ msgid "❌ Error checking existing RAG knowledge: {}"
-#~ msgstr "❌ 检查现有RAG知识库时出错：{}"
+#: utils/token_statistics.py:106
+msgid "📊 TOKEN USAGE SUMMARY"
+msgstr ""
 
-#~ msgid "❌ No CDS views available."
-#~ msgstr "❌ 没有可用的CDS视图。"
+#: utils/token_statistics.py:108
+#, python-brace-format
+msgid "Session: {}"
+msgstr ""
 
-#~ msgid "Storing embeddings"
-#~ msgstr "存储嵌入向量"
+#: utils/token_statistics.py:109
+#, fuzzy, python-brace-format
+msgid "Embedding: {:,}"
+msgstr "   嵌入模型：{}"
 
-#~ msgid "Successfully stored {} view records into {}"
-#~ msgstr "成功将 {} 个视图记录存储到 {}"
+#: utils/token_statistics.py:110
+#, fuzzy, python-brace-format
+msgid "LLM Input: {:,}"
+msgstr "   LLM：{}"
+
+#: utils/token_statistics.py:111
+#, fuzzy, python-brace-format
+msgid "LLM Output: {:,}"
+msgstr "   LLM模型：{}"
+
+#: utils/token_statistics.py:112
+#, fuzzy, python-brace-format
+msgid "LLM Total: {:,}"
+msgstr "   LLM模型：{}"
+
+#: utils/token_statistics.py:114
+#, python-brace-format
+msgid "Total: {:,}"
+msgstr ""
+
+#: utils/token_statistics.py:122
+msgid "🤖 By Provider:"
+msgstr ""
+
+#: utils/token_statistics.py:129
+#, python-brace-format
+msgid "  {}: {:,}"
+msgstr ""
 

@@ -7,8 +7,9 @@ from dotenv import load_dotenv
 from hana_ml import ConnectionContext
 from hdbcli.dbapi import Error as HanaDbError
 
-from core.i18n import _, get_current_language
-import re
+from utils.i18n import _, get_current_language
+from utils.sap_logger import logger
+
 
 load_dotenv()
 
@@ -26,7 +27,7 @@ class HANADBClient:
 
         self.hana_client: ConnectionContext = None
 
-    def connect(self) -> None:
+    def connect(self, log_filename: str = None) -> None:
         if self.hana_client:
             return
 
@@ -39,14 +40,14 @@ class HANADBClient:
                 encrypt=True,
             )
         except HanaDbError as e:
-            print(_("HANA Cloud connection failed: {}").format(e))
+            logger.error(_("HANA Cloud connection failed: {}").format(e), log_filename)
             raise
 
-    def close(self) -> None:
+    def close(self, log_filename: str = None) -> None:
         """Close database connection."""
         if self.hana_client:
             self.hana_client.close()
-            print(_("Database connection closed."))
+            logger.info(_("Database connection closed."), log_filename)
 
     def __enter__(self):
         self.connect()
@@ -62,13 +63,16 @@ class HANADBClient:
         return f"({', '.join(formatted_items)})"
 
     def run_vector_search(
-            self,
-            query: str,
-            metric="COSINE_SIMILARITY",
-            k=3,
+        self,
+        query: str,
+        metric="COSINE_SIMILARITY",
+        k=3,
+        log_filename: str = None,
     ) -> pd.DataFrame:
         if not self.hana_client:
-            raise ConnectionError(_("HANA Cloud not connected."))
+            error_msg = _("HANA Cloud not connected.")
+            logger.error(error_msg, log_filename)
+            raise ConnectionError(error_msg)
 
         sort = "ASC" if metric == "L2DISTANCE" else "DESC"
 
@@ -87,15 +91,18 @@ class HANADBClient:
             df_context = hdf.head(k).collect()
             return df_context
         except HanaDbError as e:
-            print(_("SQL execution failed: {}").format(e))
+            logger.error(_("SQL execution failed: {}").format(e), log_filename)
             return pd.DataFrame()
 
-    def get_views(self, category: str) -> pd.DataFrame:
+    def get_views(self, category: str, log_filename: str = None) -> pd.DataFrame:
         if not self.hana_client:
-            raise ConnectionError(_("Database not connected."))
+            error_msg = _("Database not connected.")
+            logger.error(error_msg, log_filename)
+            raise ConnectionError(error_msg)
 
         categories = [cat for cat in category.split("/") if cat]
         if not categories:
+            logger.warning(_("No valid categories provided"), log_filename)
             return pd.DataFrame()
 
         category_sql = self._format_in_clause(categories)
@@ -109,21 +116,27 @@ class HANADBClient:
             schema=self._db_schema, table=self.cds_view_table, categories=category_sql
         )
         try:
-            return self.hana_client.sql(sql).collect()
+            result = self.hana_client.sql(sql).collect()
+            return result
         except HanaDbError as e:
-            print(_("SQL error occurred while getting views: {}").format(e))
+            logger.error(
+                _("SQL error occurred while getting views: {}").format(e), log_filename
+            )
             return pd.DataFrame()
 
     def get_filter_fields(
-            self,
-            cds_views: List[str],
-            query: str,
-            language: str = None,
-            top_k: int = 50,
-            threshold: float = 0.2,
+        self,
+        cds_views: List[str],
+        query: str,
+        language: str = None,
+        top_k: int = 50,
+        threshold: float = 0.2,
+        log_filename: str = None,
     ) -> Dict[str, List[Dict[str, Any]]]:
         if not self.hana_client:
-            raise ConnectionError(_("Database not connected."))
+            error_msg = _("Database not connected.")
+            logger.error(error_msg, log_filename)
+            raise ConnectionError(error_msg)
 
         if language is None:
             language = get_current_language()
@@ -152,7 +165,7 @@ class HANADBClient:
             fields_embed_query = query.replace("'", "''").replace('"', '""')
 
             if not fields_df.empty:
-                print(_("Applying fields filtering..."))
+                logger.info(_("Applying fields filtering..."), log_filename)
                 for idx, row in fields_df.iterrows():
                     view_name = row["TABLENAME"]
                     content_str = row["CONTENT"]
@@ -178,7 +191,9 @@ class HANADBClient:
                             if not field_text:
                                 continue
 
-                            field_text = field_text.replace("'", "''").replace('"', '""')
+                            field_text = field_text.replace("'", "''").replace(
+                                '"', '""'
+                            )
 
                             # Calculate similarity for the current field
                             similarity_sql = f"""
@@ -187,13 +202,15 @@ class HANADBClient:
                                 VECTOR_EMBEDDING('{field_text}', 'DOCUMENT', 'SAP_NEB.20240715')
                             ) as SIMILARITY
                             FROM DUMMY
-                            """.format(query=fields_embed_query,field_text=field_text)
+                            """.format(query=fields_embed_query, field_text=field_text)
 
                             similarity_score = 0.0
                             try:
                                 result = self.hana_client.sql(similarity_sql).collect()
                                 if not result.empty:
-                                    similarity_score = float(result.iloc[0]["SIMILARITY"])
+                                    similarity_score = float(
+                                        result.iloc[0]["SIMILARITY"]
+                                    )
                             except Exception:
                                 # Assign low similarity on error
                                 similarity_score = 0.0
@@ -213,16 +230,19 @@ class HANADBClient:
                                 view_fields_with_scores.append(field_dict)
 
                         # After checking all fields, sort by similarity and take top_k
-                        view_fields_with_scores.sort(key=lambda x: x["similarity_score"], reverse=True)
+                        view_fields_with_scores.sort(
+                            key=lambda x: x["similarity_score"], reverse=True
+                        )
                         top_fields = view_fields_with_scores[:top_k]
                         filtered_fields_by_view[view_name] = top_fields
                         filtered_count += len(top_fields)
 
                     except json.JSONDecodeError:
-                        print(
+                        logger.warning(
                             _(
                                 "⚠️ Warning: Could not parse CONTENT JSON for view {}"
-                            ).format(view_name)
+                            ).format(view_name),
+                            log_filename,
                         )
                         continue
 
@@ -231,22 +251,22 @@ class HANADBClient:
                 if original_count > 0
                 else 0
             )
-            print(
+            logger.info(
                 _(
                     "After filtering: {} fields selected from {} total fields ({:.1f}% reduction)"
-                ).format(filtered_count, original_count, reduction_percentage)
+                ).format(filtered_count, original_count, reduction_percentage),
+                log_filename,
             )
 
             return filtered_fields_by_view
 
         except HanaDbError as e:
-            print(f"SQL error in get_fields: {e}")
+            logger.error(_("SQL error in get_fields: {}").format(e), log_filename)
             return {view: [] for view in cds_views}
 
-    def get_fields(self, cds_views: List[str]) -> Dict[str, List[Dict[str, Any]]]:
-        if not self.hana_client:
-            raise ConnectionError("数据库未连接。")
-
+    def get_fields(
+        self, cds_views: List[str], log_filename: str = None
+    ) -> Dict[str, List[Dict[str, Any]]]:
         cds_views_sql = self._format_in_clause(cds_views)
 
         sql = """
@@ -292,16 +312,19 @@ class HANADBClient:
                             }
                             results[view_name].append(field_dict)
                     except json.JSONDecodeError as e:
-                        print(
-                            f"⚠️ Warning: Could not parse CONTENT JSON for view {view_name} error: {e}"
+                        logger.warning(
+                            _(
+                                "⚠️ Warning: Could not parse CONTENT JSON for view {} error: {}"
+                            ).format(view_name, e),
+                            log_filename,
                         )
                         continue
                     except Exception as e:
-                        print(f"Error parse fields:{e}")
+                        logger.error(_("Error parse fields:{}").format(e), log_filename)
             return results
         except HanaDbError as e:
-            print(f"{e}")
-            return []
+            logger.error(_("Error: {}").format(e), log_filename)
+            return {}
 
     @staticmethod
     def parse_fields(content_str: str) -> str:
@@ -322,12 +345,19 @@ class HANADBClient:
                     # 字符串内部遇到了一个引号。
                     # 查找下一个非空白字符
                     next_char_index = i + 1
-                    while next_char_index < s_len and content_str[next_char_index].isspace():
+                    while (
+                        next_char_index < s_len
+                        and content_str[next_char_index].isspace()
+                    ):
                         next_char_index += 1
 
                     # 如果字符串后面就是逗号、方括号或字符串结尾，
                     # 那么这个引号是合法的结束符。
-                    if next_char_index == s_len or content_str[next_char_index] in [',', ']', '}']:
+                    if next_char_index == s_len or content_str[next_char_index] in [
+                        ",",
+                        "]",
+                        "}",
+                    ]:
                         in_string = False
                         result_chars.append(char)
                     else:
@@ -343,24 +373,25 @@ class HANADBClient:
 
         return repaired_string
 
+
 if __name__ == "__main__":
     query_text = "purchase"
     try:
         with HANADBClient() as db:
-            print(
+            logger.info(
                 _("--- Step 1: Executing vector search for query '{}' ---").format(
                     query_text
                 )
             )
             vector_search_results = db.run_vector_search(query=query_text, k=1)
 
-            print(_("\nVector search results:"))
-            print(vector_search_results)
-            print("-" * 50)
+            logger.info(_("\nVector search results:"))
+            logger.info(str(vector_search_results))
+            logger.info("-" * 80)
 
             if not vector_search_results.empty:
                 category_string = vector_search_results.iloc[0]["VIEWCATEGORY"]
-                print(
+                logger.info(
                     _(
                         "\n--- Step 2: Getting all related CDS views using category string '{}' ---"
                     ).format(category_string)
@@ -369,10 +400,12 @@ if __name__ == "__main__":
                 views_in_category = db.get_views(category=category_string)
 
                 if not views_in_category.empty:
-                    print(_("\nFound {} CDS views:").format(len(views_in_category)))
-                    print("-" * 50)
+                    logger.info(
+                        _("\nFound {} CDS views:").format(len(views_in_category))
+                    )
+                    logger.info("-" * 80)
 
             else:
-                print(_("\nVector search returned no results."))
+                logger.info(_("\nVector search returned no results."))
     except Exception as e:
-        print(_("\nProgram execution failed: {}").format(e))
+        logger.error(_("\nProgram execution failed: {}").format(e))

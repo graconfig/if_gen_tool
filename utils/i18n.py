@@ -12,21 +12,17 @@ from typing import Optional
 class LanguageManager:
     """Manages language settings and gettext translations."""
 
-    SUPPORTED_LANGUAGES = {
-        'en': 'English',
-        'zh': '中文',
-        'ja': '日本語'
-    }
+    SUPPORTED_LANGUAGES = {"en": "English", "zh": "中文", "ja": "日本語"}
 
-    DEFAULT_LANGUAGE = 'en'
-    DOMAIN = 'if_gen_tool'
+    DEFAULT_LANGUAGE = "ja"  # Changed default to Japanese
+    DOMAIN = "if_gen_tool"
 
     def __init__(self, base_dir: Optional[Path] = None):
         if base_dir is None:
             base_dir = Path(__file__).parent.parent
 
         self.base_dir = base_dir
-        self.locale_dir = base_dir / 'locale'
+        self.locale_dir = base_dir / "locale"
         self.current_language = self.DEFAULT_LANGUAGE
         self._translator = None
 
@@ -35,14 +31,14 @@ class LanguageManager:
 
     def _get_default_language(self) -> str:
         """Get default language following simplified priority order.
-        
+
         Priority:
         1. Environment variable (LANGUAGE)
         2. OS language detection
         3. English fallback
         """
         # Priority 1: Check environment variable
-        env_lang = os.getenv('LANGUAGE', '').lower()
+        env_lang = os.getenv("LANGUAGE", "").lower()
         if env_lang in self.SUPPORTED_LANGUAGES:
             return env_lang
 
@@ -67,44 +63,47 @@ class LanguageManager:
                     pass
 
             # Method 3: Try Windows-specific method
-            if not system_locale and os.name == 'nt':
+            if not system_locale and os.name == "nt":
                 try:
                     import ctypes
+
                     windll = ctypes.windll.kernel32
                     locale_id = windll.GetUserDefaultUILanguage()
 
                     # Common Windows locale IDs
-                    if locale_id == 0x0804 or locale_id == 0x0404:  # Simplified/Traditional Chinese
-                        return 'zh'
+                    if (
+                        locale_id == 0x0804 or locale_id == 0x0404
+                    ):  # Simplified/Traditional Chinese
+                        return "zh"
                     elif locale_id == 0x0411:  # Japanese
-                        return 'ja'
-                    elif locale_id in [0x0409, 0x0809, 0x0c09]:  # English variants
-                        return 'en'
+                        return "ja"
+                    elif locale_id in [0x0409, 0x0809, 0x0C09]:  # English variants
+                        return "en"
                 except Exception:
                     pass
 
             # Parse locale string if we have one
             if system_locale:
                 system_locale = system_locale.lower()
-                if system_locale.startswith('zh'):
-                    return 'zh'
-                elif system_locale.startswith('ja'):
-                    return 'ja'
-                elif system_locale.startswith('en'):
-                    return 'en'
+                if system_locale.startswith("zh"):
+                    return "zh"
+                elif system_locale.startswith("ja"):
+                    return "ja"
+                elif system_locale.startswith("en"):
+                    return "en"
 
         except Exception:
             # If locale detection fails, continue to fallback
             pass
 
         # Fallback: Check LANG environment variable (Unix-like systems)
-        system_lang = os.getenv('LANG', '').lower()
-        if system_lang.startswith('zh'):
-            return 'zh'
-        elif system_lang.startswith('ja'):
-            return 'ja'
-        elif system_lang.startswith('en'):
-            return 'en'
+        system_lang = os.getenv("LANG", "").lower()
+        if system_lang.startswith("zh"):
+            return "zh"
+        elif system_lang.startswith("ja"):
+            return "ja"
+        elif system_lang.startswith("en"):
+            return "en"
 
         # Priority 3: Final fallback to English
         return self.DEFAULT_LANGUAGE
@@ -112,24 +111,30 @@ class LanguageManager:
     def set_language(self, language: str) -> bool:
         """Set current language for translations."""
         if language not in self.SUPPORTED_LANGUAGES:
-            print(f"Warning: Unsupported language '{language}'. Using '{self.DEFAULT_LANGUAGE}'.")
+            print(
+                f"Warning: Unsupported language '{language}'. Using '{self.DEFAULT_LANGUAGE}'."
+            )
             language = self.DEFAULT_LANGUAGE
 
         self.current_language = language
 
         try:
-            if language == 'en':
+            if language == "en":
                 # For English, use NullTranslations (no translation needed)
                 self._translator = gettext.NullTranslations()
             else:
                 # Load translation for other languages
-                mo_path = self.locale_dir / language / 'LC_MESSAGES' / f'{self.DOMAIN}.mo'
+                mo_path = (
+                    self.locale_dir / language / "LC_MESSAGES" / f"{self.DOMAIN}.mo"
+                )
                 if mo_path.exists():
                     try:
-                        with open(mo_path, 'rb') as f:
+                        with open(mo_path, "rb") as f:
                             self._translator = gettext.GNUTranslations(f)
                     except Exception as e:
-                        print(f"Error loading translation file {mo_path}: {e}. Using fallback.")
+                        print(
+                            f"Error loading translation file {mo_path}: {e}. Using fallback."
+                        )
                         self._translator = gettext.NullTranslations()
                 else:
                     # Fallback to NullTranslations if file doesn't exist
@@ -187,7 +192,7 @@ def get_current_language() -> str:
 
 def _(message: str) -> str:
     """Translate message using current language settings.
-    
+
     This is the standard gettext shorthand function for translation.
     Usage: _("Hello, World!")
     """
@@ -196,15 +201,17 @@ def _(message: str) -> str:
 
 def ngettext(singular: str, plural: str, n: int) -> str:
     """Translate message with plural form support.
-    
+
     Usage: ngettext("1 file", "{} files", count).format(count)
     """
     return get_language_manager().ngettext(singular, plural, n)
 
 
-def initialize_i18n(language: Optional[str] = None, base_dir: Optional[Path] = None) -> None:
+def initialize_i18n(
+    language: Optional[str] = None, base_dir: Optional[Path] = None
+) -> None:
     """Initialize internationalization for the application.
-    
+
     Args:
         language: Language code to use (en, zh, ja). If None, uses default detection.
         base_dir: Base directory for the project. If None, auto-detects.

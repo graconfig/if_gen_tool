@@ -24,6 +24,7 @@ class ConfigurationManager:
                 "key_flag": "D",
                 "obligatory": "E",
                 "data_type": "I",
+                "field_id":"H",
                 "length_total": "J",
                 "length_dec": "K",
                 "field_text": "L",
@@ -38,9 +39,9 @@ class ConfigurationManager:
                 "data_type": "X",
                 "length_total": "Y",
                 "length_dec": "Z",
-                "sample_value": "AA",
-                "match": "AB",
-                "notes": "AC",
+                "notes": "AA",
+                "sample_value": "AB",
+                "match": "AC",
             },
         }
 
