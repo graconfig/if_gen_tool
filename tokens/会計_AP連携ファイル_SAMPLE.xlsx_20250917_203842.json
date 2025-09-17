@@ -1,0 +1,12 @@
+{
+  "usage": {
+    "embedding_tokens": 0,
+    "llm_input_tokens": 66136,
+    "llm_output_tokens": 9370,
+    "llm_total_tokens": 75506
+  },
+  "timestamp": "2025-09-17T20:38:42.525273",
+  "ai_provider": "SAP AICore Claude",
+  "processed_files": "会計_AP連携ファイル_SAMPLE.xlsx",
+  "total_files": 1
+}
