@@ -119,7 +119,7 @@ def main():
         data_dir = setup_directories()
 
         # Initialize token tracker
-        base_dir = Path(__file__).parent
+        base_dir = get_base_path()
         token_tracker = initialize_token_tracker(base_dir)
 
         if args.file:
