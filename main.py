@@ -23,12 +23,13 @@ def get_base_path() -> Path:
     """
     Get the base path for the application, accommodating both script and frozen exe.
     """
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, "frozen", False):
         # If the application is run as a bundle (e.g., by PyInstaller)
         return Path(sys.executable).parent
     else:
         # If the application is run as a script
         return Path(__file__).parent
+
 
 def setup_directories() -> Path:
     """Setup and validate application directories."""
@@ -82,6 +83,9 @@ def format_execution_time(seconds):
 def main():
     """Main application entry point."""
     project_start_time = datetime.now()
+
+    # Initialize service_name to prevent "possibly unbound" error
+    service_name = "unknown"
 
     parser = argparse.ArgumentParser(description=_("SAP IF Design Generation Tool"))
     parser.add_argument(
@@ -292,9 +296,7 @@ def main():
                         from utils.token_statistics import save_file_token_usage
 
                         additional_info = {
-                            "ai_provider": service_name
-                            if "service_name" in locals()
-                            else "unknown",
+                            "ai_provider": service_name,
                             "processed_files": args.file,
                             "total_files": 1,
                             "error": str(e),
@@ -447,7 +449,7 @@ def main():
                             logger.get_excel_log_filename(file_path.name),
                         )
                         logger.info(
-                        "=" *80,
+                            "=" * 80,
                             logger.get_excel_log_filename(file_path.name),
                         )
 
@@ -492,16 +494,14 @@ def main():
                             logger.get_excel_log_filename(file_path.name),
                         )
                         logger.info(
-                        "=" *80,
+                            "=" * 80,
                             logger.get_excel_log_filename(file_path.name),
                         )
                         # Save per-file token usage even for errors
                         from utils.token_statistics import save_file_token_usage
 
                         additional_info = {
-                            "ai_provider": service_name
-                            if "service_name" in locals()
-                            else "unknown",
+                            "ai_provider": service_name,
                             "processed_files": file_path.name,
                             "total_files": 1,
                             "error": str(e),
@@ -533,14 +533,12 @@ def main():
 
         try:
             additional_info = {
-                "ai_provider": service_name
-                if "service_name" in locals()
-                else "unknown",
+                "ai_provider": service_name,
                 "error": str(e),
                 "status": "failed",
             }
             save_and_print_usage(additional_info)
-        except:
+        except Exception:
             pass
 
         sys.exit(1)
