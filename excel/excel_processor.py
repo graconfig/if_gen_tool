@@ -7,6 +7,7 @@ import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import openpyxl
 import pandas as pd
@@ -32,6 +33,8 @@ class ExcelProcessor:
 
         self.excel_config = config_manager.get_excel_config()
         self.column_mappings = config_manager.get_column_mappings()
+        self.batch_size = int(self.excel_config.get("batch_size", 30))
+        self.max_concurrent_batches = int(self.excel_config.get("max_concurrent_batches", 4))
 
     def process_file(self, file_path: Path) -> None:
         if not file_path.exists():
@@ -86,6 +89,18 @@ class ExcelProcessor:
         # 提前输入列的字段
         input_fields = self.extract_fields(worksheet)
 
+        # If we have a small number of fields, process normally
+        if len(input_fields) <= self.batch_size:
+            self._process_single(worksheet, input_fields, excel_filename)
+        else:
+            # For large files, process in batches
+            self._process_in_batches(worksheet, input_fields, excel_filename)
+
+    def _process_single(
+        self, worksheet, input_fields: List[InterfaceField], excel_filename: str
+    ) -> None:
+        """Process a single batch of fields (original method)"""
+        # 提前输入列的字段
         batch_input_fields = input_fields[:]
 
         # 1、根据输入内容查找视图
@@ -156,36 +171,6 @@ class ExcelProcessor:
                 cds_views=llm_return_views, log_filename=log_filename
             )
 
-            # Create query string from input fields
-            # input_query_parts = []
-            # for field in batch_input_fields:
-            #     field_parts = []
-            #     if field.field_name:
-            #         field_parts.append(str(field.field_name))
-            #     if field.field_text:
-            #         field_parts.append(str(field.field_text))
-            #     if field.sample_value:
-            #         field_parts.append(str(field.sample_value))
-            #     if field_parts:
-            #         input_query_parts.append(" ".join(field_parts))
-            #
-            # input_query = " ".join(input_query_parts)
-            #
-            # # Process each view's fields with vector similarity filtering
-            # llm_return_views_fields = hana_client.get_filter_fields(
-            #     cds_views=llm_return_views,
-            #     query=input_query,
-            #     language=get_current_language(),
-            #     top_k=50,
-            #     threshold=0.6,
-            # )
-            #
-            # print(
-            #     _("Found {} total relevant fields across {} selected views.").format(
-            #         sum(len(fields) for fields in llm_return_views_fields.values()),
-            #         len(llm_return_views_fields),
-            #     )
-            # )
             # 3. Prepare the final context for the LLM using filtered fields
             llm_return_views_df = views_find_by_cat[
                 views_find_by_cat["VIEWNAME"].isin(llm_return_views)
@@ -231,6 +216,173 @@ class ExcelProcessor:
             )
             self.write_results(worksheet, final_results)
 
+    def _process_in_batches(
+        self, worksheet, input_fields: List[InterfaceField], excel_filename: str
+    ) -> None:
+        """Process large number of fields in batches"""
+        logger.info(
+            _("Processing {} rows in batches of {}").format(
+                len(input_fields), self.batch_size
+            ),
+            logger.get_excel_log_filename(excel_filename),
+        )
+
+        # 1. Get common context for all batches (same module/interface)
+        module = input_fields[0].module
+        if_name = input_fields[0].if_name
+        if_desc = input_fields[0].if_desc
+        module_query = ",".join([module, if_name, if_desc])
+
+        with HANADBClient() as hana_client:
+            log_filename = logger.get_excel_log_filename(excel_filename)
+
+            # Get CDS views once for all batches
+            cat_find_by_module = hana_client.run_vector_search(
+                query=module_query, k=3, log_filename=log_filename
+            )
+            if cat_find_by_module.empty:
+                logger.warning(
+                    _("No categories for module."),
+                    logger.get_excel_log_filename(excel_filename),
+                )
+                return
+
+            category_string = cat_find_by_module.iloc[0]["VIEWCATEGORY"]
+            views_find_by_cat = hana_client.get_views(
+                category=category_string, log_filename=log_filename
+            )
+            if views_find_by_cat.empty:
+                logger.warning(
+                    _("No views for category."),
+                    logger.get_excel_log_filename(excel_filename),
+                )
+                return
+
+            logger.info(
+                _("Found {} candidate CDS views").format(len(views_find_by_cat)),
+                logger.get_excel_log_filename(excel_filename),
+            )
+
+            # Select relevant views once for all batches
+            llm_return_views = self._select_relevant_views(
+                views_find_by_cat, input_fields, excel_filename
+            )
+            if not llm_return_views:
+                logger.warning(
+                    _("No views found by LLM."),
+                    logger.get_excel_log_filename(excel_filename),
+                )
+                raise RuntimeError(
+                    _(
+                        "Processing failed: No relevant CDS views found for this interface."
+                    )
+                )
+
+            logger.info(
+                _("LLM selected {} CDS views.").format(len(llm_return_views)),
+                logger.get_excel_log_filename(excel_filename),
+            )
+
+            # Get fields from selected views once for all batches
+            llm_return_views_fields = hana_client.get_fields(
+                cds_views=llm_return_views, log_filename=log_filename
+            )
+
+            llm_return_views_df = views_find_by_cat[
+                views_find_by_cat["VIEWNAME"].isin(llm_return_views)
+            ]
+            final_context_for_llm = self._prepare_llm_context(
+                llm_return_views_fields, llm_return_views_df
+            )
+
+            logger.info(
+                "-" * 80,
+                logger.get_excel_log_filename(excel_filename),
+            )
+
+            # 2. Process fields in batches (with parallel processing)
+            all_results = []
+
+            # Split input fields into batches
+            batches = []
+            for i in range(0, len(input_fields), self.batch_size):
+                batch_fields = input_fields[i : i + self.batch_size]
+                batches.append((i, batch_fields))
+
+            # Process batches in parallel
+            with ThreadPoolExecutor(
+                max_workers=self.max_concurrent_batches
+            ) as executor:
+                # Submit all batches for processing
+                future_to_batch = {
+                    executor.submit(
+                        self._process_batch,
+                        batch_fields,
+                        final_context_for_llm,
+                        excel_filename,
+                        i,
+                    ): (i, len(batch_fields))
+                    for i, batch_fields in batches
+                }
+
+                # Collect results as they complete
+                for future in as_completed(future_to_batch):
+                    batch_index, batch_size = future_to_batch[future]
+                    batch_start = batch_index + 1
+                    batch_end = batch_index + batch_size
+
+                    try:
+                        batch_results = future.result()
+                        # Combine input fields with results for this batch
+                        batch_fields = input_fields[
+                            batch_index : batch_index + batch_size
+                        ]
+                        batch_final_results = list(zip(batch_fields, batch_results))
+                        all_results.extend(batch_final_results)
+
+                        logger.info(
+                            _("Row {}-{} processed successfully").format(
+                                batch_start, batch_end
+                            ),
+                            logger.get_excel_log_filename(excel_filename),
+                        )
+                    except Exception as e:
+                        logger.error(
+                            _("Failed to process row {}-{}: {}").format(
+                                batch_start, batch_end, e
+                            ),
+                            logger.get_excel_log_filename(excel_filename),
+                        )
+                        # Continue with other batches even if one fails
+
+            # Sort results by row index to maintain order
+            all_results.sort(key=lambda x: x[0].row_index)
+
+            # 3. Write all results
+            logger.info(
+                _("Writing {} results to file...").format(len(all_results)),
+                logger.get_excel_log_filename(excel_filename),
+            )
+            self.write_results(worksheet, all_results)
+
+    def _process_batch(
+        self,
+        batch_fields: List[InterfaceField],
+        context: List[Dict[str, Any]],
+        excel_filename: str,
+        batch_index: int,
+    ) -> List[Dict[str, Any]]:
+        """Process a single batch of fields"""
+        try:
+            return self._match_fields(batch_fields, context, excel_filename)
+        except Exception as e:
+            logger.error(
+                _("Error in row {}: {}").format(batch_index, e),
+                logger.get_excel_log_filename(excel_filename),
+            )
+            # Return empty results for failed batch
+            return [{} for _ in batch_fields]
+
     def extract_fields(self, worksheet) -> List[InterfaceField]:
         input_fields = []
 
@@ -257,13 +409,18 @@ class ExcelProcessor:
                 if_desc=if_desc,
                 field_name=str(field_name).strip(),
                 key_flag=worksheet[f"{input_row_cols['key_flag']}{row}"].value or "",
-                obligatory=worksheet[f"{input_row_cols['obligatory']}{row}"].value or "",
+                obligatory=worksheet[f"{input_row_cols['obligatory']}{row}"].value
+                or "",
                 data_type=worksheet[f"{input_row_cols['data_type']}{row}"].value or "",
                 field_id=worksheet[f"{input_row_cols['field_id']}{row}"].value or "",
-                length_total=worksheet[f"{input_row_cols['length_total']}{row}"].value or "",
-                length_dec=worksheet[f"{input_row_cols['length_dec']}{row}"].value or "",
-                field_text=worksheet[f"{input_row_cols['field_text']}{row}"].value or "",
-                sample_value=worksheet[f"{input_row_cols['sample_value']}{row}"].value or "",
+                length_total=worksheet[f"{input_row_cols['length_total']}{row}"].value
+                or "",
+                length_dec=worksheet[f"{input_row_cols['length_dec']}{row}"].value
+                or "",
+                field_text=worksheet[f"{input_row_cols['field_text']}{row}"].value
+                or "",
+                sample_value=worksheet[f"{input_row_cols['sample_value']}{row}"].value
+                or "",
                 row_index=row,
             )
 

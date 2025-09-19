@@ -13,7 +13,13 @@ class ConfigurationManager:
         pass
 
     def get_excel_config(self) -> Dict[str, Any]:
-        return {"sheet_name": "IF項目定義", "header_row": 6, "start_row": 13}
+        return {
+            "sheet_name": "IF項目定義",
+            "header_row": 6,
+            "start_row": 13,
+            "batch_size": os.getenv("LLM_BATCH_SIZE",30),  # Default batch size for processing
+            "max_concurrent_batches": os.getenv("LLM_MAX_WORKERS", 4),  # Maximum concurrent batch processing
+        }
 
     def get_column_mappings(self) -> Dict[str, Dict[str, str]]:
         # excel输入输出列映射
@@ -24,7 +30,7 @@ class ConfigurationManager:
                 "key_flag": "D",
                 "obligatory": "E",
                 "data_type": "I",
-                "field_id":"H",
+                "field_id": "H",
                 "length_total": "J",
                 "length_dec": "K",
                 "field_text": "L",
@@ -55,12 +61,8 @@ class ConfigurationManager:
                 "embedding_model": os.getenv(
                     "TEXT_EMBEDDING_MODEL", "text-embedding-ada-002"
                 ),
-                "llm_deployment_id": os.getenv(
-                    "OPENAI_LLM_DEPLOYMENT_ID"
-                ),
-                "embedding_deployment_id": os.getenv(
-                    "OPENAI_EMBEDDING_DEPLOYMENT_ID"
-                ),
+                "llm_deployment_id": os.getenv("OPENAI_LLM_DEPLOYMENT_ID"),
+                "embedding_deployment_id": os.getenv("OPENAI_EMBEDDING_DEPLOYMENT_ID"),
             },
             "claude": {
                 "provider_name": "SAP AICore Claude",
@@ -78,12 +80,8 @@ class ConfigurationManager:
                 "embedding_model": os.getenv(
                     "TEXT_EMBEDDING_MODEL", "text-embedding-002"
                 ),
-                "llm_deployment_id": os.getenv(
-                    "GEMINI_LLM_DEPLOYMENT_ID"
-                ),
-                "embedding_deployment_id": os.getenv(
-                    "GEMINI_EMBEDDING_DEPLOYMENT_ID"
-                ),
+                "llm_deployment_id": os.getenv("GEMINI_LLM_DEPLOYMENT_ID"),
+                "embedding_deployment_id": os.getenv("GEMINI_EMBEDDING_DEPLOYMENT_ID"),
             },
         }
 
@@ -130,7 +128,7 @@ class ConfigurationManager:
 
                     # Common Windows locale IDs
                     if (
-                            locale_id == 0x0804 or locale_id == 0x0404
+                        locale_id == 0x0804 or locale_id == 0x0404
                     ):  # Simplified/Traditional Chinese
                         return Languages.ZH
                     elif locale_id == 0x0411:  # Japanese
