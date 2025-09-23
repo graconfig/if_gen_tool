@@ -2,23 +2,23 @@
 SAP AI Core Gemini服务实现
 """
 
-import logging
 from typing import Dict, Any, List
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
+import time
 
-from dotenv import load_dotenv
 from gen_ai_hub.proxy.core.proxy_clients import get_proxy_client
 from gen_ai_hub.proxy.native.google_vertexai.clients import GenerativeModel
 from gen_ai_hub.proxy.native.openai import embeddings
-
-from prompts.prompts_manager import PromptTemplateManager
-from prompts.schemas_manager import FunctionSchemas
-from utils.token_statistics import track_embedding_tokens, track_llm_tokens
-from utils.i18n import _
-
-load_dotenv()
+from services.aicore_base_service import AIServiceBase
+from utils.exceptions import AIServiceError
 
 
-class AICoreGeminiService:
+class AICoreGeminiService(AIServiceBase):
     """SAP AI Core Gemini服务实现"""
 
     def __init__(
@@ -29,12 +29,14 @@ class AICoreGeminiService:
         llm_deployment_id: str = None,
         embedding_deployment_id: str = None,
     ):
-        self.llm_model = llm_model
-        self.embedding_model = embedding_model
-        self.llm_deployment_id = llm_deployment_id
-        self.embedding_deployment_id = embedding_deployment_id
-        self.language = language
-        self.logger = logging.getLogger(__name__)
+        super().__init__(
+            llm_model,
+            embedding_model,
+            language,
+            llm_deployment_id,
+            embedding_deployment_id,
+        )
+        self.provider = "gemini"
         self._llm_client = None
         self._proxy_client = None
 
@@ -54,9 +56,18 @@ class AICoreGeminiService:
             self._llm_client = GenerativeModel(proxy_client=self.proxy_client, **kwargs)
         return self._llm_client
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type((Exception, AIServiceError)),
+        reraise=True,
+    )
     def call_with_function(
         self, prompt: str, function_schema: Dict[str, Any]
     ) -> Dict[str, Any]:
+        # 记录开始时间
+        start_time = time.time()
+
         # Convert prompt to Gemini content format
         content = [{"role": "user", "parts": [{"text": prompt}]}]
 
@@ -80,7 +91,7 @@ class AICoreGeminiService:
                 input_tokens = getattr(usage, "prompt_token_count", 0)
                 output_tokens = getattr(usage, "candidates_token_count", 0)
                 total_tokens = getattr(usage, "total_token_count", 0)
-                track_llm_tokens(
+                self._track_llm_tokens(
                     input_tokens, output_tokens, total_tokens, "sap_aicore_gemini"
                 )
 
@@ -100,8 +111,15 @@ class AICoreGeminiService:
             return {}
 
         except Exception as e:
-            raise RuntimeError(f"LLM function call failed: {e}") from e
+            self._handle_llm_error(e, "Gemini")
+            raise
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type((Exception, AIServiceError)),
+        reraise=True,
+    )
     def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         # Prepare request parameters - use deployment_id if available, otherwise use model_name
         request_params = {"input": texts}
@@ -116,37 +134,9 @@ class AICoreGeminiService:
 
             if hasattr(response, "usage") and response.usage:
                 total_tokens = response.usage.total_tokens
-                track_embedding_tokens(total_tokens, "sap_aicore")
+                self._track_embedding_tokens(total_tokens, "sap_aicore")
 
             return [emb.embedding for emb in response.data]
         except Exception as e:
-            self.logger.error(_("Failed to generate embeddings: {}").format(e))
-            return []
-
-    def get_rag_matching_prompt(
-        self, input_fields: List[Dict[str, Any]], context: List[Dict[str, Any]]
-    ) -> str:
-        return PromptTemplateManager.get_field_matching_prompt(
-            input_fields,
-            context,
-            "en",
-            # input_fields, context, self.language
-        )
-
-    def get_view_selection_prompt(
-        self, candidate_views_df, input_fields: List[Dict[str, Any]]
-    ) -> str:
-        return PromptTemplateManager.get_view_selection_prompt(
-            candidate_views_df,
-            input_fields,
-            "en",
-            # candidate_views_df, input_fields, self.language
-        )
-
-    def get_view_selection_schema(self) -> Dict[str, Any]:
-        """Get Gemini-specific view selection schema."""
-        return FunctionSchemas.get_view_selection_schema("gemini", "en")
-
-    def get_field_matching_schema(self) -> Dict[str, Any]:
-        """Get Gemini-specific field matching schema."""
-        return FunctionSchemas.get_field_matching_schema("gemini", "en")
+            self._handle_embedding_error(e, "Gemini")
+            raise

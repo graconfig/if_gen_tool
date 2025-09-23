@@ -1,0 +1,121 @@
+
+# This file defines the structure of function calling schemas.
+# The base structure is language-agnostic, while descriptions are language-specific.
+
+view_selection:
+  # Base structure for all providers
+  base_structure:
+    name: "select_relevant_views"
+    parameters:
+      type: "object"
+      properties:
+        relevant_view_names:
+          type: "array"
+          items:
+            type: "string"
+      required: ["relevant_view_names"]
+  
+  # Language-specific descriptions
+  descriptions:
+    en:
+      description: "Selects the top 3-10 most relevant CDS view names from a list based on the user's required interface fields and business context."
+      parameters:
+        properties:
+          relevant_view_names:
+            description: "A list of the names of the CDS views that are most relevant to the user's input."
+    ja:
+      description: "ユーザーの必要なインターフェースフィールドとビジネスコンテキストに基づいて、最も関連性の高いCDSビュー名のトップ3-10を選択する。"
+      parameters:
+        properties:
+          relevant_view_names:
+            description: "ユーザーの入力に最も関連性の高いCDSビューの名前のリスト。"
+    zh:
+      description: "基于用户所需的接口字段和业务上下文，从列表中选择最相关的3-10个CDS视图名称。"
+      parameters:
+        properties:
+          relevant_view_names:
+            description: "与用户输入最相关的CDS视图名称列表。"
+
+field_matching:
+  base_structure:
+    name: "review_field_matches"
+    parameters:
+      type: "object"
+      properties:
+        review:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              row_index: { type: "integer" }
+              table_id: { type: "string" }
+              field_id: { type: "string" }
+              field_desc: { type: "string" }
+              data_type: { type: "string" }
+              length_total: { type: "string" }
+              length_dec: { type: "string" }
+              key_flag: { type: "string" }
+              obligatory: { type: "string"}
+              sample_value: { type: "string"}
+              match: {type: "integer"}
+              notes: { type: "string" }
+            required: ["row_index", "table_id", "field_id", "field_desc","data_type","length_total","length_dec","key_flag","obligatory","sample_value","match", "notes"]
+      required: ["review"]
+
+  descriptions:
+    en:
+      description: "Matches input fields with SAP CDS fields STRICTLY from the provided context."
+      parameters:
+        properties:
+          review:
+            description: "A list containing the matching results for all input fields."
+            items:
+              properties:
+                row_index: { description: "Row index of the input field." }
+                table_id: { description: "EXACT SAP CDS view name from context. Empty if no match." }
+                field_id: { description: "EXACT SAP CDS technical field name from context. Empty if no match." }
+                field_desc: { description: "SAP CDS field description from context." }
+                data_type: { description: "SAP CDS field data type from context." }
+                length_total: { description: "SAP CDS field total length from context." }
+                length_dec: { description: "SAP CDS field decimal length from context." }
+                key_flag: { description: "'X' if the field is a key field, otherwise empty." }
+                obligatory: { description: "required or optional for SAP CDS field in CDS View" }
+                sample_value: { description: "SAP CDS field sample value "}
+                match: { description: "Match confidence percentage (0-100%)" }
+                notes: { description: "Explanation for the match choice or why no suitable match was found." }
+    ja:
+      description: "提供されたコンテキストからSAP CDSフィールドと入力フィールドを厳密にマッチングする。"
+      parameters:
+        properties:
+          review:
+            description: "すべての入力フィールドのマッチング結果を含むリスト。"
+            items:
+              properties:
+                row_index: { description: "入力フィールドの行インデックス。" }
+                table_id: { description: "コンテキストからの正確なSAP CDSビュー名。一致がない場合は空。" }
+                field_id: { description: "コンテキストからの正確なSAP CDS技術フィールド名。一致がない場合は空。" }
+                field_desc: { description: "コンテキストからのSAP CDSフィールド説明。" }
+                data_type: { description: "コンテキストからのSAP CDSフィールドデータタイプ。" }
+                length_total: { description: "コンテキストからのSAP CDSフィールド総長。" }
+                length_dec: { description: "コンテキストからのSAP CDSフィールド小数点以下長。" }
+                key_flag: { description: "フィールドがキーフィールドの場合は'X'、そうでなければ空。" }
+                match: { description: "マッチングの信頼度レベル：High, Medium, Low, No Match。" }
+                notes: { description: "マッチング選択の理由、または適切なマッチが見つからなかった理由の説明。" }
+    zh:
+      description: "从提供的上下文中将输入字段与SAP CDS字段进行严格匹配。"
+      parameters:
+        properties:
+          review:
+            description: "包含所有输入字段匹配结果的列表。"
+            items:
+              properties:
+                row_index: { description: "输入字段的行索引。" }
+                table_id: { description: "来自上下文的精确SAP CDS视图名。如无匹配则为空。" }
+                field_id: { description: "来自上下文的精确SAP CDS技术字段名。如无匹配则为空。" }
+                field_desc: { description: "来自上下文的SAP CDS字段描述。" }
+                data_type: { description: "来自上下文的SAP CDS字段数据类型。" }
+                length_total: { description: "来自上下文的SAP CDS字段总长度。" }
+                length_dec: { description: "来自上下文的SAP CDS字段小数位长度。" }
+                key_flag: { description: "该字段是否为键字段，是则为'X'，否则为空。" }
+                match_quality: { description: "匹配置信度等级：High, Medium, Low, No Match。" }
+                notes: { description: "说明匹配选择的理由，或为何没有找到合适匹配的原因。" }

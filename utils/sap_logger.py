@@ -12,6 +12,7 @@ from logging import Logger
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Final, Optional
+from tqdm import tqdm
 
 try:
     import pytz
@@ -122,7 +123,7 @@ class ExcelFileLogger(Logger):
                 **kwargs,
             )
             console_msg = self.console_formatter.format(record)
-            print(console_msg)
+            tqdm.write(console_msg)
             return
 
         elif file_name and not file_name.endswith(".log"):
@@ -147,13 +148,9 @@ class ExcelFileLogger(Logger):
             )
             self.file_handlers[file_name].emit(record)
 
-            # Also log to console with safe Unicode handling
+            # Also log to console using tqdm.write
             console_msg = self.console_formatter.format(record)
-            try:
-                print(console_msg)
-            except UnicodeEncodeError:
-                # Fallback to UTF-8 encoding if console doesn't support Unicode
-                print(console_msg.encode("utf-8", errors="replace").decode("utf-8"))
+            tqdm.write(console_msg)
 
     def debug(self, msg: str, file_name: Optional[str] = None, *args, **kwargs) -> None:
         self._log_to_file(logging.DEBUG, msg, file_name, *args, **kwargs)
@@ -244,6 +241,16 @@ class ExcelFileLogger(Logger):
         self.excel_log_filenames[excel_filename] = log_filename
         return log_filename
 
+    # Add the missing context manager method
+    @contextmanager
+    def if_gen_logging(self, excel_filename: str):
+        """Context manager for Excel file logging."""
+        log_path = self.start_excel_logging(excel_filename)
+        try:
+            yield log_path
+        finally:
+            pass  # Logger handles cleanup automatically
+
 
 def setup_logger(name: str, log_dir: str, level: int) -> ExcelFileLogger:
     """Setup and return a configured ExcelFileLogger."""
@@ -270,13 +277,3 @@ def get_logger(
 
 # Global logger instance
 logger: Final[ExcelFileLogger] = get_logger("if_gen_tool", level=logging.INFO)
-
-
-@contextmanager
-def if_gen_logging(excel_filename: str):
-    """Context manager for Excel file logging."""
-    log_path = logger.start_excel_logging(excel_filename)
-    try:
-        yield log_path
-    finally:
-        pass  # Logger handles cleanup automatically

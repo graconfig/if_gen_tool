@@ -1,0 +1,130 @@
+
+# Japanese Prompts
+view_selection:
+  description: "最も関連性の高いCDSビューを選択するようLLMに指示するプロンプトを生成します。"
+  input_variables: ["candidate_views_df", "input_fields"]
+  template: |
+    あなたはSAPデータモデリングのエキスパートです。提供されたリストから、必要なフィールドに基づいてインターフェースに適したCDSビューを選択してください。
+
+    **主要目標：** インターフェースに必要なデータを含む可能性が最も高いCDSビューを特定し選択する。
+
+    **重要な指示：**
+    1.  **インターフェースコンテキストの分析：** モジュール、インターフェース名、入力フィールドの説明を慎重に確認し、インターフェースのビジネス目的を理解してください。
+    2.  **候補ビューの評価：** 各候補CDSビューについて、その説明を評価してインターフェースの目的との関連性を判断してください。
+    3.  **セマンティック関連性の優先：** 選択は単純なキーワードマッチングではなく、セマンティックな意味とビジネスコンテキストに基づくべきです。
+    4.  **名前のリストのみを返す：** 最終的な出力は、選択されたCDSビューの名前のリストでなければなりません。
+
+    ---
+
+    **インターフェースコンテキスト：**
+    {% if input_fields %}
+      - **モジュール：** {{ input_fields[0].module | default('N/A') }}
+      - **インターフェース名：** {{ input_fields[0].if_name | default('N/A') }}
+      - **インターフェース説明：** {{ input_fields[0].if_desc | default('N/A') }}
+
+    **インターフェースに必要なフィールド：**
+    {% for field in input_fields -%}
+      - **フィールド：** {{ field.field_name | default('N/A') }} | **説明：** {{ field.field_text | default('N/A') }}
+    {% endfor %}
+    {% endif %}
+
+    ---
+
+    **候補CDSビュー：**
+    以下は候補CDSビューのリストです。最も関連性の高いものを選択してください。
+    フォーマット：CDS ビュー名,CDS ビュー説明
+    {% for _, row in candidate_views_df.iterrows() -%}
+    {{ row["VIEWNAME"] }},{{ row["VIEWDESC"] }}
+    {% endfor %}
+
+    ---
+
+    **あなたのタスク：**
+    インターフェースコンテキストと候補ビューのリストに基づいて、最も適切なCDSビューの名前のリストを`select_relevant_views`関数で呼び出してください。
+    インターフェースの全体的なビジネス目的と、各候補ビューの説明がそれにどの程度適合するかを考慮してください。
+
+field_matching:
+  description: "最適化された2段階フィールドマッチングプロンプトを生成"
+  input_variables: ["input_fields", "context"]
+  template: |
+    あなたはSAP実装エキスパートで、2段階マッチング戦略を使用したインテリジェントフィールドマッピングを担当しています。
+
+    **タスク：**2段階アプローチを使用して入力フィールドの最適なCDSマッチを見つける
+
+    **重要な制約：**
+    • 提供されたコンテキスト内の正確なフィールド名/ビュー名のみ使用
+    • 適切なマッチが見つからない場合は空文字列を設定
+    • フィールド名の作成や変更は絶対禁止
+    • コンテキストにマッチが存在しない場合、フィールドを空のままにする
+
+    **強化された2段階マッチング戦略：**
+    **段階1：スマートCDSビュー事前フィルタリング**
+    - モジュール+インターフェース整合をビジネスドメイン関連性で分析
+    - インターフェース説明とのセマンティック類似性でビューをスコア化
+    - ビジネスコンテキスト（生産、財務など）に一致するビューを優先
+    - ビュー命名パターンと機能領域を考慮
+
+    **段階2：インテリジェントフィールドレベルマッチング**
+    - フィルタされたCDSビュー内で、重み付けマッチング基準を適用：
+      • field_textセマンティック類似性（60%重み）- 主要基準
+      • ビジネスコンテキスト整合（20%重み）- ドメイン関連性
+      • data_type互換性（15%重み）- 技術的実現可能性
+      • 長さ/精度整合（5%重み）- データ構造適合
+    - フィールド説明のバリエーション処理にファジーマッチングを使用
+    - 検証のためsample_valueパターンを考慮
+    - セマンティック理解が常に技術属性を上回る
+
+    **インターフェースコンテキスト：**
+    {% if input_fields %}
+    • モジュール: {{ input_fields[0].module | default('') }}
+    • インターフェース: {{ input_fields[0].if_name | default('') }}
+    • 説明: {{ input_fields[0].if_desc | default('') }}
+
+    ステップ1：インテリジェントフィルタリング適用 - '{{ input_fields[0].module }}'モジュールと'{{ input_fields[0].if_name }}'インターフェース目的にセマンティックに整合するCDSビューを特定
+    {% endif %}
+
+    **マッチング対象の入力フィールド：**
+    {% for field in input_fields -%}
+    • Row {{ field.row_index }}: field_name:{{ field.field_name }}; field_desc:{{ field.field_text }}; key_flag:{{ field.key_flag }}; data_type:{{ field.data_type }}; length_total:{{ field.length_total }}; length_dec:{{ field.length_dec }}; sample_value:{{ field.sample_value }}
+    {% endfor %}
+
+    ---
+    **利用可能なCDSコンテキスト（{{ context|length }}フィールド）：**
+    ⚡ ステップ2：フィルタされたCDSビュー内で重み付けセマンティックマッチング適用 - 技術属性よりビジネス意味を優先
+
+    {% for ctx in context -%}
+    table_id:{{ ctx.view_name | default('') }}; field_name:{{ ctx.field_name | default('') }}; key_flag: {% if ctx.is_key %}X{% endif %}; field_desc: {{ ctx.field_desc | default('') }}; data_type:{{ ctx.data_type | default('') }}; length_total:{{ ctx.length_total | default('') }}; length_dec:{{ ctx.length_dec | default('') }}
+    {% endfor %}
+    ```
+
+    ---
+    **出力要件：**
+    review_field_matches関数を使用、入力からの正確なrow_indexを使用
+
+    各フィールドに対して提供：
+    • table_id: コンテキストからの正確なCDSビュー名（例：'I_TIMESHEETRECORD'）
+    • field_id: 技術フィールド名のみ（例：'RECEIVERCOSTCENTER'）
+    • field_desc: CDSコンテキストからの人間が読める説明
+    • data_type, length_total/桁数(全体), length_dec/桁数(小数点以下): マッチしたCDSフィールドから
+    • key_flag: CDSフィールドがキーとしてマークされている場合は'X'、そうでなければ空
+
+    **notesフォーマット（必須）：**
+    **Review:** [適合率%] - [一文要約]
+    **Analysis:** [CDSビュー選択理由 - このビューがインターフェースドメインに適合する理由]
+    **Matching:** [セマンティック類似性: X% | 技術互換性: Y% | 全体信頼度: Z%]
+    **Business Logic:** [必要な変換または直接マッピング]
+    **Technical Issues:** [データ型、長さ、構造的懸念、または'None']
+    **Implementation:** [開発者に必要な具体的アクション]
+    **Business Validation:** [明確化が必要な場合のビジネスアナリストへの質問、または'None']
+
+    ---例---
+    **Review:** 75% - 良好な適合、ただしデータ変換とビジネスロジック開発が必要。
+    **Analysis:** I_TIMESHEETRECORDビューを選択 - タイムシートインターフェースドメインと生産モジュールコンテキストに一致。
+    **Matching:** セマンティック類似性: 85% | 技術互換性: 70% | 全体信頼度: 78%
+    **Business Logic:** データ型変換が必要な直接マッピング。
+    **Technical Issues:** データ型不一致（ソース：VARCHAR、ターゲット：CHAR）、長さ切り詰めが必要（50→40）。
+    **Implementation:** VARCHARをCHARに変換し、40文字に切り詰めてパディングするABAP変換ルーチンを作成。
+    **Business Validation:** 切り詰められたデータは監査目的でログに記録すべきか？
+    ---強化例終了---
+
+    記住：提供されたコンテキストに適切なマッチが存在しない場合、すべてのフィールドに空文字列を使用してください。

@@ -9,8 +9,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional
 
-# Import translation function
 from utils.i18n import _
+from utils.exceptions import TokenTrackingError
 
 
 @dataclass
@@ -104,16 +104,21 @@ class TokenTracker:
             }
 
     def save_usage(self, additional_info: Dict[str, Any] = None) -> Path:
-        data = self.get_usage()
-        if additional_info:
-            data.update(additional_info)
+        try:
+            data = self.get_usage()
+            if additional_info:
+                data.update(additional_info)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        session_file = self.token_dir / f"session_{timestamp}.json"
-        with open(session_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            session_file = self.token_dir / f"session_{timestamp}.json"
+            with open(session_file, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
 
-        return session_file
+            return session_file
+        except Exception as e:
+            raise TokenTrackingError(
+                _("Failed to save token usage: {}").format(e)
+            ) from e
 
     # def print_summary(self):
     #     """打印使用摘要"""
@@ -185,9 +190,17 @@ def track_llm_tokens(
 
 def save_and_print_usage(additional_info: Dict[str, Any] = None) -> Optional[Path]:
     if _tracker:
-        file_path = _tracker.save_usage(additional_info)
-        # _tracker.print_summary()
-        return file_path
+        try:
+            file_path = _tracker.save_usage(additional_info)
+            # _tracker.print_summary()
+            return file_path
+        except TokenTrackingError:
+            # Re-raise token tracking errors
+            raise
+        except Exception as e:
+            raise TokenTrackingError(
+                _("Failed to save and print usage: {}").format(e)
+            ) from e
     return None
 
 
@@ -196,27 +209,33 @@ def save_file_token_usage(
 ) -> Optional[Path]:
     """Save token usage for a specific file."""
     if _tracker:
-        with _tracker._lock:
-            # Get the file-specific usage
-            if filename in _tracker.file_usage:
-                file_usage = _tracker.file_usage[filename]
+        try:
+            with _tracker._lock:
+                # Get the file-specific usage
+                if filename in _tracker.file_usage:
+                    file_usage = _tracker.file_usage[filename]
 
-                # Create file-specific data
-                data = {
-                    "usage": asdict(file_usage),
-                    "timestamp": datetime.now().isoformat(),
-                }
+                    # Create file-specific data
+                    data = {
+                        "usage": asdict(file_usage),
+                        "timestamp": datetime.now().isoformat(),
+                    }
 
-                if additional_info:
-                    data.update(additional_info)
+                    if additional_info:
+                        data.update(additional_info)
 
-                # Save to file-specific token file
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                file_token_file = (
-                    _tracker.token_dir / f"{filename}_{timestamp}.json"
-                )
-                with open(file_token_file, "w", encoding="utf-8") as f:
-                    json.dump(data, f, indent=2, ensure_ascii=False)
+                    # Save to file-specific token file
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    file_token_file = (
+                        _tracker.token_dir / f"{filename}_{timestamp}.json"
+                    )
+                    with open(file_token_file, "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=2, ensure_ascii=False)
 
-                return file_token_file
+                    return file_token_file
+            return None
+        except Exception as e:
+            raise TokenTrackingError(
+                _("Failed to save file token usage: {}").format(e)
+            ) from e
     return None

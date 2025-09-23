@@ -1,21 +1,29 @@
-"""
-SAP IF Process
-"""
-
 import shutil
 import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
+from tqdm import tqdm
 
 import openpyxl
 import pandas as pd
 
+from core.config import AppSettings
 from utils.i18n import _
 from utils.sap_logger import logger
 from hana.hana_conn import HANADBClient
 from models.data_models import InterfaceField
+from services.aicore_base_service import AIServiceBase
+from utils.exceptions import FileProcessingError
+from utils.tools import parse_notes, clean_field_id, normalize_key_flag
+
 
 # Suppress the specific DrawingML warning by matching the message text
 warnings.filterwarnings(
@@ -26,19 +34,51 @@ warnings.filterwarnings(
 
 
 class ExcelProcessor:
-    def __init__(self, data_dir: Path, ai_service, config_manager):
+    """Process Excel files for SAP interface field mapping.
+
+    This class handles the extraction of interface definitions from Excel files,
+    queries relevant CDS views from HANA, and uses AI services to match fields.
+    """
+
+    def __init__(
+        self, data_dir: Path, ai_service: AIServiceBase, settings: AppSettings
+    ):
+        """Initialize the Excel processor.
+
+        Args:
+            data_dir: Path to the data directory
+            ai_service: AI service instance for field matching
+            settings: The application settings object
+        """
         self.data_dir = data_dir
         self.ai_service = ai_service
-        self.config_manager = config_manager
+        self.settings = settings
 
-        self.excel_config = config_manager.get_excel_config()
-        self.column_mappings = config_manager.get_column_mappings()
-        self.batch_size = int(self.excel_config.get("batch_size", 30))
-        self.max_concurrent_batches = int(self.excel_config.get("max_concurrent_batches", 4))
+        # 配置直接从settings对象获取
+        self.excel_config = settings.excel
+        self.column_mappings = settings.columns
+        self.batch_size = self.excel_config.batch_size
+        self.max_concurrent_batches = self.excel_config.max_concurrent_batches
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type((Exception, FileProcessingError)),
+        reraise=True,
+    )
     def process_file(self, file_path: Path) -> None:
+        """Process an Excel file for field mapping.
+
+        Args:
+            file_path: Path to the Excel file to process
+
+        Raises:
+            FileProcessingError: If file processing fails
+            FileNotFoundError: If the input file is not found
+        """
         if not file_path.exists():
-            raise FileNotFoundError(_("❌ Input file not found: {}").format(file_path))
+            error_msg = _("❌ Input file not found: {}").format(file_path)
+            raise FileNotFoundError(error_msg)
 
         from core.consts import Directories
 
@@ -53,15 +93,25 @@ class ExcelProcessor:
         if output_path.exists():
             output_path.unlink()
 
-        workbook = openpyxl.load_workbook(file_path)
+        try:
+            workbook = openpyxl.load_workbook(file_path)
+        except Exception as e:
+            error_msg = _("Failed to load workbook: {}").format(e)
+            raise FileProcessingError(error_msg) from e
 
-        sheet_name = self.excel_config["sheet_name"]
+        sheet_name = self.excel_config.sheet_name
         if sheet_name not in workbook.sheetnames:
-            raise ValueError(_("Sheet '{}' not found in workbook").format(sheet_name))
+            error_msg = _("Sheet '{}' not found in workbook").format(sheet_name)
+            raise ValueError(error_msg)
 
         self._process_worksheet(workbook, sheet_name, file_path.name)
 
-        workbook.save(output_path)
+        try:
+            workbook.save(output_path)
+        except Exception as e:
+            error_msg = _("Failed to save processed file: {}").format(e)
+            raise FileProcessingError(error_msg) from e
+
         logger.info(
             _("Processed file saved: {} ✅").format(output_filename),
             logger.get_excel_log_filename(file_path.name),
@@ -70,7 +120,7 @@ class ExcelProcessor:
         # Archive the source file after successful processing
         if self._archive_processed_file(file_path):
             logger.info(
-                _("Source file moved to archive folder."),
+                _("Successful file moved to archive folder."),
                 logger.get_excel_log_filename(file_path.name),
             )
         else:
@@ -84,150 +134,39 @@ class ExcelProcessor:
     def _process_worksheet(
         self, workbook: openpyxl.Workbook, sheet_name: str, excel_filename: str
     ) -> None:
+        """Process a worksheet within the workbook.
+
+        Args:
+            workbook: OpenPyXL workbook instance
+            sheet_name: Name of the sheet to process
+            excel_filename: Name of the Excel file for logging
+        """
         worksheet = workbook[sheet_name]
 
-        # 提前输入列的字段
+        # 提取输入列的字段
         input_fields = self.extract_fields(worksheet)
 
-        # If we have a small number of fields, process normally
+        # 分批处理
         if len(input_fields) <= self.batch_size:
             self._process_single(worksheet, input_fields, excel_filename)
         else:
-            # For large files, process in batches
             self._process_in_batches(worksheet, input_fields, excel_filename)
 
-    def _process_single(
-        self, worksheet, input_fields: List[InterfaceField], excel_filename: str
-    ) -> None:
-        """Process a single batch of fields (original method)"""
-        # 提前输入列的字段
-        batch_input_fields = input_fields[:]
+    def _get_cds_context(
+        self, input_fields: List[InterfaceField], excel_filename: str
+    ) -> List[Dict[str, Any]]:
+        """Get CDS context for field matching.
 
-        # 1、根据输入内容查找视图
-        final_context_for_llm = []
-        module = batch_input_fields[0].module
-        if_name = batch_input_fields[0].if_name
-        if_desc = batch_input_fields[0].if_desc
-        module_query = ",".join([module, if_name, if_desc])
+        Args:
+            input_fields: List of input fields
+            excel_filename: Name of the Excel file for logging
 
-        with HANADBClient() as hana_client:
-            log_filename = logger.get_excel_log_filename(excel_filename)
+        Returns:
+            List of field context dictionaries
+        """
+        if not input_fields:
+            return []
 
-            cat_find_by_module = hana_client.run_vector_search(
-                query=module_query, k=3, log_filename=log_filename
-            )
-            if cat_find_by_module.empty:
-                logger.warning(
-                    _("No categories for module."),
-                    logger.get_excel_log_filename(excel_filename),
-                )
-                return
-
-            category_string = cat_find_by_module.iloc[0]["VIEWCATEGORY"]
-            views_find_by_cat = hana_client.get_views(
-                category=category_string, log_filename=log_filename
-            )
-            if views_find_by_cat.empty:
-                logger.warning(
-                    _("No views for category."),
-                    logger.get_excel_log_filename(excel_filename),
-                )
-            logger.info(
-                "-" * 80,
-                logger.get_excel_log_filename(excel_filename),
-            )
-            logger.info(
-                _("Found {} candidate CDS views").format(len(views_find_by_cat)),
-                logger.get_excel_log_filename(excel_filename),
-            )
-            # 根据输入内容查找最相关的视图
-            llm_return_views = self._select_relevant_views(
-                views_find_by_cat, batch_input_fields, excel_filename
-            )
-            if not llm_return_views:
-                logger.warning(
-                    _("No views found by LLM."),
-                    logger.get_excel_log_filename(excel_filename),
-                )
-
-            logger.info(
-                _("LLM selected {} CDS views.").format(len(llm_return_views)),
-                logger.get_excel_log_filename(excel_filename),
-            )
-
-            # If no views were selected, treat as processing failure and skip this file
-            if not llm_return_views:
-                logger.error(
-                    _("No CDS views selected - unable to process this file."),
-                    logger.get_excel_log_filename(excel_filename),
-                )
-                raise RuntimeError(
-                    _(
-                        "Processing failed: No relevant CDS views found for this interface."
-                    )
-                )
-            # 获取视图的字段
-            llm_return_views_fields = hana_client.get_fields(
-                cds_views=llm_return_views, log_filename=log_filename
-            )
-
-            # 3. Prepare the final context for the LLM using filtered fields
-            llm_return_views_df = views_find_by_cat[
-                views_find_by_cat["VIEWNAME"].isin(llm_return_views)
-            ]
-            final_context_for_llm = self._prepare_llm_context(
-                llm_return_views_fields, llm_return_views_df
-            )
-
-            logger.info(
-                "-" * 80,
-                logger.get_excel_log_filename(excel_filename),
-            )
-
-            # 根据查找的视图和字段调用LLM匹配
-            logger.info(
-                _("Calling LLM to match result..."),
-                logger.get_excel_log_filename(excel_filename),
-            )
-            try:
-                batch_results = self._match_fields(
-                    batch_input_fields, final_context_for_llm, excel_filename
-                )
-            except Exception as e:
-                logger.error(
-                    f"❌ LLM function call failed: {e}",
-                    logger.get_excel_log_filename(excel_filename),
-                )
-                raise RuntimeError(
-                    _("Failed to process file due to LLM error: {}").format(e)
-                ) from e
-            logger.info(
-                "-" * 80,
-                logger.get_excel_log_filename(excel_filename),
-            )
-
-            # 输入输出组合，方便后续解析映射
-            final_results = list(zip(input_fields, batch_results))
-
-            # Write results
-            logger.info(
-                _("Writing results to file..."),
-                logger.get_excel_log_filename(excel_filename),
-            )
-            self.write_results(worksheet, final_results)
-
-    def _process_in_batches(
-        self, worksheet, input_fields: List[InterfaceField], excel_filename: str
-    ) -> None:
-        """Process large number of fields in batches"""
-        logger.info(
-            _("Processing {} rows in batches of {}").format(
-                len(input_fields), self.batch_size
-            ),
-            logger.get_excel_log_filename(excel_filename),
-        )
-
-        # 1. Get common context for all batches (same module/interface)
         module = input_fields[0].module
         if_name = input_fields[0].if_name
         if_desc = input_fields[0].if_desc
@@ -236,7 +175,7 @@ class ExcelProcessor:
         with HANADBClient() as hana_client:
             log_filename = logger.get_excel_log_filename(excel_filename)
 
-            # Get CDS views once for all batches
+            # Get CDS views
             cat_find_by_module = hana_client.run_vector_search(
                 query=module_query, k=3, log_filename=log_filename
             )
@@ -245,7 +184,7 @@ class ExcelProcessor:
                     _("No categories for module."),
                     logger.get_excel_log_filename(excel_filename),
                 )
-                return
+                return []
 
             category_string = cat_find_by_module.iloc[0]["VIEWCATEGORY"]
             views_find_by_cat = hana_client.get_views(
@@ -256,14 +195,14 @@ class ExcelProcessor:
                     _("No views for category."),
                     logger.get_excel_log_filename(excel_filename),
                 )
-                return
+                return []
 
             logger.info(
                 _("Found {} candidate CDS views").format(len(views_find_by_cat)),
                 logger.get_excel_log_filename(excel_filename),
             )
 
-            # Select relevant views once for all batches
+            # Select relevant views using LLM
             llm_return_views = self._select_relevant_views(
                 views_find_by_cat, input_fields, excel_filename
             )
@@ -272,43 +211,137 @@ class ExcelProcessor:
                     _("No views found by LLM."),
                     logger.get_excel_log_filename(excel_filename),
                 )
-                raise RuntimeError(
-                    _(
-                        "Processing failed: No relevant CDS views found for this interface."
-                    )
-                )
+                return []
 
             logger.info(
                 _("LLM selected {} CDS views.").format(len(llm_return_views)),
                 logger.get_excel_log_filename(excel_filename),
             )
 
-            # Get fields from selected views once for all batches
+            # Get fields from selected views
             llm_return_views_fields = hana_client.get_fields(
                 cds_views=llm_return_views, log_filename=log_filename
             )
 
+            #Get Custom views fields
+            # custom_views_fields = hana_client.get_custom_fields(log_filename=log_filename)
+
+            #Merge fields
+            # llm_return_views_fields.extend(custom_views_fields)
+
             llm_return_views_df = views_find_by_cat[
                 views_find_by_cat["VIEWNAME"].isin(llm_return_views)
             ]
+
+            # 获取custom视图对应的DataFrame
+            # custom_views_df = views_find_by_cat[
+            #     views_find_by_cat["VIEWNAME"].isin(custom_views_fields)
+            # ]
+            #
+            # llm_return_views_df = pd.concat([llm_return_views_df, custom_views_df],ignore_index=True)
+
             final_context_for_llm = self._prepare_llm_context(
                 llm_return_views_fields, llm_return_views_df
             )
 
-            logger.info(
-                "-" * 80,
+            return final_context_for_llm
+
+    def _process_single(
+        self, worksheet, input_fields: List[InterfaceField], excel_filename: str
+    ) -> None:
+        """Process a single batch of fields.
+
+        Args:
+            worksheet: OpenPyXL worksheet instance
+            input_fields: List of input fields to process
+            excel_filename: Name of the Excel file for logging
+        """
+        # Get CDS context
+        final_context_for_llm = self._get_cds_context(input_fields, excel_filename)
+        if not final_context_for_llm:
+            error_msg = _("No CDS context available - unable to process this file.")
+            logger.error(
+                error_msg,
                 logger.get_excel_log_filename(excel_filename),
             )
+            raise FileProcessingError(error_msg)
 
-            # 2. Process fields in batches (with parallel processing)
-            all_results = []
+        # Process fields
+        try:
+            batch_results = self._match_fields(
+                input_fields, final_context_for_llm, excel_filename
+            )
+        except Exception as e:
+            error_msg = f"❌ LLM function call failed: {e}"
+            logger.error(
+                error_msg,
+                logger.get_excel_log_filename(excel_filename),
+            )
+            raise FileProcessingError(
+                _("Failed to process file due to LLM error: {}").format(str(e))
+            ) from e
 
-            # Split input fields into batches
-            batches = []
-            for i in range(0, len(input_fields), self.batch_size):
-                batch_fields = input_fields[i : i + self.batch_size]
-                batches.append((i, batch_fields))
+        # Combine input fields with results
+        final_results = list(zip(input_fields, batch_results))
 
+        logger.info(
+            "-" *80,
+            logger.get_excel_log_filename(excel_filename),
+        )
+
+        # Write results
+        logger.info(
+            _("Writing results to file..."),
+            logger.get_excel_log_filename(excel_filename),
+        )
+        self.write_results(worksheet, final_results)
+
+    def _process_in_batches(
+        self, worksheet, input_fields: List[InterfaceField], excel_filename: str
+    ) -> None:
+        """Process fields in batches for large files.
+
+        Args:
+            worksheet: OpenPyXL worksheet instance
+            input_fields: List of input fields to process
+            excel_filename: Name of the Excel file for logging
+        """
+        logger.info(
+            _("Processing {} rows in batches of {}").format(
+                len(input_fields), self.batch_size
+            ),
+            logger.get_excel_log_filename(excel_filename),
+        )
+
+        # Get common context for all batches
+        final_context_for_llm = self._get_cds_context(input_fields, excel_filename)
+        if not final_context_for_llm:
+            error_msg = _(
+                "Processing failed: No relevant CDS context found for this interface."
+            )
+            raise FileProcessingError(error_msg)
+
+        # Process fields in batches (with parallel processing)
+        all_results = []
+
+        # Split input fields into batches
+        batches = []
+        for i in range(0, len(input_fields), self.batch_size):
+            batch_fields = input_fields[i : i + self.batch_size]
+            batches.append((i, batch_fields))
+
+        # Process batches with progress bar
+        logger.info(
+            _("Processing {} batches...").format(len(batches)),
+            logger.get_excel_log_filename(excel_filename),
+        )
+        with tqdm(
+            total=len(batches),
+            desc=_("Processing batches"),
+            unit="batch",
+            ncols=100,
+            leave=False,
+        ) as pbar:
             # Process batches in parallel
             with ThreadPoolExecutor(
                 max_workers=self.max_concurrent_batches
@@ -326,6 +359,7 @@ class ExcelProcessor:
                 }
 
                 # Collect results as they complete
+                completed_batches = 0
                 for future in as_completed(future_to_batch):
                     batch_index, batch_size = future_to_batch[future]
                     batch_start = batch_index + 1
@@ -347,23 +381,38 @@ class ExcelProcessor:
                             logger.get_excel_log_filename(excel_filename),
                         )
                     except Exception as e:
+                        error_msg = _("Failed to process row {}-{}: {}").format(
+                            batch_start, batch_end, str(e)
+                        )
                         logger.error(
-                            _("Failed to process row {}-{}: {}").format(
-                                batch_start, batch_end, e
-                            ),
+                            error_msg,
                             logger.get_excel_log_filename(excel_filename),
                         )
                         # Continue with other batches even if one fails
 
-            # Sort results by row index to maintain order
-            all_results.sort(key=lambda x: x[0].row_index)
+                    # Update progress
+                    completed_batches += 1
+                    pbar.set_postfix_str(
+                        _("Completed: {}/{}").format(completed_batches, len(batches))
+                    )
+                    pbar.update(1)
+                    # Add newline to separate progress bar from logger output
+                    print()  # Add newline after progress update
 
-            # 3. Write all results
-            logger.info(
-                _("Writing {} results to file...").format(len(all_results)),
-                logger.get_excel_log_filename(excel_filename),
-            )
-            self.write_results(worksheet, all_results)
+        # Sort results by row index to maintain order
+        all_results.sort(key=lambda x: x[0].row_index)
+
+        logger.info(
+            "-" *80,
+            logger.get_excel_log_filename(excel_filename),
+        )
+
+        # Write all results
+        logger.info(
+            _("Writing {} results to file...").format(len(all_results)),
+            logger.get_excel_log_filename(excel_filename),
+        )
+        self.write_results(worksheet, all_results)
 
     def _process_batch(
         self,
@@ -372,30 +421,51 @@ class ExcelProcessor:
         excel_filename: str,
         batch_index: int,
     ) -> List[Dict[str, Any]]:
-        """Process a single batch of fields"""
+        """Process a single batch of fields.
+
+        Args:
+            batch_fields: List of fields in this batch
+            context: Context information for field matching
+            excel_filename: Name of the Excel file for logging
+            batch_index: Index of this batch
+
+        Returns:
+            List of matching results for the batch
+        """
         try:
-            return self._match_fields(batch_fields, context, excel_filename)
+            results = self._match_fields(batch_fields, context, excel_filename)
+
+            return results
         except Exception as e:
+            error_msg = _("Error in row {}: {}").format(batch_index, str(e))
             logger.error(
-                _("Error in row {}: {}").format(batch_index, e),
+                error_msg,
                 logger.get_excel_log_filename(excel_filename),
             )
             # Return empty results for failed batch
             return [{} for _ in batch_fields]
 
     def extract_fields(self, worksheet) -> List[InterfaceField]:
+        """Extract interface fields from the worksheet.
+
+        Args:
+            worksheet: OpenPyXL worksheet instance
+
+        Returns:
+            List of InterfaceField objects
+        """
         input_fields = []
 
-        header_row = self.excel_config["header_row"]
-        input_header_cols = self.column_mappings["input_header_cols"]
+        header_row = self.excel_config.header_row
+        input_header_cols = self.column_mappings.input_header_cols
 
         # 抬头module、接口信息
         module = worksheet[f"{input_header_cols['module']}{header_row}"].value or ""
         if_name = worksheet[f"{input_header_cols['if_name']}{header_row}"].value or ""
         if_desc = worksheet[f"{input_header_cols['if_desc']}{header_row}"].value or ""
 
-        start_row = self.excel_config["start_row"]
-        input_row_cols = self.column_mappings["input_row_cols"]
+        start_row = self.excel_config.start_row
+        input_row_cols = self.column_mappings.input_row_cols
 
         for row in range(start_row, (worksheet.max_row or 1000) + 1):
             field_name = worksheet[f"{input_row_cols['field_name']}{row}"].value
@@ -434,6 +504,16 @@ class ExcelProcessor:
         input_fields: List[InterfaceField],
         excel_filename: str,
     ) -> List[str]:
+        """Select relevant CDS views using AI service.
+
+        Args:
+            candidate_views_df: DataFrame with candidate views
+            input_fields: List of input fields
+            excel_filename: Name of the Excel file for logging
+
+        Returns:
+            List of selected view names
+        """
         views_prompt = self.ai_service.get_view_selection_prompt(
             candidate_views_df, input_fields
         )
@@ -461,6 +541,15 @@ class ExcelProcessor:
         all_fields_dict: Dict[str, List[Dict[str, Any]]],
         relevant_views_df: pd.DataFrame,
     ) -> List[Dict[str, Any]]:
+        """Prepare context for LLM field matching.
+
+        Args:
+            all_fields_dict: Dictionary of fields by view
+            relevant_views_df: DataFrame with relevant views
+
+        Returns:
+            List of field context dictionaries
+        """
         context_list = []
         view_desc_map = pd.Series(
             relevant_views_df.VIEWDESC.values, index=relevant_views_df.VIEWNAME
@@ -486,7 +575,13 @@ class ExcelProcessor:
     def write_results(
         self, worksheet, results: List[Tuple[InterfaceField, Dict[str, Any]]]
     ) -> None:
-        output_columns = self.column_mappings["output_columns"]
+        """Write matching results to the worksheet.
+
+        Args:
+            worksheet: OpenPyXL worksheet instance
+            results: List of tuples containing input fields and matching results
+        """
+        output_columns = self.column_mappings.output_columns
 
         processed_count = 0
         for interface_field, match_result in results:
@@ -540,7 +635,16 @@ class ExcelProcessor:
         context: Optional[List[Dict[str, Any]]] = None,
         excel_filename: str = None,
     ) -> List[Dict[str, Any]]:
-        """Field matching using AI services with HANA context"""
+        """Field matching using AI services with HANA context.
+
+        Args:
+            input_fields: List of input fields to match
+            context: Context information for matching
+            excel_filename: Name of the Excel file for logging
+
+        Returns:
+            List of matching results
+        """
         if not input_fields:
             return []
 
@@ -555,6 +659,16 @@ class ExcelProcessor:
         context: List[Dict[str, Any]],
         excel_filename: str = None,
     ) -> List[Dict[str, Any]]:
+        """Match fields with context using AI service.
+
+        Args:
+            input_fields: List of input fields to match
+            context: Context information for matching
+            excel_filename: Name of the Excel file for logging
+
+        Returns:
+            List of matching results
+        """
         all_fields_context = self._extract_fields_from_context(context)
 
         resulsts_prompt = self.ai_service.get_rag_matching_prompt(
@@ -576,14 +690,21 @@ class ExcelProcessor:
                 if excel_filename
                 else None,
             )
-            raise RuntimeError(error_msg)
+            raise FileProcessingError(error_msg)
 
         return self._parse_llm_response(results_response, input_fields, excel_filename)
 
     def _extract_fields_from_context(
         self, context: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
-        """Extract all fields from the matched views as context."""
+        """Extract all fields from the matched views as context.
+
+        Args:
+            context: Context information for matching
+
+        Returns:
+            List of field context dictionaries
+        """
         all_fields_context = []
 
         for field_detail in context:
@@ -609,6 +730,16 @@ class ExcelProcessor:
         input_fields: List,
         excel_filename: str = None,
     ) -> List[Dict[str, Any]]:
+        """Parse LLM response into structured results.
+
+        Args:
+            function_response: Raw LLM response
+            input_fields: List of input fields
+            excel_filename: Name of the Excel file for logging
+
+        Returns:
+            List of parsed matching results
+        """
         results = []
         matches = function_response.get("review", [])
 
@@ -628,13 +759,9 @@ class ExcelProcessor:
             if hasattr(input_field, "row_index"):
                 # InterfaceField object
                 row_index = input_field.row_index
-                obligatory = input_field.obligatory
-                sample_value = input_field.sample_value
             else:
                 # Dictionary
                 row_index = input_field.get("row_index")
-                obligatory = input_field.get("obligatory", "")
-                sample_value = input_field.get("sample_value", "")
 
             match_result = match_map.get(row_index, {})
 
@@ -648,29 +775,15 @@ class ExcelProcessor:
                 )
 
             key_flag_raw = match_result.get("key_flag", "")
-            if isinstance(key_flag_raw, bool):
-                key_flag = "X" if key_flag_raw else ""
-            elif isinstance(key_flag_raw, str):
-                key_flag = (
-                    "X" if key_flag_raw.lower() in ["true", "y", "yes", "x"] else ""
-                )
-            else:
-                key_flag = ""
+            key_flag = normalize_key_flag(key_flag_raw)
 
             # Clean field_id to remove view name prefix (technical field name)
             raw_field_id = match_result.get("field_id", "")
-            clean_field_id = ""
-
-            if raw_field_id:
-                # Remove view name prefix (e.g., "I_TIMESHEETRECORD.RECEIVERCOSTCENTER" -> "RECEIVERCOSTCENTER")
-                if "." in raw_field_id:
-                    clean_field_id = raw_field_id.split(".")[-1]
-                else:
-                    clean_field_id = raw_field_id
+            clean_field_id_val = clean_field_id(raw_field_id)
 
             # Parse notes to extract percentage and description
             notes_text = match_result.get("notes", "")
-            match_percentage, notes_description = self._parse_notes(notes_text)
+            match_percentage, notes_description = parse_notes(notes_text)
 
             # field_name should be the field description
             field_name = match_result.get("field_desc", "")
@@ -678,62 +791,21 @@ class ExcelProcessor:
             results.append(
                 {
                     "table_id": match_result.get("table_id", ""),
-                    "field_id": clean_field_id,  # Technical field name
+                    "field_id": clean_field_id_val,  # Technical field name
                     "field_name": field_name,  # Field description
                     "key_flag": key_flag,
-                    "obligatory": obligatory,
+                    "obligatory": match_result.get("obligatory", ""),
                     "data_type": match_result.get("data_type", ""),
                     "length_total": match_result.get("length_total", ""),
                     "length_dec": match_result.get("length_dec", ""),
                     "field_desc": match_result.get("field_desc", ""),
-                    "sample_value": sample_value,
+                    "sample_value": match_result.get("sample_value", ""),
                     "match": match_result.get("match"),
                     "notes": match_result.get("notes", ""),
                 }
             )
 
         return results
-
-    def _parse_notes(self, notes_text: str) -> Tuple[str, str]:
-        """Parse notes text to extract percentage and description.
-
-        Expected format: "XX% - Description" or "XX%: Description" or "Description (XX%)"
-        Returns: (percentage, description)
-        """
-        if not notes_text:
-            return "", ""
-
-        import re
-
-        # Pattern 1: "XX% - Description" or "XX%: Description"
-        pattern1 = r"^(\d+%)\s*[-:]\s*(.+)$"
-        match1 = re.match(pattern1, notes_text.strip())
-        if match1:
-            return match1.group(1), match1.group(2).strip()
-
-        # Pattern 2: "Description (XX%)"
-        pattern2 = r"^(.+)\s*\((\d+%)\)\s*$"
-        match2 = re.match(pattern2, notes_text.strip())
-        if match2:
-            return match2.group(2), match2.group(1).strip()
-
-        # Pattern 3: Just percentage "XX%"
-        pattern3 = r"^(\d+%)\s*$"
-        match3 = re.match(pattern3, notes_text.strip())
-        if match3:
-            return match3.group(1), ""
-
-        # Pattern 4: Contains percentage anywhere
-        pattern4 = r"(\d+%)"
-        match4 = re.search(pattern4, notes_text)
-        if match4:
-            percentage = match4.group(1)
-            # Remove percentage from description
-            description = re.sub(r"\s*\d+%\s*[-:()]*\s*", " ", notes_text).strip()
-            return percentage, description
-
-        # No percentage found, return everything as description
-        return "", notes_text.strip()
 
     def _archive_processed_file(self, source_file_path: Path) -> bool:
         """Move successfully processed file to excel_archive folder.
@@ -759,10 +831,10 @@ class ExcelProcessor:
             # Move the file to archive
             shutil.move(str(source_file_path), str(archive_path))
 
-            logger.info(
-                f"File archived: {source_file_path.name} → {archive_filename}",
-                logger.get_excel_log_filename(source_file_path.name),
-            )
+            # logger.info(
+            #     f"File archived: {source_file_path.name} → {archive_filename}",
+            #     logger.get_excel_log_filename(source_file_path.name),
+            # )
             return True
 
         except Exception as e:

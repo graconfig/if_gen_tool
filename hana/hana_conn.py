@@ -1,6 +1,12 @@
 import json
 import os
 from typing import List, Dict, Any
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -9,70 +15,116 @@ from hdbcli.dbapi import Error as HanaDbError
 
 from utils.i18n import _, get_current_language
 from utils.sap_logger import logger
+from utils.tools import sanitize_text, format_in_clause
+from utils.exceptions import DatabaseError
 
 
 load_dotenv()
 
 
 class HANADBClient:
+    """HANA Database client for accessing SAP data.
+
+    This client provides methods to query CDS views and fields from HANA Cloud,
+    with built-in retry mechanisms and error handling.
+    """
+
     def __init__(self):
+        """Initialize the HANA database client."""
+        # Table names
         self.scenario_table = "AI_ORCHESTRATION_RAG_BUSINESSSCENARIOS"
         self.cds_view_table = "AI_ORCHESTRATION_RAG_CDSVIEWS"
         self.view_fields_table = "AI_ORCHESTRATION_RAG_VIEWFIELDS"
+        self.custom_fields_table = "PWC_HAND_AI2REPORT_DEV_CUSTFIELDS"
 
+        # Connection parameters
         self.db_addr = os.getenv("HANA_ADDRESS")
         self.db_user = os.getenv("HANA_USER")
         self.db_pwd = os.getenv("HANA_PASSWORD")
         self._db_schema = os.getenv("HANA_SCHEMA")
+        self._db_schema_report = os.getenv("HANA_SCHEMA_REPORT")
 
         self.hana_client: ConnectionContext = None
 
     def connect(self, log_filename: str = None) -> None:
+        """Establish connection to HANA Cloud database.
+
+        Args:
+            log_filename: Optional log filename for contextual logging
+
+        Raises:
+            DatabaseError: If connection fails
+        """
         if self.hana_client:
             return
 
         try:
             self.hana_client = ConnectionContext(
                 address=self.db_addr,
-                port="443",  # 443 is usual
+                port=443,  # 443 is usual
                 user=self.db_user,
                 password=self.db_pwd,
                 encrypt=True,
             )
         except HanaDbError as e:
-            logger.error(_("HANA Cloud connection failed: {}").format(e), log_filename)
-            raise
+            error_msg = _("HANA Cloud connection failed: {}").format(e)
+            logger.error(error_msg, log_filename)
+            raise DatabaseError(error_msg) from e
 
     def close(self, log_filename: str = None) -> None:
-        """Close database connection."""
+        """Close database connection.
+
+        Args:
+            log_filename: Optional log filename for contextual logging
+        """
         if self.hana_client:
-            self.hana_client.close()
-            logger.info(_("Database connection closed."), log_filename)
+            try:
+                self.hana_client.close()
+            except Exception as e:
+                logger.warning(
+                    _("Error closing database connection: {}").format(e), log_filename
+                )
 
     def __enter__(self):
+        """Context manager entry."""
         self.connect()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit."""
         self.close()
 
-    def _format_in_clause(self, items: List[str]) -> str:
-        if not items:
-            return "('')"
-        formatted_items = [f"'{str(item).replace("'", "''")}'" for item in items]
-        return f"({', '.join(formatted_items)})"
-
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type((HanaDbError, DatabaseError)),
+        reraise=True,
+    )
     def run_vector_search(
         self,
         query: str,
-        metric="COSINE_SIMILARITY",
-        k=3,
+        metric: str = "COSINE_SIMILARITY",
+        k: int = 3,
         log_filename: str = None,
     ) -> pd.DataFrame:
+        """Run vector search to find relevant business scenarios.
+
+        Args:
+            query: Search query text
+            metric: Similarity metric to use (default: COSINE_SIMILARITY)
+            k: Number of results to return (default: 3)
+            log_filename: Optional log filename for contextual logging
+
+        Returns:
+            DataFrame with search results
+
+        Raises:
+            DatabaseError: If query fails
+        """
         if not self.hana_client:
             error_msg = _("HANA Cloud not connected.")
             logger.error(error_msg, log_filename)
-            raise ConnectionError(error_msg)
+            raise DatabaseError(error_msg)
 
         sort = "ASC" if metric == "L2DISTANCE" else "DESC"
 
@@ -81,7 +133,7 @@ class HANADBClient:
         ORDER BY {metric}(VECTOR_EMBEDDING('{query}', 'QUERY', 'SAP_NEB.20240715'),"EMBEDDINGS") {sort}""".format(
             k=k,
             metric=metric,
-            query=query,
+            query=sanitize_text(query),  # Sanitize query
             sort=sort,
             table=self.scenario_table,
             schema=self._db_schema,
@@ -91,21 +143,40 @@ class HANADBClient:
             df_context = hdf.head(k).collect()
             return df_context
         except HanaDbError as e:
-            logger.error(_("SQL execution failed: {}").format(e), log_filename)
-            return pd.DataFrame()
+            error_msg = _("SQL execution failed: {}").format(e)
+            logger.error(error_msg, log_filename)
+            raise DatabaseError(error_msg) from e
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type((HanaDbError, DatabaseError)),
+        reraise=True,
+    )
     def get_views(self, category: str, log_filename: str = None) -> pd.DataFrame:
+        """Get CDS views for a specific category.
+
+        Args:
+            category: Category to filter views by
+            log_filename: Optional log filename for contextual logging
+
+        Returns:
+            DataFrame with CDS views
+
+        Raises:
+            DatabaseError: If query fails
+        """
         if not self.hana_client:
             error_msg = _("Database not connected.")
             logger.error(error_msg, log_filename)
-            raise ConnectionError(error_msg)
+            raise DatabaseError(error_msg)
 
         categories = [cat for cat in category.split("/") if cat]
         if not categories:
             logger.warning(_("No valid categories provided"), log_filename)
             return pd.DataFrame()
 
-        category_sql = self._format_in_clause(categories)
+        category_sql = format_in_clause(categories)
 
         sql = """
              SELECT "VIEWNAME", "VIEWDESC"
@@ -119,11 +190,16 @@ class HANADBClient:
             result = self.hana_client.sql(sql).collect()
             return result
         except HanaDbError as e:
-            logger.error(
-                _("SQL error occurred while getting views: {}").format(e), log_filename
-            )
-            return pd.DataFrame()
+            error_msg = _("SQL error occurred while getting views: {}").format(e)
+            logger.error(error_msg, log_filename)
+            raise DatabaseError(error_msg) from e
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type((HanaDbError, DatabaseError)),
+        reraise=True,
+    )
     def get_filter_fields(
         self,
         cds_views: List[str],
@@ -133,16 +209,32 @@ class HANADBClient:
         threshold: float = 0.2,
         log_filename: str = None,
     ) -> Dict[str, List[Dict[str, Any]]]:
+        """Get filtered fields from CDS views based on similarity to query.
+
+        Args:
+            cds_views: List of CDS view names to query
+            query: Query text for similarity matching
+            language: Language code (default: current language)
+            top_k: Maximum number of fields to return per view (default: 50)
+            threshold: Minimum similarity threshold (default: 0.2)
+            log_filename: Optional log filename for contextual logging
+
+        Returns:
+            Dictionary mapping view names to lists of field dictionaries
+
+        Raises:
+            DatabaseError: If query fails
+        """
         if not self.hana_client:
             error_msg = _("Database not connected.")
             logger.error(error_msg, log_filename)
-            raise ConnectionError(error_msg)
+            raise DatabaseError(error_msg)
 
         if language is None:
             language = get_current_language()
         db_language = language
 
-        cds_views_sql = self._format_in_clause(cds_views)
+        cds_views_sql = format_in_clause(cds_views)
         sql = """
             SELECT "TABLENAME","TABLEDESC","CONTENT"
             FROM "{schema}"."{table}"
@@ -162,7 +254,7 @@ class HANADBClient:
             filtered_count = 0
 
             # Clean query text once for reuse
-            fields_embed_query = query.replace("'", "''").replace('"', '""')
+            fields_embed_query = sanitize_text(query)
 
             if not fields_df.empty:
                 logger.info(_("Applying fields filtering..."), log_filename)
@@ -191,9 +283,7 @@ class HANADBClient:
                             if not field_text:
                                 continue
 
-                            field_text = field_text.replace("'", "''").replace(
-                                '"', '""'
-                            )
+                            field_text = sanitize_text(field_text)
 
                             # Calculate similarity for the current field
                             similarity_sql = f"""
@@ -261,13 +351,32 @@ class HANADBClient:
             return filtered_fields_by_view
 
         except HanaDbError as e:
-            logger.error(_("SQL error in get_fields: {}").format(e), log_filename)
-            return {view: [] for view in cds_views}
+            error_msg = _("SQL error in get_fields: {}").format(e)
+            logger.error(error_msg, log_filename)
+            raise DatabaseError(error_msg) from e
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type((HanaDbError, DatabaseError)),
+        reraise=True,
+    )
     def get_fields(
         self, cds_views: List[str], log_filename: str = None
     ) -> Dict[str, List[Dict[str, Any]]]:
-        cds_views_sql = self._format_in_clause(cds_views)
+        """Get all fields from specified CDS views.
+
+        Args:
+            cds_views: List of CDS view names to query
+            log_filename: Optional log filename for contextual logging
+
+        Returns:
+            Dictionary mapping view names to lists of field dictionaries
+
+        Raises:
+            DatabaseError: If query fails
+        """
+        cds_views_sql = format_in_clause(cds_views)
 
         sql = """
             SELECT "TABLENAME","TABLEDESC","CONTENT"
@@ -320,14 +429,60 @@ class HANADBClient:
                         )
                         continue
                     except Exception as e:
-                        logger.error(_("Error parse fields:{}").format(e), log_filename)
+                        error_msg = _("Error parse fields:{}").format(str(e))
+                        logger.error(error_msg, log_filename)
+                        raise DatabaseError(error_msg) from e
             return results
         except HanaDbError as e:
-            logger.error(_("Error: {}").format(e), log_filename)
-            return {}
+            error_msg = _("Error: {}").format(str(e))
+            logger.error(error_msg, log_filename)
+            raise DatabaseError(error_msg) from e
+
+    def get_custom_fields(self,log_filename: str = None) -> Dict[str, List[Dict[str, Any]]]:
+        """Get custom fields from specified CDS views.
+        """
+
+        sql = """
+            SELECT "TARGETTABLE","TARGETFIELD","TARGETDESC",
+                   "TARGETTYPE","TARGETLENGTH","TARGETDECIMALS",
+                   "KEYFLAG","OBLIGATORY"
+            FROM "{schema}"."{table}"
+        """.format(
+            schema=self._db_schema_report,
+            table=self.custom_fields_table
+        )
+        try:
+            fields_df = self.hana_client.sql(sql).collect()
+            # 初始化结果字典
+            results = {}
+            if not fields_df.empty:
+                for _, row in fields_df.iterrows():
+                    view_name = row["TARGETTABLE"]
+                    field_dict = {
+                        "field_name": row["TARGETFIELD"],
+                        "is_key": row["KEYFLAG"],
+                        "field_desc": row["TARGETDESC"],
+                        "data_type": row["TARGETTYPE"],
+                        "length_total": row["TARGETLENGTH"],
+                        "length_dec": row["TARGETDECIMALS"],
+                    }
+                    results[view_name].append(field_dict)
+            return results
+        except HanaDbError as e:
+            error_msg = _("Error: {}").format(str(e))
+            logger.error(error_msg, log_filename)
+            raise DatabaseError(error_msg) from e
 
     @staticmethod
     def parse_fields(content_str: str) -> str:
+        """Parse field content string to fix JSON formatting issues.
+
+        Args:
+            content_str: Raw field content string
+
+        Returns:
+            Repaired JSON string
+        """
         result_chars = []
         in_string = False
         i = 0

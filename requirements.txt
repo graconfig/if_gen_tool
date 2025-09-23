@@ -1,3 +1,4 @@
+pydantic
 python-dotenv==1.1.1
 aioboto3==15.1.0
 openpyxl==3.1.5
@@ -9,3 +10,9 @@ hana-ml==2.25.25080800
 pandas==2.3.2
 google-api-core==2.25.1
 google-cloud-aiplatform==1.114.0
+tenacity==9.0.0
+tqdm==4.66.0
+psutil==7.1.0
+PyYAML==6.0.1
+Jinja2==3.1.4
+pydantic-settings==2.4.0

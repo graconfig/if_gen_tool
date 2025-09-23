@@ -30,83 +30,9 @@ class LanguageManager:
         self.set_language(self._get_default_language())
 
     def _get_default_language(self) -> str:
-        """Get default language following simplified priority order.
-
-        Priority:
-        1. Environment variable (LANGUAGE)
-        2. OS language detection
-        3. English fallback
-        """
-        # Priority 1: Check environment variable
-        env_lang = os.getenv("LANGUAGE", "").lower()
-        if env_lang in self.SUPPORTED_LANGUAGES:
-            return env_lang
-
-        # Priority 2: Try to detect OS language
-        try:
-            import locale
-
-            # Try different methods to get system locale
-            system_locale = None
-
-            # Method 1: Get default locale
-            try:
-                system_locale = locale.getdefaultlocale()[0]
-            except (TypeError, ValueError):
-                pass
-
-            # Method 2: Get current locale if method 1 fails
-            if not system_locale:
-                try:
-                    system_locale = locale.getlocale()[0]
-                except (TypeError, ValueError):
-                    pass
-
-            # Method 3: Try Windows-specific method
-            if not system_locale and os.name == "nt":
-                try:
-                    import ctypes
-
-                    windll = ctypes.windll.kernel32
-                    locale_id = windll.GetUserDefaultUILanguage()
-
-                    # Common Windows locale IDs
-                    if (
-                        locale_id == 0x0804 or locale_id == 0x0404
-                    ):  # Simplified/Traditional Chinese
-                        return "zh"
-                    elif locale_id == 0x0411:  # Japanese
-                        return "ja"
-                    elif locale_id in [0x0409, 0x0809, 0x0C09]:  # English variants
-                        return "en"
-                except Exception:
-                    pass
-
-            # Parse locale string if we have one
-            if system_locale:
-                system_locale = system_locale.lower()
-                if system_locale.startswith("zh"):
-                    return "zh"
-                elif system_locale.startswith("ja"):
-                    return "ja"
-                elif system_locale.startswith("en"):
-                    return "en"
-
-        except Exception:
-            # If locale detection fails, continue to fallback
-            pass
-
-        # Fallback: Check LANG environment variable (Unix-like systems)
-        system_lang = os.getenv("LANG", "").lower()
-        if system_lang.startswith("zh"):
-            return "zh"
-        elif system_lang.startswith("ja"):
-            return "ja"
-        elif system_lang.startswith("en"):
-            return "en"
-
-        # Priority 3: Final fallback to English
-        return self.DEFAULT_LANGUAGE
+        """Get default language by calling the centralized utility function."""
+        from utils.tools import detect_system_language
+        return detect_system_language()
 
     def set_language(self, language: str) -> bool:
         """Set current language for translations."""

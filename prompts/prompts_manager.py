@@ -1,81 +1,53 @@
-"""
-Dynamic prompt template manager with internationalization support.
-Automatically selects appropriate language templates based on current locale.
-"""
+import os
+from pathlib import Path
+from functools import lru_cache
 
-from typing import Dict, List, Any, Type
-
-import pandas as pd
+import yaml
+from jinja2 import Environment, FileSystemLoader
 
 from utils.i18n import get_current_language
-# Import all template classes
-from prompts.prompts_en import EnPromptTemplates
-from prompts.prompts_jp import JapanesePromptTemplates
-from prompts.prompts_zh import ChinesePromptTemplates
-
 
 class PromptTemplateManager:
-    """Manages prompt templates for different languages."""
+    """Manages prompt templates loaded from YAML files for different languages."""
 
-    _template_classes = {
-        'en': EnPromptTemplates,
-        'zh': ChinesePromptTemplates,
-        'ja': JapanesePromptTemplates
-    }
+    def __init__(self, templates_dir: Path):
+        self.env = Environment(loader=FileSystemLoader(templates_dir))
 
-    @classmethod
-    def get_template_class(cls, language: str = None) -> Type:
-        """Get template class for specified language.
-        
-        Args:
-            language: Language code (en, zh, ja). If None, uses current language.
-            
-        Returns:
-            Template class for the specified language.
-        """
+    @lru_cache(maxsize=3) # Cache loaded YAML files for en, zh, ja
+    def _load_templates(self, language: str) -> dict:
+        """Load and parse the YAML file for a given language."""
+        template_file = f"{language}.yaml"
+        try:
+            with open(self.env.loader.get_source(self.env, template_file)[1], 'r', encoding='utf-8') as f:
+                return yaml.safe_load(f)
+        except Exception as e:
+            # Fallback to English if the language file has issues
+            if language != 'en':
+                return self._load_templates('en')
+            raise e
+
+    def get(self, prompt_name: str, language: str = None, **kwargs) -> str:
+        """Get and render a prompt template."""
         if language is None:
             language = get_current_language()
+        
+        templates = self._load_templates(language)
+        prompt_config = templates.get(prompt_name)
 
-        # Fallback to English if language not supported
-        return cls._template_classes.get(language, EnPromptTemplates)
+        if not prompt_config:
+            raise ValueError(f"Prompt '{prompt_name}' not found in language '{language}'.")
 
-    @classmethod
-    def get_field_matching_prompt(cls, input_fields: List[Dict[str, Any]],
-                                  context: List[Dict[str, Any]],
-                                  language: str = None) -> str:
-        """Get field matching prompt in specified language."""
-        template_class = cls.get_template_class(language)
-        return template_class.get_field_matching_prompt(input_fields, context)
+        template_str = prompt_config.get('template', '')
+        template = self.env.from_string(template_str)
+        
+        return template.render(**kwargs)
 
-    @classmethod
-    def get_view_selection_prompt(cls, candidate_views_df: pd.DataFrame,
-                                  input_fields: List[Dict[str, Any]],
-                                  language: str = None) -> str:
-        """Get view selection prompt in specified language."""
-        template_class = cls.get_template_class(language)
-        return template_class.get_view_selection_prompt(candidate_views_df, input_fields)
+# Initialize the manager with the default path
+_prompt_manager_instance = None
 
-    @classmethod
-    def get_supported_languages(cls) -> List[str]:
-        """Get list of supported language codes."""
-        return list(cls._template_classes.keys())
-
-    @classmethod
-    def is_language_supported(cls, language: str) -> bool:
-        """Check if language is supported."""
-        return language in cls._template_classes
-
-
-# Global template manager functions for backward compatibility
-def get_field_matching_prompt(input_fields: List[Dict[str, Any]],
-                              context: List[Dict[str, Any]],
-                              language: str = None) -> str:
-    """Get field matching prompt using current or specified language."""
-    return PromptTemplateManager.get_field_matching_prompt(input_fields, context, language)
-
-
-def get_view_selection_prompt(candidate_views_df: pd.DataFrame,
-                              input_fields: List[Dict[str, Any]],
-                              language: str = None) -> str:
-    """Get view selection prompt using current or specified language."""
-    return PromptTemplateManager.get_view_selection_prompt(candidate_views_df, input_fields, language)
+def get_prompt_manager() -> PromptTemplateManager:
+    global _prompt_manager_instance
+    if _prompt_manager_instance is None:
+        templates_path = Path(__file__).parent / "templates"
+        _prompt_manager_instance = PromptTemplateManager(templates_path)
+    return _prompt_manager_instance
