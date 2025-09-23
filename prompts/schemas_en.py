@@ -57,6 +57,14 @@ class ClaudeSchemas:
                                                     "type": "string",
                                                     "description": "Whether the field is a key field - use 'X' if true from context, empty string otherwise",
                                                 },
+                                                "obligatory": {
+                                                    "type": "string",
+                                                    "description": "Whether the field is required or optional from context, empty string otherwise",
+                                                },
+                                                "sample_value": {
+                                                    "type": "string",
+                                                    "description": "Sample value for SAP CDS field, empty string otherwise",
+                                                },
                                                 "match": {
                                                     "type": "integer",
                                                     "description": "Match confidence percentage (0-100)",
@@ -66,7 +74,7 @@ class ClaudeSchemas:
                                                     "description": "Notes explaining the match choice from context OR why no suitable match was found in the provided context",
                                                 },
                                             },
-                                            "required": ["row_index","table_id","field_id","field_desc","data_type","length_total","length_dec","key_flag","match_confidence", "notes"]
+                                            "required": ["row_index","table_id","field_id","field_desc","data_type","length_total","length_dec","key_flag","obligatory","sample_value","match_confidence", "notes"]
                                         },
                                     }
                                 },

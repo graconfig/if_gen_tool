@@ -16,6 +16,7 @@ from utils.i18n import _
 from utils.sap_logger import logger
 from hana.hana_conn import HANADBClient
 from models.data_models import InterfaceField
+from tqdm import tqdm
 
 # Suppress the specific DrawingML warning by matching the message text
 warnings.filterwarnings(
@@ -171,10 +172,24 @@ class ExcelProcessor:
                 cds_views=llm_return_views, log_filename=log_filename
             )
 
+            #Get Custom views fields
+            # custom_views_fields = hana_client.get_custom_fields(log_filename=log_filename)
+
+            #Merge fields
+            # llm_return_views_fields.extend(custom_views_fields)
+
             # 3. Prepare the final context for the LLM using filtered fields
             llm_return_views_df = views_find_by_cat[
                 views_find_by_cat["VIEWNAME"].isin(llm_return_views)
             ]
+
+            # 获取custom视图对应的DataFrame
+            # custom_views_df = views_find_by_cat[
+            #     views_find_by_cat["VIEWNAME"].isin(custom_views_fields)
+            # ]
+            #
+            # llm_return_views_df = pd.concat([llm_return_views_df, custom_views_df],ignore_index=True)
+
             final_context_for_llm = self._prepare_llm_context(
                 llm_return_views_fields, llm_return_views_df
             )
@@ -288,9 +303,24 @@ class ExcelProcessor:
                 cds_views=llm_return_views, log_filename=log_filename
             )
 
+            # Get Custom views fields
+            # custom_views_fields = hana_client.get_custom_fields(log_filename=log_filename)
+
+
+            # Merge fields
+            # llm_return_views_fields.extend(custom_views_fields)
+
             llm_return_views_df = views_find_by_cat[
                 views_find_by_cat["VIEWNAME"].isin(llm_return_views)
             ]
+
+            # 获取custom视图对应的DataFrame
+            # custom_views_df = views_find_by_cat[
+            #     views_find_by_cat["VIEWNAME"].isin(custom_views_fields)
+            # ]
+            #
+            # llm_return_views_df = pd.concat([llm_return_views_df, custom_views_df],ignore_index=True)
+
             final_context_for_llm = self._prepare_llm_context(
                 llm_return_views_fields, llm_return_views_df
             )
@@ -309,51 +339,73 @@ class ExcelProcessor:
                 batch_fields = input_fields[i : i + self.batch_size]
                 batches.append((i, batch_fields))
 
+            logger.info(
+                _("Processing {} batches...").format(len(batches)),
+                logger.get_excel_log_filename(excel_filename),
+            )
+
             # Process batches in parallel
-            with ThreadPoolExecutor(
-                max_workers=self.max_concurrent_batches
-            ) as executor:
-                # Submit all batches for processing
-                future_to_batch = {
-                    executor.submit(
-                        self._process_batch,
-                        batch_fields,
-                        final_context_for_llm,
-                        excel_filename,
-                        i,
-                    ): (i, len(batch_fields))
-                    for i, batch_fields in batches
-                }
+            with tqdm(
+                    total=len(batches),
+                    desc=_("Processing batches"),
+                    unit="batch",
+                    ncols=100,
+                    leave=False,
+            ) as pbar:
+                with ThreadPoolExecutor(
+                    max_workers=self.max_concurrent_batches
+                ) as executor:
+                    # Submit all batches for processing
+                    future_to_batch = {
+                        executor.submit(
+                            self._process_batch,
+                            batch_fields,
+                            final_context_for_llm,
+                            excel_filename,
+                            i,
+                        ): (i, len(batch_fields))
+                        for i, batch_fields in batches
+                    }
 
-                # Collect results as they complete
-                for future in as_completed(future_to_batch):
-                    batch_index, batch_size = future_to_batch[future]
-                    batch_start = batch_index + 1
-                    batch_end = batch_index + batch_size
+                    # Collect results as they complete
+                    completed_batches = 0
+                    for future in as_completed(future_to_batch):
+                        batch_index, batch_size = future_to_batch[future]
+                        batch_start = batch_index + 1
+                        batch_end = batch_index + batch_size
 
-                    try:
-                        batch_results = future.result()
-                        # Combine input fields with results for this batch
-                        batch_fields = input_fields[
-                            batch_index : batch_index + batch_size
-                        ]
-                        batch_final_results = list(zip(batch_fields, batch_results))
-                        all_results.extend(batch_final_results)
+                        try:
+                            batch_results = future.result()
+                            # Combine input fields with results for this batch
+                            batch_fields = input_fields[
+                                batch_index : batch_index + batch_size
+                            ]
+                            batch_final_results = list(zip(batch_fields, batch_results))
+                            all_results.extend(batch_final_results)
 
-                        logger.info(
-                            _("Row {}-{} processed successfully").format(
-                                batch_start, batch_end
-                            ),
-                            logger.get_excel_log_filename(excel_filename),
+                            logger.info(
+                                _("Row {}-{} processed successfully").format(
+                                    batch_start, batch_end
+                                ),
+                                logger.get_excel_log_filename(excel_filename),
+                            )
+                        except Exception as e:
+                            logger.error(
+                                _("Failed to process row {}-{}: {}").format(
+                                    batch_start, batch_end, e
+                                ),
+                                logger.get_excel_log_filename(excel_filename),
+                            )
+                            # Continue with other batches even if one fails
+
+                        # Update progress
+                        completed_batches += 1
+                        pbar.set_postfix_str(
+                            _("Completed: {}/{}").format(completed_batches, len(batches))
                         )
-                    except Exception as e:
-                        logger.error(
-                            _("Failed to process row {}-{}: {}").format(
-                                batch_start, batch_end, e
-                            ),
-                            logger.get_excel_log_filename(excel_filename),
-                        )
-                        # Continue with other batches even if one fails
+                        pbar.update(1)
+                        # Add newline to separate progress bar from logger output
+                        print()  # Add newline after progress update
 
             # Sort results by row index to maintain order
             all_results.sort(key=lambda x: x[0].row_index)
@@ -628,13 +680,9 @@ class ExcelProcessor:
             if hasattr(input_field, "row_index"):
                 # InterfaceField object
                 row_index = input_field.row_index
-                obligatory = input_field.obligatory
-                sample_value = input_field.sample_value
             else:
                 # Dictionary
                 row_index = input_field.get("row_index")
-                obligatory = input_field.get("obligatory", "")
-                sample_value = input_field.get("sample_value", "")
 
             match_result = match_map.get(row_index, {})
 
@@ -681,12 +729,12 @@ class ExcelProcessor:
                     "field_id": clean_field_id,  # Technical field name
                     "field_name": field_name,  # Field description
                     "key_flag": key_flag,
-                    "obligatory": obligatory,
+                    "obligatory": match_result.get("obligatory", ""),
                     "data_type": match_result.get("data_type", ""),
                     "length_total": match_result.get("length_total", ""),
                     "length_dec": match_result.get("length_dec", ""),
                     "field_desc": match_result.get("field_desc", ""),
-                    "sample_value": sample_value,
+                    "sample_value": match_result.get("sample_value", ""),
                     "match": match_result.get("match"),
                     "notes": match_result.get("notes", ""),
                 }
