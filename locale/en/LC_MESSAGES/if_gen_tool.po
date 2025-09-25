@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: if_gen_tool 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-17 17:20+0800\n"
+"POT-Creation-Date: 2025-09-25 14:13+0800\n"
 "PO-Revision-Date: 2025-09-11 19:47+0800\n"
 "Last-Translator: SAP Team\n"
 "Language: en\n"
@@ -19,294 +19,328 @@ msgstr ""
 "Generated-By: Babel 2.17.0\n"
 
 # Main application messages
-#: main.py:41
+#: main.py:55
 #, python-brace-format
 msgid "Data directory not found: {}"
 msgstr "Data directory not found: {}"
 
-#: main.py:68
+#: main.py:82
 #, python-brace-format
 msgid "{}h {}m {:.2f}s"
 msgstr "{}h {}m {:.2f}s"
 
-#: main.py:75
-msgid "SAP IF Design Generation Tool"
-msgstr "SAP IF Design Generation Tool"
-
-#: main.py:79
-msgid "Process specific Excel file (relative to input directory)"
-msgstr "Process specific Excel file (relative to input directory)"
-
-#: main.py:86
-msgid "Set interface language (en, zh, ja)"
-msgstr "Set interface language (en, zh, ja)"
-
-#: main.py:93
-msgid "Choose AI provider (claude, gemini, openai) - all via AI Core"
-msgstr ""
-
-#: main.py:123 main.py:275 main.py:300
+#: main.py:98 main.py:358
 #, python-brace-format
 msgid "Language: {}"
 msgstr ""
 
-#: main.py:131 main.py:308
+#: main.py:109
 #, fuzzy
 msgid "[Step 1]: Detecting available AI services..."
 msgstr "[Step 1] 🔍 Auto-detecting available AI services..."
 
-#: main.py:147 main.py:329
+#: main.py:125
 #, fuzzy
 msgid "[Step 2]: Excel Processing..."
 msgstr "[Step 3] 📄 Excel Processing..."
 
-#: main.py:157
+#: main.py:133
 #, fuzzy, python-brace-format
-msgid "Processing specific file: {}"
+msgid "Processing file: {}"
 msgstr ""
 "\n"
 "Processing: {} start time: {}"
 
-#: main.py:161
-#, fuzzy, python-brace-format
-msgid "Log file created: {}"
-msgstr "❌ Failed: {}"
-
-#: main.py:168
+#: main.py:144
 #, python-brace-format
 msgid "Processing file: {} start time: {}"
 msgstr "Processing file: {} start time: {}"
 
-#: main.py:179
+#: main.py:155
 #, python-brace-format
 msgid "Completed: {} ✅"
 msgstr "Completed: {} ✅"
 
-#: main.py:193
+#: main.py:169
 #, python-brace-format
 msgid "Processing {} completed at: {}"
 msgstr "Processing {} completed at: {}"
 
-#: main.py:200
+#: main.py:176
 #, python-brace-format
 msgid "File processing time: {}"
 msgstr "File processing time: {}"
 
-#: main.py:206
+#: main.py:182
 #, python-brace-format
 msgid "Total project time: {}"
 msgstr "Total project time: {}"
 
-#: main.py:218 main.py:245
-#, python-brace-format
-msgid "[Project End Time]: {} ====="
-msgstr "[Project End Time]: {} ====="
-
-#: main.py:224 main.py:251 main.py:387 main.py:427
-#, python-brace-format
-msgid "===== Total Time: {} ====="
-msgstr "===== Total Time: {} ====="
-
-#: main.py:230
-msgid "Application completed successfully"
-msgstr ""
-
-#: main.py:262
-#, python-brace-format
-msgid "File not found: {}"
-msgstr "File not found: {}"
-
-#: main.py:279
-msgid "❌ No Excel files found in data/excel_input/ directory"
-msgstr "❌ No Excel files found in data/excel_input/ directory"
-
-#: main.py:284
-msgid "❌ Please add Excel files to process or use --file to specify a file"
-msgstr "❌ Please add Excel files to process or use --file to specify a file"
-
-#: main.py:289
-#, fuzzy, python-brace-format
-msgid "Application ended - No files to process"
-msgstr "Found {} Excel file(s) to process:"
-
-#: main.py:339
-#, fuzzy, python-brace-format
-msgid "Processing file {} of {}: {}"
-msgstr "Processing {} completed at: {}"
-
-#: main.py:381 main.py:421
+#: main.py:194 main.py:241
 #, fuzzy, python-brace-format
 msgid "[File End Time]: {} ====="
 msgstr "[Project End Time]: {} ====="
 
-#: main.py:393
+#: main.py:200 main.py:247
 #, fuzzy, python-brace-format
+msgid "Total Time: {}"
+msgstr "[Project Start Time]: {}"
+
+#: main.py:206
+#, fuzzy
 msgid "File processing completed successfully"
 msgstr "Processing {} completed at: {}"
 
-#: main.py:439
+#: main.py:282
+msgid "SAP IF Design Generation Tool"
+msgstr "SAP IF Design Generation Tool"
+
+#: main.py:286
+msgid "Process specific Excel file (relative to input directory)"
+msgstr "Process specific Excel file (relative to input directory)"
+
+#: main.py:293
+msgid "Set interface language (en, zh, ja)"
+msgstr "Set interface language (en, zh, ja)"
+
+#: main.py:300
+msgid "Choose AI provider (claude, gemini, openai) - all via AI Core"
+msgstr ""
+
+#: main.py:345
+#, python-brace-format
+msgid "File not found: {}"
+msgstr "File not found: {}"
+
+#: main.py:362
+msgid "❌ No Excel files found in data/excel_input/ directory"
+msgstr "❌ No Excel files found in data/excel_input/ directory"
+
+#: main.py:367
+msgid "❌ Please add Excel files to process or use --file to specify a file"
+msgstr "❌ Please add Excel files to process or use --file to specify a file"
+
+#: main.py:372
+#, fuzzy
+msgid "Application ended - No files to process"
+msgstr "Found {} Excel file(s) to process:"
+
+#: main.py:381
+#, fuzzy, python-brace-format
+msgid "Found {} Excel files to process"
+msgstr "Found {} Excel file(s) to process:"
+
+#: main.py:411
+#, python-brace-format
+msgid "✅ Successfully processed: {}"
+msgstr ""
+
+#: main.py:414
+#, fuzzy, python-brace-format
+msgid "❌ Failed to process: {} - {}"
+msgstr "Failed to process file due to LLM error: {}"
+
+#: main.py:417
+#, python-brace-format
+msgid "❌ Exception processing: {} - {}"
+msgstr ""
+
+#: main.py:424
 #, python-brace-format
 msgid "❌ Application error: {}"
 msgstr "❌ Application error: {}"
 
-#: main.py:443
+#: main.py:428
 #, fuzzy, python-brace-format
 msgid "Application error occurred: {}"
 msgstr "❌ Application error: {}"
 
-#: main.py:447
+#: main.py:432
 #, fuzzy, python-brace-format
 msgid "Error timestamp: {}"
 msgstr "   ❌ Error: {}"
 
 # Excel processor messages
-#: excel/excel_processor.py:38
+#: excel/excel_processor.py:48
 #, python-brace-format
 msgid "❌ Input file not found: {}"
 msgstr "❌ Input file not found: {}"
 
-#: excel/excel_processor.py:57
+#: excel/excel_processor.py:67
 #, python-brace-format
 msgid "Sheet '{}' not found in workbook"
 msgstr "Sheet '{}' not found in workbook"
 
-#: excel/excel_processor.py:63
+#: excel/excel_processor.py:73
 #, python-brace-format
 msgid "Processed file saved: {} ✅"
 msgstr "Processed file saved: {} ✅"
 
-#: excel/excel_processor.py:70
+#: excel/excel_processor.py:80
 msgid "Source file moved to archive folder."
 msgstr ""
 
-#: excel/excel_processor.py:76
+#: excel/excel_processor.py:86
 msgid ""
 "⚠️ Warning: Could not archive source file, but processing completed "
 "successfully."
 msgstr ""
 
-#: excel/excel_processor.py:103
+#: excel/excel_processor.py:128 excel/excel_processor.py:266
 msgid "No categories for module."
 msgstr "No categories for module."
 
-#: excel/excel_processor.py:114
+#: excel/excel_processor.py:139 excel/excel_processor.py:277
 msgid "No views for category."
 msgstr "No views for category."
 
-#: excel/excel_processor.py:122
+#: excel/excel_processor.py:147 excel/excel_processor.py:283
 #, fuzzy, python-brace-format
 msgid "Found {} candidate CDS views"
 msgstr "Found {} candidate CDS views."
 
-#: excel/excel_processor.py:131
+#: excel/excel_processor.py:156 excel/excel_processor.py:293
 msgid "No views found by LLM."
 msgstr "No views found by LLM."
 
-#: excel/excel_processor.py:136
+#: excel/excel_processor.py:161 excel/excel_processor.py:303
 #, python-brace-format
 msgid "LLM selected {} CDS views."
 msgstr "LLM selected {} CDS views."
 
-#: excel/excel_processor.py:143
+#: excel/excel_processor.py:168
 msgid "No CDS views selected - unable to process this file."
 msgstr "No CDS views selected - unable to process this file."
 
-#: excel/excel_processor.py:148
+#: excel/excel_processor.py:173 excel/excel_processor.py:298
 msgid "Processing failed: No relevant CDS views found for this interface."
 msgstr "Processing failed: No relevant CDS views found for this interface."
 
-#: excel/excel_processor.py:201
+#: excel/excel_processor.py:210
 msgid "Calling LLM to match result..."
 msgstr "Calling LLM to match result..."
 
-#: excel/excel_processor.py:209
-msgid "LLM Process Finished"
-msgstr "LLM Process Finished"
-
-#: excel/excel_processor.py:218
+#: excel/excel_processor.py:223
 #, python-brace-format
 msgid "Failed to process file due to LLM error: {}"
 msgstr "Failed to process file due to LLM error: {}"
 
-#: excel/excel_processor.py:230
+#: excel/excel_processor.py:235
 msgid "Writing results to file..."
 msgstr "Writing results to file..."
 
+#: excel/excel_processor.py:245
+#, fuzzy, python-brace-format
+msgid "Processing {} rows in batches of {}"
+msgstr "Processing {} completed at: {}"
+
+#: excel/excel_processor.py:348
+#, python-brace-format
+msgid "Processing {} batches..."
+msgstr ""
+
+#: excel/excel_processor.py:355
+#, fuzzy
+msgid "Processing batches"
+msgstr "File processing time: {}"
+
+#: excel/excel_processor.py:392
+#, fuzzy, python-brace-format
+msgid "Row {}-{} processed successfully"
+msgstr "Processing {} completed at: {}"
+
+#: excel/excel_processor.py:399
+#, fuzzy, python-brace-format
+msgid "Failed to process row {}-{}: {}"
+msgstr "Failed to process file due to LLM error: {}"
+
+#: excel/excel_processor.py:409
+#, fuzzy, python-brace-format
+msgid "Completed: {}/{}"
+msgstr "Completed: {} ✅"
+
+#: excel/excel_processor.py:422
+#, fuzzy, python-brace-format
+msgid "Writing {} results to file..."
+msgstr "Writing results to file..."
+
+#: excel/excel_processor.py:444
+#, fuzzy, python-brace-format
+msgid "Error in batch {}: {}"
+msgstr "   ❌ Error: {}"
+
+#: excel/excel_processor.py:636
+msgid "LLM returned empty response for field matching"
+msgstr ""
+
 # HANA connection messages
-#: hana/hana_conn.py:43
+#: hana/hana_conn.py:45
 #, python-brace-format
 msgid "HANA Cloud connection failed: {}"
 msgstr "HANA Cloud connection failed: {}"
 
-#: hana/hana_conn.py:50
+#: hana/hana_conn.py:52
 msgid "Database connection closed."
 msgstr "Database connection closed."
 
-#: hana/hana_conn.py:73
+#: hana/hana_conn.py:75
 msgid "HANA Cloud not connected."
 msgstr "HANA Cloud not connected."
 
-#: hana/hana_conn.py:94
+#: hana/hana_conn.py:96
 #, python-brace-format
 msgid "SQL execution failed: {}"
 msgstr "SQL execution failed: {}"
 
-#: hana/hana_conn.py:99 hana/hana_conn.py:137
+#: hana/hana_conn.py:101 hana/hana_conn.py:139
 msgid "Database not connected."
 msgstr "Database not connected."
 
-#: hana/hana_conn.py:105
+#: hana/hana_conn.py:107
 #, fuzzy
 msgid "No valid categories provided"
 msgstr "No categories for module."
 
-#: hana/hana_conn.py:123
+#: hana/hana_conn.py:125
 #, python-brace-format
 msgid "SQL error occurred while getting views: {}"
 msgstr "SQL error occurred while getting views: {}"
 
-#: hana/hana_conn.py:168
+#: hana/hana_conn.py:170
 msgid "Applying fields filtering..."
 msgstr ""
 
-#: hana/hana_conn.py:243
+#: hana/hana_conn.py:245
 #, python-brace-format
 msgid "⚠️ Warning: Could not parse CONTENT JSON for view {}"
 msgstr "⚠️ Warning: Could not parse CONTENT JSON for view {}"
 
-#: hana/hana_conn.py:256
-#, python-brace-format, python-format
-msgid ""
-"After filtering: {} fields selected from {} total fields ({:.1f}% "
-"reduction)"
-msgstr ""
-
-#: hana/hana_conn.py:264
+#: hana/hana_conn.py:260
 #, fuzzy, python-brace-format
 msgid "SQL error in get_fields: {}"
 msgstr "SQL error occurred while getting views: {}"
 
-#: hana/hana_conn.py:317
+#: hana/hana_conn.py:313
 #, fuzzy, python-brace-format
 msgid "⚠️ Warning: Could not parse CONTENT JSON for view {} error: {}"
 msgstr "⚠️ Warning: Could not parse CONTENT JSON for view {}"
 
-#: hana/hana_conn.py:323
+#: hana/hana_conn.py:319
 #, python-brace-format
 msgid "Error parse fields:{}"
 msgstr ""
 
-#: hana/hana_conn.py:326
+#: hana/hana_conn.py:322 hana/hana_conn.py:356
 #, fuzzy, python-brace-format
 msgid "Error: {}"
 msgstr "   ❌ Error: {}"
 
-#: hana/hana_conn.py:382
+#: hana/hana_conn.py:413
 #, python-brace-format
 msgid "--- Step 1: Executing vector search for query '{}' ---"
 msgstr "--- Step 1: Executing vector search for query '{}' ---"
 
-#: hana/hana_conn.py:388
+#: hana/hana_conn.py:419
 msgid ""
 "\n"
 "Vector search results:"
@@ -314,7 +348,7 @@ msgstr ""
 "\n"
 "Vector search results:"
 
-#: hana/hana_conn.py:396
+#: hana/hana_conn.py:427
 #, python-brace-format
 msgid ""
 "\n"
@@ -323,7 +357,7 @@ msgstr ""
 "\n"
 "--- Step 2: Getting all related CDS views using category string '{}' ---"
 
-#: hana/hana_conn.py:404
+#: hana/hana_conn.py:435
 #, python-brace-format
 msgid ""
 "\n"
@@ -332,7 +366,7 @@ msgstr ""
 "\n"
 "Found {} CDS views:"
 
-#: hana/hana_conn.py:409
+#: hana/hana_conn.py:440
 msgid ""
 "\n"
 "Vector search returned no results."
@@ -340,7 +374,7 @@ msgstr ""
 "\n"
 "Vector search returned no results."
 
-#: hana/hana_conn.py:411
+#: hana/hana_conn.py:442
 #, python-brace-format
 msgid ""
 "\n"
@@ -354,45 +388,45 @@ msgstr ""
 msgid "Failed to generate embeddings: {}"
 msgstr ""
 
-#: utils/ai_connectivity_test.py:71
+#: utils/ai_connectivity.py:71
 #, fuzzy, python-brace-format
 msgid "AI Service initialization failed: {}..."
 msgstr "AI Service initialization failed: {}"
 
-#: utils/ai_connectivity_test.py:89
+#: utils/ai_connectivity.py:89
 #, fuzzy, python-brace-format
 msgid "Using specified AI provider: {}"
 msgstr "[INFO] Using specified AI provider: {}"
 
-#: utils/ai_connectivity_test.py:111
+#: utils/ai_connectivity.py:111
 #, fuzzy, python-brace-format
 msgid "Using configured default AI provider: {}"
 msgstr "[INFO] Using specified AI provider: {}"
 
-#: utils/ai_connectivity_test.py:123
+#: utils/ai_connectivity.py:123
 msgid "No default AI provider configured, testing in priority order"
 msgstr ""
 
-#: utils/ai_connectivity_test.py:133
+#: utils/ai_connectivity.py:133
 #, python-brace-format
 msgid "Testing {}..."
 msgstr "Testing {}..."
 
-#: utils/ai_connectivity_test.py:142
+#: utils/ai_connectivity.py:142
 #, python-brace-format
 msgid "Selected AI Provider: {}"
 msgstr "Selected AI Provider: {}"
 
-#: utils/ai_connectivity_test.py:148
+#: utils/ai_connectivity.py:148
 msgid "❌ Not available"
 msgstr "❌ Not available"
 
-#: utils/ai_connectivity_test.py:153
+#: utils/ai_connectivity.py:153
 #, python-brace-format
 msgid "❌ Failed: {}"
 msgstr "❌ Failed: {}"
 
-#: utils/ai_connectivity_test.py:160 utils/ai_connectivity_test.py:166
+#: utils/ai_connectivity.py:160 utils/ai_connectivity.py:166
 msgid ""
 "❌ No AI services are available. Please check your configuration and API "
 "keys."
@@ -400,12 +434,12 @@ msgstr ""
 "❌ No AI services are available. Please check your configuration and API "
 "keys."
 
-#: utils/ai_connectivity_test.py:180
+#: utils/ai_connectivity.py:180
 #, fuzzy
 msgid "🚀 Testing all AI providers via AI Core..."
 msgstr "🚀 Testing all AI service providers..."
 
-#: utils/ai_connectivity_test.py:187
+#: utils/ai_connectivity.py:187
 #, python-brace-format
 msgid ""
 "\n"
@@ -414,30 +448,30 @@ msgstr ""
 "\n"
 "🧪 Testing {}:"
 
-#: utils/ai_connectivity_test.py:197
+#: utils/ai_connectivity.py:197
 msgid "   ✅ Available"
 msgstr "   ✅ Available"
 
-#: utils/ai_connectivity_test.py:198
+#: utils/ai_connectivity.py:198
 #, python-brace-format
 msgid "   LLM: {}"
 msgstr "   LLM: {}"
 
-#: utils/ai_connectivity_test.py:199
+#: utils/ai_connectivity.py:199
 #, python-brace-format
 msgid "   Embedding: {}"
 msgstr "   Embedding: {}"
 
-#: utils/ai_connectivity_test.py:202
+#: utils/ai_connectivity.py:202
 msgid "   ❌ Not available"
 msgstr "   ❌ Not available"
 
-#: utils/ai_connectivity_test.py:206
+#: utils/ai_connectivity.py:206
 #, python-brace-format
 msgid "   ❌ Error: {}"
 msgstr "   ❌ Error: {}"
 
-#: utils/ai_connectivity_test.py:210
+#: utils/ai_connectivity.py:210
 msgid ""
 "\n"
 "📊 Summary:"
@@ -445,73 +479,73 @@ msgstr ""
 "\n"
 "📊 Summary:"
 
-#: utils/ai_connectivity_test.py:211
+#: utils/ai_connectivity.py:211
 #, python-brace-format
 msgid "   Available: {}/{}"
 msgstr "   Available: {}/{}"
 
-#: utils/ai_connectivity_test.py:214
+#: utils/ai_connectivity.py:214
 #, python-brace-format
 msgid "   ✅ Ready: {}"
 msgstr "   ✅ Ready: {}"
 
-#: utils/ai_connectivity_test.py:216
+#: utils/ai_connectivity.py:216
 #, python-brace-format
 msgid "   🎯 Recommended: {}"
 msgstr "   🎯 Recommended: {}"
 
-#: utils/ai_connectivity_test.py:222
+#: utils/ai_connectivity.py:222
 msgid "   ❌ No services available"
 msgstr "   ❌ No services available"
 
-#: utils/ai_connectivity_test.py:237
+#: utils/ai_connectivity.py:237
 #, python-brace-format
 msgid "🧪 Testing {} connectivity..."
 msgstr "🧪 Testing {} connectivity..."
 
-#: utils/ai_connectivity_test.py:244
+#: utils/ai_connectivity.py:244
 #, python-brace-format
 msgid "✅ {} is ready to use!"
 msgstr "✅ {} is ready to use!"
 
-#: utils/ai_connectivity_test.py:245
+#: utils/ai_connectivity.py:245
 #, python-brace-format
 msgid "   LLM Model: {}"
 msgstr "   LLM Model: {}"
 
-#: utils/ai_connectivity_test.py:246
+#: utils/ai_connectivity.py:246
 #, python-brace-format
 msgid "   Embedding Model: {}"
 msgstr "   Embedding Model: {}"
 
-#: utils/ai_connectivity_test.py:249
+#: utils/ai_connectivity.py:249
 #, python-brace-format
 msgid "❌ {} is not available"
 msgstr "❌ {} is not available"
 
-#: utils/ai_connectivity_test.py:253
+#: utils/ai_connectivity.py:253
 #, python-brace-format
 msgid "❌ {} test failed: {}"
 msgstr "❌ {} test failed: {}"
 
-#: utils/ai_connectivity_test.py:262
+#: utils/ai_connectivity.py:262
 msgid "AI Service Connectivity Test"
 msgstr "AI Service Connectivity Test"
 
-#: utils/ai_connectivity_test.py:267
+#: utils/ai_connectivity.py:267
 #, fuzzy
 msgid "Test specific AI provider via AI Core"
 msgstr "Test specific AI service provider"
 
-#: utils/ai_connectivity_test.py:272
+#: utils/ai_connectivity.py:272
 msgid "Test all available AI providers"
 msgstr "Test all available AI providers"
 
-#: utils/ai_connectivity_test.py:292
+#: utils/ai_connectivity.py:292
 msgid "🚀 Auto-detecting available AI services..."
 msgstr "🚀 Auto-detecting available AI services..."
 
-#: utils/ai_connectivity_test.py:296
+#: utils/ai_connectivity.py:296
 #, python-brace-format
 msgid ""
 "\n"
@@ -520,7 +554,7 @@ msgstr ""
 "\n"
 "🎉 Ready to use {}!"
 
-#: utils/ai_connectivity_test.py:301
+#: utils/ai_connectivity.py:301
 msgid ""
 "\n"
 "✅ Connectivity test completed!"
@@ -528,7 +562,7 @@ msgstr ""
 "\n"
 "✅ Connectivity test completed!"
 
-#: utils/ai_connectivity_test.py:304
+#: utils/ai_connectivity.py:304
 #, python-brace-format
 msgid "❌ Test error: {}"
 msgstr "❌ Test error: {}"
@@ -539,7 +573,7 @@ msgid "SAP IF Design Generation Tool - Processing Log"
 msgstr "SAP IF Design Generation Tool"
 
 #: utils/sap_logger.py:203
-#, fuzzy, python-brace-format
+#, fuzzy
 msgid "Application Log"
 msgstr "❌ Application error: {}"
 
@@ -553,46 +587,65 @@ msgstr "❌ Failed: {}"
 msgid "Start Time: {}"
 msgstr "[Project Start Time]: {}"
 
-#: utils/token_statistics.py:106
-msgid "📊 TOKEN USAGE SUMMARY"
-msgstr ""
+#~ msgid "Log file created: {}"
+#~ msgstr "❌ Failed: {}"
 
-#: utils/token_statistics.py:108
-#, python-brace-format
-msgid "Session: {}"
-msgstr ""
+#~ msgid "[Project End Time]: {} ====="
+#~ msgstr "[Project End Time]: {} ====="
 
-#: utils/token_statistics.py:109
-#, fuzzy, python-brace-format
-msgid "Embedding: {:,}"
-msgstr "   Embedding: {}"
+#~ msgid "===== Total Time: {} ====="
+#~ msgstr "===== Total Time: {} ====="
 
-#: utils/token_statistics.py:110
-#, fuzzy, python-brace-format
-msgid "LLM Input: {:,}"
-msgstr "   LLM: {}"
+#~ msgid "Application completed successfully"
+#~ msgstr ""
 
-#: utils/token_statistics.py:111
-#, fuzzy, python-brace-format
-msgid "LLM Output: {:,}"
-msgstr "   LLM Model: {}"
+#~ msgid "Processing file {} of {}: {}"
+#~ msgstr "Processing {} completed at: {}"
 
-#: utils/token_statistics.py:112
-#, fuzzy, python-brace-format
-msgid "LLM Total: {:,}"
-msgstr "   LLM Model: {}"
+#~ msgid "LLM Process Finished"
+#~ msgstr "LLM Process Finished"
 
-#: utils/token_statistics.py:114
-#, python-brace-format
-msgid "Total: {:,}"
-msgstr ""
+#~ msgid "SAP IF Design Generation Tool - Processing Log"
+#~ msgstr "SAP IF Design Generation Tool"
 
-#: utils/token_statistics.py:122
-msgid "🤖 By Provider:"
-msgstr ""
+#~ msgid "Application Log"
+#~ msgstr "❌ Application error: {}"
 
-#: utils/token_statistics.py:129
-#, python-brace-format
-msgid "  {}: {:,}"
-msgstr ""
+#~ msgid "Excel File: {}"
+#~ msgstr "❌ Failed: {}"
+
+#~ msgid "📊 TOKEN USAGE SUMMARY"
+#~ msgstr ""
+
+#~ msgid "Session: {}"
+#~ msgstr ""
+
+#~ msgid "Embedding: {:,}"
+#~ msgstr "   Embedding: {}"
+
+#~ msgid "LLM Input: {:,}"
+#~ msgstr "   LLM: {}"
+
+#~ msgid "LLM Output: {:,}"
+#~ msgstr "   LLM Model: {}"
+
+#~ msgid "LLM Total: {:,}"
+#~ msgstr "   LLM Model: {}"
+
+#~ msgid "Total: {:,}"
+#~ msgstr ""
+
+#~ msgid "🤖 By Provider:"
+#~ msgstr ""
+
+#~ msgid "  {}: {:,}"
+#~ msgstr ""
+
+#~ msgid "Processing batch {} with {} fields in thread {}"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "After filtering: {} fields selected from"
+#~ " {} total fields ({:.1f}% reduction)"
+#~ msgstr ""
 

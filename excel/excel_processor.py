@@ -4,6 +4,7 @@ SAP IF Process
 
 import shutil
 import warnings
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
@@ -34,8 +35,13 @@ class ExcelProcessor:
 
         self.excel_config = config_manager.get_excel_config()
         self.column_mappings = config_manager.get_column_mappings()
+
+        # Use environment-based configuration
         self.batch_size = int(self.excel_config.get("batch_size", 30))
-        self.max_concurrent_batches = int(self.excel_config.get("max_concurrent_batches", 4))
+        self.max_concurrent_batches = int(
+            self.excel_config.get("max_concurrent_batches", 5)
+        )
+        self.config_source = "environment variables"
 
     def process_file(self, file_path: Path) -> None:
         if not file_path.exists():
@@ -172,11 +178,17 @@ class ExcelProcessor:
                 cds_views=llm_return_views, log_filename=log_filename
             )
 
-            #Get Custom views fields
-            # custom_views_fields = hana_client.get_custom_fields(log_filename=log_filename)
+            # Get Custom views fields
+            custom_views_fields = hana_client.get_custom_fields(
+                log_filename=log_filename
+            )
 
-            #Merge fields
-            # llm_return_views_fields.extend(custom_views_fields)
+            # Merge fields (both are dictionaries)
+            for view_name, fields_list in custom_views_fields.items():
+                if view_name in llm_return_views_fields:
+                    llm_return_views_fields[view_name].extend(fields_list)
+                else:
+                    llm_return_views_fields[view_name] = fields_list
 
             # 3. Prepare the final context for the LLM using filtered fields
             llm_return_views_df = views_find_by_cat[
@@ -184,11 +196,13 @@ class ExcelProcessor:
             ]
 
             # 获取custom视图对应的DataFrame
-            # custom_views_df = views_find_by_cat[
-            #     views_find_by_cat["VIEWNAME"].isin(custom_views_fields)
-            # ]
-            #
-            # llm_return_views_df = pd.concat([llm_return_views_df, custom_views_df],ignore_index=True)
+            custom_views_df = views_find_by_cat[
+                views_find_by_cat["VIEWNAME"].isin(custom_views_fields.keys())
+            ]
+
+            llm_return_views_df = pd.concat(
+                [llm_return_views_df, custom_views_df], ignore_index=True
+            )
 
             final_context_for_llm = self._prepare_llm_context(
                 llm_return_views_fields, llm_return_views_df
@@ -306,7 +320,6 @@ class ExcelProcessor:
             # Get Custom views fields
             # custom_views_fields = hana_client.get_custom_fields(log_filename=log_filename)
 
-
             # Merge fields
             # llm_return_views_fields.extend(custom_views_fields)
 
@@ -346,11 +359,11 @@ class ExcelProcessor:
 
             # Process batches in parallel
             with tqdm(
-                    total=len(batches),
-                    desc=_("Processing batches"),
-                    unit="batch",
-                    ncols=100,
-                    leave=False,
+                total=len(batches),
+                desc=_("Processing batches"),
+                unit="batch",
+                ncols=100,
+                leave=False,
             ) as pbar:
                 with ThreadPoolExecutor(
                     max_workers=self.max_concurrent_batches
@@ -401,7 +414,9 @@ class ExcelProcessor:
                         # Update progress
                         completed_batches += 1
                         pbar.set_postfix_str(
-                            _("Completed: {}/{}").format(completed_batches, len(batches))
+                            _("Completed: {}/{}").format(
+                                completed_batches, len(batches)
+                            )
                         )
                         pbar.update(1)
                         # Add newline to separate progress bar from logger output
@@ -426,10 +441,15 @@ class ExcelProcessor:
     ) -> List[Dict[str, Any]]:
         """Process a single batch of fields"""
         try:
+            # Ensure the current file is set for this worker thread for proper token tracking
+            from utils.token_statistics import set_current_file
+
+            set_current_file(excel_filename)
+
             return self._match_fields(batch_fields, context, excel_filename)
         except Exception as e:
             logger.error(
-                _("Error in row {}: {}").format(batch_index, e),
+                _("Error in batch {}: {}").format(batch_index, e),
                 logger.get_excel_log_filename(excel_filename),
             )
             # Return empty results for failed batch
@@ -807,10 +827,6 @@ class ExcelProcessor:
             # Move the file to archive
             shutil.move(str(source_file_path), str(archive_path))
 
-            logger.info(
-                f"File archived: {source_file_path.name} → {archive_filename}",
-                logger.get_excel_log_filename(source_file_path.name),
-            )
             return True
 
         except Exception as e:

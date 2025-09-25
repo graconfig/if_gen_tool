@@ -12,6 +12,7 @@ from logging import Logger
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Final, Optional
+from utils.i18n import _
 
 try:
     import pytz
@@ -174,9 +175,7 @@ class ExcelFileLogger(Logger):
         translate = get_translation_function()  # Get translation function dynamically
 
         # Check if this is an application log (starts with special prefixes)
-        if excel_filename.startswith(
-            ("error_", "app_", "log_", "batch_", "summary_", "project_end_")
-        ):
+        if excel_filename.startswith(("error_", "app_", "log_", "project_end_")):
             # For application logs, use the filename as-is
             log_filename = (
                 excel_filename
@@ -198,14 +197,14 @@ class ExcelFileLogger(Logger):
         # Write header
         self.info("=" * 80, log_filename)
         self.info(
-            translate("SAP IF Design Generation Tool - Processing Log"), log_filename
+            _("SAP IF Design Generation Tool - Processing Log"), log_filename
         )
         if excel_filename.startswith("log_"):
-            self.info(translate("Application Log"), log_filename)
+            self.info(_("Application Log"), log_filename)
         else:
-            self.info(translate("Excel File: {}").format(excel_filename), log_filename)
+            self.info(_("Excel File: {}").format(excel_filename), log_filename)
         self.info(
-            translate("Start Time: {}").format(
+            _("Start Time: {}").format(
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             ),
             log_filename,
@@ -224,8 +223,6 @@ class ExcelFileLogger(Logger):
             excel_filename.startswith("error_")
             or excel_filename.startswith("app_")
             or excel_filename.startswith("log_")
-            or excel_filename.startswith("batch_")
-            or excel_filename.startswith("summary_")
             or excel_filename.startswith("project_end_")
         ):
             # For application logs, use the filename as-is

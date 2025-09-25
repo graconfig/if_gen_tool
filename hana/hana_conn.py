@@ -9,6 +9,7 @@ from hdbcli.dbapi import Error as HanaDbError
 
 from utils.i18n import _, get_current_language
 from utils.sap_logger import logger
+from collections import defaultdict
 
 
 load_dotenv()
@@ -16,16 +17,16 @@ load_dotenv()
 
 class HANADBClient:
     def __init__(self):
-        self.scenario_table = "AI_ORCHESTRATION_RAG_BUSINESSSCENARIOS" #PWC_HAND_AI2REPORT_DEV_BUSINESSSCENARIOS
-        self.cds_view_table = "AI_ORCHESTRATION_RAG_CDSVIEWS"          #PWC_HAND_AI2REPORT_DEV_CDSVIEWS
-        self.view_fields_table = "AI_ORCHESTRATION_RAG_VIEWFIELDS"     #PWC_HAND_AI2REPORT_DEV_VIEWFIELDS
-        self.custom_fields_table = "PWC_HAND_AI2REPORT_DEV_CUSTFIELDS"
+        self.scenario_table = "AI_ORCHESTRATION_RAG_BUSINESSSCENARIOS"
+        self.cds_view_table = "AI_ORCHESTRATION_RAG_CDSVIEWS"
+        self.view_fields_table = "AI_ORCHESTRATION_RAG_VIEWFIELDS"
+        self.cust_fields_table = "PWC_HAND_AI2REPORT_DEV_CUSTFIELDS"
 
         self.db_addr = os.getenv("HANA_ADDRESS")
         self.db_user = os.getenv("HANA_USER")
         self.db_pwd = os.getenv("HANA_PASSWORD")
         self._db_schema = os.getenv("HANA_SCHEMA")
-        self._db_schema_report = os.getenv("HANA_SCHEMA_REPORT")
+        self._db_schema_cust = os.getenv("HANA_SCHEMA_CUST")
 
         self.hana_client: ConnectionContext = None
 
@@ -253,12 +254,6 @@ class HANADBClient:
                 if original_count > 0
                 else 0
             )
-            logger.info(
-                _(
-                    "After filtering: {} fields selected from {} total fields ({:.1f}% reduction)"
-                ).format(filtered_count, original_count, reduction_percentage),
-                log_filename,
-            )
 
             return filtered_fields_by_view
 
@@ -328,23 +323,21 @@ class HANADBClient:
             logger.error(_("Error: {}").format(e), log_filename)
             return {}
 
-    def get_custom_fields(self,log_filename: str = None) -> Dict[str, List[Dict[str, Any]]]:
-        """Get custom fields from specified CDS views.
-        """
+    def get_custom_fields(
+        self, log_filename: str = None
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """Get custom fields from specified CDS views."""
 
         sql = """
             SELECT "TARGETTABLE","TARGETFIELD","TARGETDESC",
                    "TARGETTYPE","TARGETLENGTH","TARGETDECIMALS",
                    "KEYFLAG","OBLIGATORY"
             FROM "{schema}"."{table}"
-        """.format(
-            schema=self._db_schema_report,
-            table=self.custom_fields_table
-        )
+        """.format(schema=self._db_schema_cust, table=self.cust_fields_table)
         try:
             fields_df = self.hana_client.sql(sql).collect()
             # 初始化结果字典
-            results = {}
+            results = defaultdict(list)
             if not fields_df.empty:
                 for _, row in fields_df.iterrows():
                     view_name = row["TARGETTABLE"]
@@ -357,11 +350,11 @@ class HANADBClient:
                         "length_dec": row["TARGETDECIMALS"],
                     }
                     results[view_name].append(field_dict)
-            return results
+            return dict(results)
         except HanaDbError as e:
             error_msg = _("Error: {}").format(str(e))
             logger.error(error_msg, log_filename)
-            raise DatabaseError(error_msg) from e
+            raise HanaDbError(error_msg) from e
 
     @staticmethod
     def parse_fields(content_str: str) -> str:

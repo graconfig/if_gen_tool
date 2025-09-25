@@ -6,6 +6,8 @@ import argparse
 import sys
 from datetime import datetime
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 from core.config import ConfigurationManager
 from utils.i18n import initialize_i18n, _
@@ -80,6 +82,196 @@ def format_execution_time(seconds):
     return _("{}h {}m {:.2f}s").format(hours, minutes, seconds)
 
 
+def process_single_excel_file(
+    file_path, data_dir, config_manager, target_language, provider, project_start_time
+):
+    """
+    Process a single Excel file with its own configuration and logging.
+    This function is thread-safe and handles all processing for one file.
+    """
+    service_name = "unknown"
+
+    try:
+        # Use Excel file logging for the entire process
+        with if_gen_logging(file_path.name) as log_path:
+            logger.info(
+                _("Language: {}").format(target_language),
+                logger.get_excel_log_filename(file_path.name),
+            )
+
+            # Get configuration from environment variables
+            excel_config = config_manager.get_excel_config()
+
+            # Auto-select AI service
+            logger.info("=" * 80, logger.get_excel_log_filename(file_path.name))
+
+            logger.info(
+                _("[Step 1]: Detecting available AI services..."),
+                logger.get_excel_log_filename(file_path.name),
+            )
+
+            # Use the specified provider
+            ai_service, service_name = auto_select_ai_service(
+                config_manager,
+                provider,
+                target_language,
+                logger.get_excel_log_filename(file_path.name),
+            )
+
+            # Set current provider for token tracking
+            set_current_provider(service_name)
+
+            logger.info(
+                _("[Step 2]: Excel Processing..."),
+                logger.get_excel_log_filename(file_path.name),
+            )
+
+            # Initialize Excel processor with AI service (using environment config)
+            excel_processor = ExcelProcessor(data_dir, ai_service, config_manager)
+
+            logger.info(
+                _("Processing file: {}").format(file_path.name),
+                logger.get_excel_log_filename(file_path.name),
+            )
+
+            # Set current file for token tracking
+            from utils.token_statistics import set_current_file
+
+            set_current_file(file_path.name)
+
+            file_start_time = datetime.now()
+            logger.info(
+                _("Processing file: {} start time: {}").format(
+                    file_path.name,
+                    file_start_time.strftime("%Y-%m-%d %H:%M:%S"),
+                ),
+                logger.get_excel_log_filename(file_path.name),
+            )
+
+            excel_processor.process_file(file_path)
+
+            file_end_time = datetime.now()
+            logger.info(
+                _("Completed: {} ✅").format(file_path.name),
+                logger.get_excel_log_filename(file_path.name),
+            )
+            logger.info("-" * 80, logger.get_excel_log_filename(file_path.name))
+
+            # 计算当前文件的单独处理时间
+            file_seconds = (file_end_time - file_start_time).total_seconds()
+            # 计算从项目开始到当前文件完成的累计时间
+            project_elapsed_seconds = (
+                file_end_time - project_start_time
+            ).total_seconds()
+
+            # 输出时间信息
+            logger.info(
+                _("Processing {} completed at: {}").format(
+                    file_path.name,
+                    file_end_time.strftime("%Y-%m-%d %H:%M:%S"),
+                ),
+                logger.get_excel_log_filename(file_path.name),
+            )
+            logger.info(
+                _("File processing time: {}").format(
+                    format_execution_time(file_seconds)
+                ),
+                logger.get_excel_log_filename(file_path.name),
+            )
+            logger.info(
+                _("Total project time: {}").format(
+                    format_execution_time(project_elapsed_seconds)
+                ),
+                logger.get_excel_log_filename(file_path.name),
+            )
+
+            # Project end time in same log file
+            project_end_time = datetime.now()
+            total_project_seconds = (
+                project_end_time - project_start_time
+            ).total_seconds()
+            logger.info(
+                _("[File End Time]: {} =====").format(
+                    project_end_time.strftime("%Y-%m-%d %H:%M:%S")
+                ),
+                logger.get_excel_log_filename(file_path.name),
+            )
+            logger.info(
+                _("Total Time: {}").format(
+                    format_execution_time(total_project_seconds)
+                ),
+                logger.get_excel_log_filename(file_path.name),
+            )
+            logger.info(
+                _("File processing completed successfully"),
+                logger.get_excel_log_filename(file_path.name),
+            )
+            logger.info(
+                "=" * 80,
+                logger.get_excel_log_filename(file_path.name),
+            )
+
+            # Save per-file token usage
+            from utils.token_statistics import save_file_token_usage
+
+            additional_info = {
+                "ai_provider": service_name,
+                "processed_files": file_path.name,
+                "total_files": 1,
+                "batch_size": excel_config["batch_size"],
+                "max_threads": excel_config["max_concurrent_batches"],
+            }
+            token_file = save_file_token_usage(file_path.name, additional_info)
+
+            return True, None
+
+    except Exception as e:
+        # Handle errors with proper logging
+        try:
+            logger.error(
+                f"❌ Failed to process {file_path.name}: {e}",
+                logger.get_excel_log_filename(file_path.name),
+            )
+            # Project end time even for errors
+            project_end_time = datetime.now()
+            total_project_seconds = (
+                project_end_time - project_start_time
+            ).total_seconds()
+            logger.info(
+                _("[File End Time]: {} =====").format(
+                    project_end_time.strftime("%Y-%m-%d %H:%M:%S")
+                ),
+                logger.get_excel_log_filename(file_path.name),
+            )
+            logger.info(
+                _("Total Time: {}").format(
+                    format_execution_time(total_project_seconds)
+                ),
+                logger.get_excel_log_filename(file_path.name),
+            )
+            logger.info(
+                "=" * 50,
+                logger.get_excel_log_filename(file_path.name),
+            )
+
+            # Save per-file token usage even for errors
+            from utils.token_statistics import save_file_token_usage
+
+            additional_info = {
+                "ai_provider": service_name,
+                "processed_files": file_path.name,
+                "total_files": 1,
+                "error": str(e),
+                "status": "failed",
+            }
+            token_file = save_file_token_usage(file_path.name, additional_info)
+        except Exception:
+            # If even error logging fails, just print to console
+            print(f"❌ Critical error processing {file_path.name}: {e}")
+
+        return False, str(e)
+
+
 def main():
     """Main application entry point."""
     project_start_time = datetime.now()
@@ -127,183 +319,24 @@ def main():
         token_tracker = initialize_token_tracker(base_dir)
 
         if args.file:
-            # Process specific file - use Excel file logging
+            # Process specific file
             from core.consts import Directories
 
             file_path = data_dir / Directories.EXCEL_INPUT / args.file
             if file_path.exists():
-                # Use Excel file logging context manager for the entire process
-                with if_gen_logging(args.file) as log_path:
-                    logger.info(
-                        _("Language: {}").format(target_language),
-                        logger.get_excel_log_filename(args.file),
-                    )
+                # Process single file using the same function as multi-file processing
+                success, error_msg = process_single_excel_file(
+                    file_path,
+                    data_dir,
+                    config_manager,
+                    target_language,
+                    args.provider,
+                    project_start_time,
+                )
 
-                    # Auto-select AI service
-                    logger.info("=" * 80, logger.get_excel_log_filename(args.file))
-
-                    logger.info(
-                        _("[Step 1]: Detecting available AI services..."),
-                        logger.get_excel_log_filename(args.file),
-                    )
-
-                    # Use the specified provider
-                    ai_service, service_name = auto_select_ai_service(
-                        config_manager,
-                        args.provider,
-                        target_language,
-                        logger.get_excel_log_filename(args.file),
-                    )
-
-                    # Set current provider for token tracking
-                    set_current_provider(service_name)
-
-                    logger.info(
-                        _("[Step 2]: Excel Processing..."),
-                        logger.get_excel_log_filename(args.file),
-                    )
-
-                    # Initialize Excel processor with AI service
-                    excel_processor = ExcelProcessor(
-                        data_dir, ai_service, config_manager
-                    )
-
-                    logger.info(
-                        _("Processing specific file: {}").format(args.file),
-                        logger.get_excel_log_filename(args.file),
-                    )
-                    logger.info(
-                        _("Log file created: {}").format(log_path),
-                        logger.get_excel_log_filename(args.file),
-                    )
-
-                    try:
-                        # Set current file for token tracking
-                        from utils.token_statistics import set_current_file
-
-                        set_current_file(args.file)
-
-                        file_start_time = datetime.now()
-                        logger.info(
-                            _("Processing file: {} start time: {}").format(
-                                args.file,
-                                file_start_time.strftime("%Y-%m-%d %H:%M:%S"),
-                            ),
-                            logger.get_excel_log_filename(args.file),
-                        )
-
-                        excel_processor.process_file(file_path)
-
-                        file_end_time = datetime.now()
-                        logger.info(
-                            _("Completed: {} ✅").format(args.file),
-                            logger.get_excel_log_filename(args.file),
-                        )
-                        logger.info("-" * 80, logger.get_excel_log_filename(args.file))
-
-                        # 计算当前文件的单独处理时间
-                        file_seconds = (file_end_time - file_start_time).total_seconds()
-                        # 计算从项目开始到当前文件完成的累计时间
-                        project_elapsed_seconds = (
-                            file_end_time - project_start_time
-                        ).total_seconds()
-
-                        # 输出时间信息
-                        logger.info(
-                            _("Processing {} completed at: {}").format(
-                                file_path.name,
-                                file_end_time.strftime("%Y-%m-%d %H:%M:%S"),
-                            ),
-                            logger.get_excel_log_filename(args.file),
-                        )
-                        logger.info(
-                            _("File processing time: {}").format(
-                                format_execution_time(file_seconds)
-                            ),
-                            logger.get_excel_log_filename(args.file),
-                        )
-                        logger.info(
-                            _("Total project time: {}").format(
-                                format_execution_time(project_elapsed_seconds)
-                            ),
-                            logger.get_excel_log_filename(args.file),
-                        )
-
-                        # Project end time in same log file
-                        project_end_time = datetime.now()
-                        total_project_seconds = (
-                            project_end_time - project_start_time
-                        ).total_seconds()
-                        logger.info(
-                            _("[Project End Time]: {} =====").format(
-                                project_end_time.strftime("%Y-%m-%d %H:%M:%S")
-                            ),
-                            logger.get_excel_log_filename(args.file),
-                        )
-                        logger.info(
-                            _("Total Time: {}").format(
-                                format_execution_time(total_project_seconds)
-                            ),
-                            logger.get_excel_log_filename(args.file),
-                        )
-                        logger.info(
-                            _("Application completed successfully"),
-                            logger.get_excel_log_filename(args.file),
-                        )
-                        logger.info(
-                            "=" * 80,
-                            logger.get_excel_log_filename(args.file),
-                        )
-
-                        # Save per-file token usage
-                        from utils.token_statistics import save_file_token_usage
-
-                        additional_info = {
-                            "ai_provider": service_name,
-                            "processed_files": args.file,
-                            "total_files": 1,
-                        }
-                        token_file = save_file_token_usage(args.file, additional_info)
-
-                    except Exception as e:
-                        logger.error(
-                            f"❌ Failed to process {args.file}: {e}",
-                            logger.get_excel_log_filename(args.file),
-                        )
-                        # Project end time even for errors
-                        project_end_time = datetime.now()
-                        total_project_seconds = (
-                            project_end_time - project_start_time
-                        ).total_seconds()
-                        logger.info(
-                            _("[Project End Time]: {} =====").format(
-                                project_end_time.strftime("%Y-%m-%d %H:%M:%S")
-                            ),
-                            logger.get_excel_log_filename(args.file),
-                        )
-                        logger.info(
-                            _("Total Time: {}").format(
-                                format_execution_time(total_project_seconds)
-                            ),
-                            logger.get_excel_log_filename(args.file),
-                        )
-                        logger.info(
-                            "=" * 50,
-                            logger.get_excel_log_filename(args.file),
-                        )
-
-                        # Save per-file token usage even for errors
-                        from utils.token_statistics import save_file_token_usage
-
-                        additional_info = {
-                            "ai_provider": service_name,
-                            "processed_files": args.file,
-                            "total_files": 1,
-                            "error": str(e),
-                            "status": "failed",
-                        }
-                        token_file = save_file_token_usage(args.file, additional_info)
-                        sys.exit(1)
+                if not success:
+                    logger.error(f"Failed to process file: {error_msg}")
+                    sys.exit(1)
             else:
                 # File not found - use general application log
                 app_log_name = f"app_error_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -314,7 +347,7 @@ def main():
                     )
                     sys.exit(1)
         else:
-            # Auto-process all Excel files in input directory
+            # Auto-process all Excel files in input directory with multi-threading
             excel_files = get_excel_files(data_dir)
 
             if not excel_files:
@@ -341,176 +374,47 @@ def main():
                     )
                 return
 
-            # Process each file with its own complete log (including AI service setup)
-            for file_index, file_path in enumerate(excel_files):
-                # Use Excel file logging for each file - complete processing in one log
-                with if_gen_logging(file_path.name) as log_path:
-                    # Each file gets full initialization and setup in its own log
-                    logger.info(
-                        _("Language: {}").format(target_language),
-                        logger.get_excel_log_filename(file_path.name),
-                    )
+            # Get processing configuration from environment variables
+            file_config = config_manager.get_file_config()
+            max_concurrent_files = file_config["max_concurrent_files"]
 
-                    # Auto-select AI service (for each file to ensure consistency)
-                    logger.info("=" * 80, logger.get_excel_log_filename(file_path.name))
+            logger.info(_("Found {} Excel files to process").format(len(excel_files)))
 
-                    logger.info(
-                        _("[Step 1]: Detecting available AI services..."),
-                        logger.get_excel_log_filename(file_path.name),
-                    )
+            # Process files in parallel using ThreadPoolExecutor
+            successful_files = []
+            failed_files = []
 
-                    # Use the specified provider
-                    ai_service, service_name = auto_select_ai_service(
+            with ThreadPoolExecutor(
+                max_workers=max_concurrent_files, thread_name_prefix="FileProcessor"
+            ) as executor:
+                # Submit all files for processing
+                future_to_file = {
+                    executor.submit(
+                        process_single_excel_file,
+                        file_path,
+                        data_dir,
                         config_manager,
-                        args.provider,
                         target_language,
-                        logger.get_excel_log_filename(file_path.name),
-                    )
+                        args.provider,
+                        project_start_time,
+                    ): file_path
+                    for file_path in excel_files
+                }
 
-                    # Set current provider for token tracking
-                    set_current_provider(service_name)
-
-                    logger.info(
-                        "-" * 80,
-                        logger.get_excel_log_filename(file_path.name),
-                    )
-
-                    logger.info(
-                        _("[Step 2]: Excel Processing..."),
-                        logger.get_excel_log_filename(file_path.name),
-                    )
-
-                    # Initialize Excel processor with AI service
-                    excel_processor = ExcelProcessor(
-                        data_dir, ai_service, config_manager
-                    )
-
-                    logger.info(
-                        _("Processing file {} of {}: {}").format(
-                            file_index + 1, len(excel_files), file_path.name
-                        ),
-                        logger.get_excel_log_filename(file_path.name),
-                    )
+                # Process results as they complete
+                for future in as_completed(future_to_file):
+                    file_path = future_to_file[future]
                     try:
-                        # Set current file for token tracking
-                        from utils.token_statistics import set_current_file
-
-                        set_current_file(file_path.name)
-
-                        file_start_time = datetime.now()
-                        # logger.info(
-                        #     f"\nProcessing: {file_path.name} start time: {file_start_time.strftime('%Y-%m-%d %H:%M:%S')}",
-                        #     logger.get_excel_log_filename(file_path.name),
-                        # )
-                        excel_processor.process_file(file_path)
-
-                        file_end_time = datetime.now()
-                        logger.info(
-                            f"Completed: {file_path.name} ✅ Available end time: {file_end_time.strftime('%Y-%m-%d %H:%M:%S')}",
-                            logger.get_excel_log_filename(file_path.name),
-                        )
-                        logger.info(
-                            "-" * 80,
-                            logger.get_excel_log_filename(file_path.name),
-                        )
-
-                        # 计算当前文件的单独处理时间
-                        file_seconds = (file_end_time - file_start_time).total_seconds()
-                        # 计算从项目开始到当前文件完成的累计时间
-                        project_elapsed_seconds = (
-                            file_end_time - project_start_time
-                        ).total_seconds()
-
-                        # 输出时间信息
-                        logger.info(
-                            f"{file_path.name} execution time: {format_execution_time(file_seconds)}",
-                            logger.get_excel_log_filename(file_path.name),
-                        )
-
-                        # Include project end time and summary in each file's log
-                        current_time = datetime.now()
-                        total_project_seconds = (
-                            current_time - project_start_time
-                        ).total_seconds()
-                        logger.info(
-                            _("[File End Time]: {} =====").format(
-                                current_time.strftime("%Y-%m-%d %H:%M:%S")
-                            ),
-                            logger.get_excel_log_filename(file_path.name),
-                        )
-                        logger.info(
-                            _("Total Time: {}").format(
-                                format_execution_time(total_project_seconds)
-                            ),
-                            logger.get_excel_log_filename(file_path.name),
-                        )
-                        logger.info(
-                            _("File processing completed successfully"),
-                            logger.get_excel_log_filename(file_path.name),
-                        )
-                        logger.info(
-                            "=" * 80,
-                            logger.get_excel_log_filename(file_path.name),
-                        )
-
-                        processed_files = (
-                            excel_files
-                            if not args.file
-                            else [data_dir / "excel_archive" / args.file]
-                        )
-                        additional_info = {
-                            "ai_provider": service_name,
-                            "processed_files": file_path.name,
-                            "total_files": 1,
-                        }
-
-                        # Save per-file token usage
-                        from utils.token_statistics import save_file_token_usage
-
-                        token_file = save_file_token_usage(
-                            file_path.name, additional_info
-                        )
-
+                        success, error_msg = future.result()
+                        if success:
+                            successful_files.append(file_path.name)
+                            logger.info(_("✅ Successfully processed: {}").format(file_path.name))
+                        else:
+                            failed_files.append((file_path.name, error_msg))
+                            logger.error(_( "❌ Failed to process: {} - {}").format(file_path.name,error_msg))
                     except Exception as e:
-                        logger.error(
-                            f"❌ Failed to process {file_path.name}: {e}",
-                            logger.get_excel_log_filename(file_path.name),
-                        )
-                        # Log project end time even for errors
-                        current_time = datetime.now()
-                        total_project_seconds = (
-                            current_time - project_start_time
-                        ).total_seconds()
-                        logger.info(
-                            _("[File End Time]: {}").format(
-                                current_time.strftime("%Y-%m-%d %H:%M:%S")
-                            ),
-                            logger.get_excel_log_filename(file_path.name),
-                        )
-                        logger.info(
-                            _("Total Time: {}").format(
-                                format_execution_time(total_project_seconds)
-                            ),
-                            logger.get_excel_log_filename(file_path.name),
-                        )
-                        logger.info(
-                            "=" * 80,
-                            logger.get_excel_log_filename(file_path.name),
-                        )
-                        # Save per-file token usage even for errors
-                        from utils.token_statistics import save_file_token_usage
-
-                        additional_info = {
-                            "ai_provider": service_name,
-                            "processed_files": file_path.name,
-                            "total_files": 1,
-                            "error": str(e),
-                            "status": "failed",
-                        }
-                        token_file = save_file_token_usage(
-                            file_path.name, additional_info
-                        )
-                        continue
+                        failed_files.append((file_path.name, str(e)))
+                        logger.error(_("❌ Exception processing: {} - {}").format(file_path.name,e))
 
     except Exception as e:
         # Create error log with proper context

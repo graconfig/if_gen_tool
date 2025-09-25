@@ -12,6 +12,9 @@ from typing import Dict, Any, Optional
 # Import translation function
 from utils.i18n import _
 
+# Thread-local storage for per-thread file context
+_thread_local = threading.local()
+
 
 @dataclass
 class TokenUsage:
@@ -45,7 +48,6 @@ class TokenTracker:
         self.file_usage = {}  # Track usage per file
 
         self.current_provider = None
-        self.current_file = None  # Track current file being processed
 
     def set_provider(self, provider: str, model: str = None):
         with self._lock:
@@ -54,11 +56,16 @@ class TokenTracker:
                 self.provider_usage[provider] = TokenUsage()
 
     def set_current_file(self, filename: str):
-        """Set the current file being processed for per-file token tracking."""
+        """Set the current file being processed for per-file token tracking (thread-safe)."""
         with self._lock:
-            self.current_file = filename
+            # Use thread-local storage for current file
+            _thread_local.current_file = filename
             if filename not in self.file_usage:
                 self.file_usage[filename] = TokenUsage()
+
+    def get_current_file(self) -> Optional[str]:
+        """Get the current file for this thread."""
+        return getattr(_thread_local, "current_file", None)
 
     def track_embedding(self, tokens: int, provider: str = None):
         if tokens <= 0:
@@ -69,9 +76,10 @@ class TokenTracker:
             self.usage.add_embedding(tokens)
             if provider and provider in self.provider_usage:
                 self.provider_usage[provider].add_embedding(tokens)
-            # Track per-file usage
-            if self.current_file and self.current_file in self.file_usage:
-                self.file_usage[self.current_file].add_embedding(tokens)
+            # Track per-file usage using thread-local current file
+            current_file = self.get_current_file()
+            if current_file and current_file in self.file_usage:
+                self.file_usage[current_file].add_embedding(tokens)
 
     def track_llm(
         self,
@@ -88,9 +96,10 @@ class TokenTracker:
             self.usage.add_llm(input_tokens, output_tokens, total_tokens)
             if provider and provider in self.provider_usage:
                 self.provider_usage[provider].add_llm(input_tokens, output_tokens)
-            # Track per-file usage
-            if self.current_file and self.current_file in self.file_usage:
-                self.file_usage[self.current_file].add_llm(input_tokens, output_tokens)
+            # Track per-file usage using thread-local current file
+            current_file = self.get_current_file()
+            if current_file and current_file in self.file_usage:
+                self.file_usage[current_file].add_llm(input_tokens, output_tokens)
 
     def get_usage(self) -> Dict[str, Any]:
         with self._lock:
@@ -163,7 +172,7 @@ def set_current_provider(provider: str, model: str = None):
 
 
 def set_current_file(filename: str):
-    """Set the current file being processed for per-file token tracking."""
+    """Set the current file being processed for per-file token tracking (thread-safe)."""
     if _tracker:
         _tracker.set_current_file(filename)
 
@@ -212,9 +221,7 @@ def save_file_token_usage(
 
                 # Save to file-specific token file
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                file_token_file = (
-                    _tracker.token_dir / f"{filename}_{timestamp}.json"
-                )
+                file_token_file = _tracker.token_dir / f"{filename}_{timestamp}.json"
                 with open(file_token_file, "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=2, ensure_ascii=False)
 

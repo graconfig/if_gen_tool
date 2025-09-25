@@ -17,8 +17,13 @@ class ConfigurationManager:
             "sheet_name": "IF項目定義",
             "header_row": 6,
             "start_row": 13,
-            "batch_size": os.getenv("LLM_BATCH_SIZE",30),  # Default batch size for processing
-            "max_concurrent_batches": os.getenv("LLM_MAX_WORKERS", 4),  # Maximum concurrent batch processing
+            "batch_size": int(os.getenv("LLM_BATCH_SIZE", 30)),
+            "max_concurrent_batches": int(os.getenv("LLM_MAX_WORKERS", 5)),
+        }
+
+    def get_file_config(self) -> Dict[str, Any]:
+        return {
+            "max_concurrent_files": int(os.getenv("FILE_MAX_WORKERS", 5)),
         }
 
     def get_column_mappings(self) -> Dict[str, Dict[str, str]]:
