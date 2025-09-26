@@ -472,9 +472,6 @@ class ExcelProcessor:
         for row in range(start_row, (worksheet.max_row or 1000) + 1):
             field_name = worksheet[f"{input_row_cols['field_name']}{row}"].value
 
-            if not field_name or str(field_name).strip() == "":
-                continue
-
             interface_field = InterfaceField(
                 module=module,
                 if_name=if_name,
