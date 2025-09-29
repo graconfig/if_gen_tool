@@ -53,6 +53,7 @@ class ConfigurationManager:
                 "notes": "AA",
                 "sample_value": "AB",
                 "match": "AC",
+                "verify": "AD",
             },
         }
 
