@@ -18,7 +18,7 @@ from utils.sap_logger import logger
 from hana.hana_conn import HANADBClient
 from models.data_models import InterfaceField
 from tqdm import tqdm
-from .odata import odata_verify
+from odata.odata import odata_verify
 
 # Suppress the specific DrawingML warning by matching the message text
 warnings.filterwarnings(
