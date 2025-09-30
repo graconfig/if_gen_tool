@@ -1,18 +1,19 @@
-from typing import List, Dict, Any
+import os
 import requests
 import json
 from requests.auth import HTTPBasicAuth
+from typing import List, Dict, Any
 
 def odata_verify(
          results: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
-    
-        # OData 服务URL
-        url = "https://handsap01.hand-china.com/sap/opu/odata4/sap/zui_zye9012_001/srvd_a2x/sap/zui_zye9012_001/0001/Verify?sap-client=310"
 
+      if os.getenv("VERIFY_FLAG") == "true":
+        # OData 服务URL
+        url = os.getenv("ODATA_URL")
         # 身份验证信息
-        username = "3749"
-        password = "Handhand1234"
+        username = os.getenv("ODATA_USER")
+        password = os.getenv("ODATA_PASSWORD")
 
         # 设置请求头
         headers = {
@@ -54,7 +55,7 @@ def odata_verify(
         # 发起POST请求创建业务伙伴
         response = session.post(
             url,
-            auth=HTTPBasicAuth(username, password),
+            # auth=HTTPBasicAuth(username, password),
             headers=headers,
             data=json.dumps(request_json)
         )
@@ -77,4 +78,4 @@ def odata_verify(
                  result["verify"] = "-"
         else:
            print(f"错误: {response.text}")
-        return results
+      return results

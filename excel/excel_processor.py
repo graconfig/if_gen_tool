@@ -761,6 +761,7 @@ class ExcelProcessor:
                 }
             )
 
+        # Call OData service to verify results
         results = odata_verify(results)
 
         return results
