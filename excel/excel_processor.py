@@ -34,7 +34,7 @@ class ExcelProcessor:
         self.config_manager = config_manager
 
         self.excel_config = config_manager.get_excel_config()
-        self.column_mappings = config_manager.get_column_mappings()
+        self.column_mappings = None
 
         # Use environment-based configuration
         self.batch_size = int(self.excel_config.get("batch_size", 30))
@@ -457,6 +457,17 @@ class ExcelProcessor:
 
     def extract_fields(self, worksheet) -> List[InterfaceField]:
         input_fields = []
+
+        # Detect SAP format by checking the detection cell
+        input_system_col = self.excel_config.get("input_system_col", "F")
+        input_system_row = self.excel_config.get("input_system_row", 6)
+        cell_value = worksheet[f"{input_system_col}{input_system_row}"].value
+
+        # Determine which column mappings to use based on cell value
+        if cell_value and "SAP" in str(cell_value).upper():
+            self.column_mappings = self.config_manager.get_column_mappings_sap()
+        else:
+            self.column_mappings = self.config_manager.get_column_mappings()
 
         header_row = self.excel_config["header_row"]
         input_header_cols = self.column_mappings["input_header_cols"]

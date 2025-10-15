@@ -19,6 +19,8 @@ class ConfigurationManager:
             "start_row": 13,
             "batch_size": int(os.getenv("LLM_BATCH_SIZE", 30)),
             "max_concurrent_batches": int(os.getenv("LLM_MAX_WORKERS", 5)),
+            "input_system_col": "F",
+            "input_system_row": 6,
         }
 
     def get_file_config(self) -> Dict[str, Any]:
@@ -53,6 +55,36 @@ class ConfigurationManager:
                 "notes": "AA",
                 "sample_value": "AB",
                 "match": "AC",
+            },
+        }
+
+    def get_column_mappings_sap(self) -> Dict[str, Dict[str, str]]:
+        # excel输入输出列映射
+        return {
+            "input_header_cols": {"module": "C", "if_name": "H", "if_desc": "I"},
+            "input_row_cols": {
+                "field_name": "S",
+                "key_flag": "T",
+                "obligatory": "U",
+                "data_type": "X",
+                "field_id": "W",
+                "length_total": "Y",
+                "length_dec": "Z",
+                "field_text": "AA",
+                "sample_value": "AB",
+            },
+            "output_columns": {
+                "field_name": "C",
+                "key_flag": "D",
+                "obligatory": "E",
+                "table_id": "F",
+                "field_id": "G",
+                "data_type": "I",
+                "length_total": "J",
+                "length_dec": "K",
+                "notes": "L",
+                "sample_value": "N",
+                "match": "M",
             },
         }
 
