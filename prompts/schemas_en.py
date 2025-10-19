@@ -55,15 +55,15 @@ class ClaudeSchemas:
                                                 },
                                                 "key_flag": {
                                                     "type": "string",
-                                                    "description": "Whether the field is a key field - use 'X' if true from context, empty string otherwise",
+                                                    "description": "Whether the field is a key field - use '○' if true from context, empty string otherwise",
                                                 },
                                                 "obligatory": {
                                                     "type": "string",
-                                                    "description": "Whether the field is required or optional from context, empty string otherwise",
+                                                    "description": "Whether the field is required or optional from context - use '○' if required from context, empty string otherwise",
                                                 },
                                                 "sample_value": {
                                                     "type": "string",
-                                                    "description": "Sample value for SAP CDS field, empty string otherwise",
+                                                    "description": "Sample value for SAP CDS field",
                                                 },
                                                 "match": {
                                                     "type": "integer",

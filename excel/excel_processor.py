@@ -482,6 +482,8 @@ class ExcelProcessor:
 
         for row in range(start_row, (worksheet.max_row or 1000) + 1):
             field_name = worksheet[f"{input_row_cols['field_name']}{row}"].value
+            if field_name == '' or field_name == 'e':
+                continue
 
             interface_field = InterfaceField(
                 module=module,
@@ -725,10 +727,10 @@ class ExcelProcessor:
 
             key_flag_raw = match_result.get("key_flag", "")
             if isinstance(key_flag_raw, bool):
-                key_flag = "X" if key_flag_raw else ""
+                key_flag = "○" if key_flag_raw else ""
             elif isinstance(key_flag_raw, str):
                 key_flag = (
-                    "X" if key_flag_raw.lower() in ["true", "y", "yes", "x"] else ""
+                    "○" if key_flag_raw.lower() in ["true", "y", "yes", "x"] else ""
                 )
             else:
                 key_flag = ""

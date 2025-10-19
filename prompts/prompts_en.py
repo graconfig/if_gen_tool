@@ -86,13 +86,13 @@ class EnPromptTemplates:
                 "• key_flag: 'X' if CDS field is marked as key, empty otherwise",
                 "",
                 "Review notes in Japanese",
-                "**Review:** [Fit Rate%] - [A one-sentence summary]",
-                "**Analysis:** [CDS View selection reasoning]",
-                "**Matching:** [Semantic similarity: X% | Technical compatibility: Y% | Overall confidence: Z%]",
-                "**Business Logic:** [Required transformations or direct mapping]",
-                "**Technical Issues:** [Data type, length, or structural concerns, or 'None']",
-                "**Implementation:** [Specific developer action required]",
-                "**Business Validation:** [Question for business analyst if clarification needed, or 'None']",
+                "[A one-sentence summary]",
+                "[CDS View selection reasoning]",
+                "[Semantic similarity: X% | Technical compatibility: Y% | Overall confidence: Z%]",
+                "[Required transformations or direct mapping]",
+                "[Data type, length, or structural concerns, or 'None']",
+                "[Specific developer action required]",
+                "[Question for business analyst if clarification needed, or 'None']",
             ]
         )
 

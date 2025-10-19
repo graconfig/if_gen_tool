@@ -16,7 +16,7 @@ class ConfigurationManager:
         return {
             "sheet_name": "IF項目定義",
             "header_row": 6,
-            "start_row": 13,
+            "start_row": 11,
             "batch_size": int(os.getenv("LLM_BATCH_SIZE", 30)),
             "max_concurrent_batches": int(os.getenv("LLM_MAX_WORKERS", 5)),
             "input_system_col": "F",
@@ -82,9 +82,9 @@ class ConfigurationManager:
                 "data_type": "I",
                 "length_total": "J",
                 "length_dec": "K",
-                "notes": "L",
+                "notes": "M",
                 "sample_value": "N",
-                "match": "M",
+                "match": "O",
             },
         }
 
