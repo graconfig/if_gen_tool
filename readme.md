@@ -78,6 +78,12 @@ HANA_USER="your_user"
 HANA_PASSWORD="your_password"
 HANA_SCHEMA="your_schema"
 
+# ODATA配置
+VERIFY_FLAG="true" 
+ODATA_URL="your_url"
+ODATA_USER="your_user"
+ODATA_PASSWORD="your_password"
+
 # Default AI Provider 
 AI_PROVIDER="claude"
 

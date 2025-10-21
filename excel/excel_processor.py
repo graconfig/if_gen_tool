@@ -18,6 +18,7 @@ from utils.sap_logger import logger
 from hana.hana_conn import HANADBClient
 from models.data_models import InterfaceField
 from tqdm import tqdm
+from odata.odata import odata_verify
 
 # Suppress the specific DrawingML warning by matching the message text
 warnings.filterwarnings(
@@ -569,7 +570,7 @@ class ExcelProcessor:
         self, worksheet, results: List[Tuple[InterfaceField, Dict[str, Any]]]
     ) -> None:
         output_columns = self.column_mappings["output_columns"]
-
+        
         processed_count = 0
         for interface_field, match_result in results:
             row = interface_field.row_index
@@ -607,6 +608,9 @@ class ExcelProcessor:
                 )
                 worksheet[f"{output_columns['sample_value']}{row}"] = match_result.get(
                     "sample_value", ""
+                )
+                worksheet[f"{output_columns['verify']}{row}"] = match_result.get(
+                    "verify", ""
                 )
 
                 processed_count += 1
@@ -770,6 +774,9 @@ class ExcelProcessor:
                 }
             )
 
+        # Call OData service to verify results
+        results = odata_verify(results)
+
         return results
 
     def _parse_notes(self, notes_text: str) -> Tuple[str, str]:
@@ -845,3 +852,4 @@ class ExcelProcessor:
                 logger.get_excel_log_filename(source_file_path.name),
             )
             return False
+               
