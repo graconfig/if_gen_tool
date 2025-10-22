@@ -42,6 +42,8 @@ class ConfigurationManager:
                 "length_dec": "K",
                 "field_text": "L",
                 "sample_value": "N",
+                "remark":"M",
+                "verify":"AD"
             },
             "output_columns": {
                 "field_name": "S",
@@ -71,8 +73,9 @@ class ConfigurationManager:
                 "field_id": "W",
                 "length_total": "Y",
                 "length_dec": "Z",
-                "field_text": "AA",
+                "remark": "AA",
                 "sample_value": "AB",
+                "verify": "AD",
             },
             "output_columns": {
                 "field_name": "C",
@@ -85,7 +88,8 @@ class ConfigurationManager:
                 "length_dec": "K",
                 "notes": "M",
                 "sample_value": "N",
-                "match": "O",
+                "match": "AC",
+                "verify": "AD",
             },
         }
 

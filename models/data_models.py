@@ -24,6 +24,8 @@ class InterfaceField:
     length_dec: str = ""
     field_text: str = ""
     sample_value: str = ""
+    remark: str = ""
+    verify: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for processing."""
@@ -41,6 +43,8 @@ class InterfaceField:
             "length_dec": self.length_dec,
             "field_text": self.field_text,
             "sample_value": self.sample_value,
+            "remark": self.remark,
+            "verify": self.verify,
         }
 
     def to_query_string(self) -> str:

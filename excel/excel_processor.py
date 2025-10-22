@@ -504,6 +504,10 @@ class ExcelProcessor:
                 or "",
                 sample_value=worksheet[f"{input_row_cols['sample_value']}{row}"].value
                 or "",
+                remark=worksheet[f"{input_row_cols['remark']}{row}"].value
+                or "",
+                verify=worksheet[f"{input_row_cols['verify']}{row}"].value
+                or "",
                 row_index=row,
             )
 
@@ -574,49 +578,51 @@ class ExcelProcessor:
         processed_count = 0
         for interface_field, match_result in results:
             row = interface_field.row_index
+            isverify = interface_field.verify
 
-            try:
-                worksheet[f"{output_columns['field_name']}{row}"] = match_result.get(
-                    "field_name", ""
-                )  # Field description
-                worksheet[f"{output_columns['field_id']}{row}"] = match_result.get(
-                    "field_id", ""
-                )  # Technical field name
-                worksheet[f"{output_columns['key_flag']}{row}"] = match_result.get(
-                    "key_flag", ""
-                )
-                worksheet[f"{output_columns['obligatory']}{row}"] = match_result.get(
-                    "obligatory", ""
-                )
-                worksheet[f"{output_columns['table_id']}{row}"] = match_result.get(
-                    "table_id", ""
-                )
-                worksheet[f"{output_columns['data_type']}{row}"] = match_result.get(
-                    "data_type", ""
-                )
-                worksheet[f"{output_columns['length_total']}{row}"] = match_result.get(
-                    "length_total", ""
-                )
-                worksheet[f"{output_columns['length_dec']}{row}"] = match_result.get(
-                    "length_dec", ""
-                )
-                worksheet[f"{output_columns['match']}{row}"] = match_result.get(
-                    "match", ""
-                )
-                worksheet[f"{output_columns['notes']}{row}"] = match_result.get(
-                    "notes", ""
-                )
-                worksheet[f"{output_columns['sample_value']}{row}"] = match_result.get(
-                    "sample_value", ""
-                )
-                worksheet[f"{output_columns['verify']}{row}"] = match_result.get(
-                    "verify", ""
-                )
+            if isverify == "" or isverify == "-":
+                try:
+                    worksheet[f"{output_columns['field_name']}{row}"] = match_result.get(
+                        "field_name", ""
+                    )  # Field description
+                    worksheet[f"{output_columns['field_id']}{row}"] = match_result.get(
+                        "field_id", ""
+                    )  # Technical field name
+                    worksheet[f"{output_columns['key_flag']}{row}"] = match_result.get(
+                        "key_flag", ""
+                    )
+                    worksheet[f"{output_columns['obligatory']}{row}"] = match_result.get(
+                        "obligatory", ""
+                    )
+                    worksheet[f"{output_columns['table_id']}{row}"] = match_result.get(
+                        "table_id", ""
+                    )
+                    worksheet[f"{output_columns['data_type']}{row}"] = match_result.get(
+                        "data_type", ""
+                    )
+                    worksheet[f"{output_columns['length_total']}{row}"] = match_result.get(
+                        "length_total", ""
+                    )
+                    worksheet[f"{output_columns['length_dec']}{row}"] = match_result.get(
+                        "length_dec", ""
+                    )
+                    worksheet[f"{output_columns['match']}{row}"] = match_result.get(
+                        "match", ""
+                    )
+                    worksheet[f"{output_columns['notes']}{row}"] = match_result.get(
+                        "notes", ""
+                    )
+                    worksheet[f"{output_columns['sample_value']}{row}"] = match_result.get(
+                        "sample_value", ""
+                    )
+                    worksheet[f"{output_columns['verify']}{row}"] = match_result.get(
+                        "verify", ""
+                    )
 
-                processed_count += 1
+                    processed_count += 1
 
-            except Exception as e:
-                continue
+                except Exception as e:
+                        continue
 
     # ========== Field Matching Logic ==========
 
