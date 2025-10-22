@@ -52,7 +52,7 @@ def odata_verify(
             "_ItemField": item_field_list
         }
         
-        # 发起POST请求创建业务伙伴
+        # 发起POST请求
         response = session.post(
             url,
             # auth=HTTPBasicAuth(username, password),
@@ -73,7 +73,15 @@ def odata_verify(
                   if checkresult["ReturnCode"] == 0:
                     result["verify"] = "√"
                   else:
-                    result["verify"] = checkresult["ReturnMessage"]
+                    result["table_id"] = ""
+                    result["field_id"] = ""
+                    result["data_type"] = ""
+                    result["length_total"] = ""
+                    result["length_dec"] = ""
+                    result["sample_value"] = ""
+                    result["match"] = ""
+                    result["notes"] = os.getenv("ODATA_MESSAGE") 
+                    # result["verify"] = checkresult["ReturnMessage"]
                else:
                  result["verify"] = "-"
         else:
