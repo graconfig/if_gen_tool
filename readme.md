@@ -83,6 +83,7 @@ VERIFY_FLAG="true"
 ODATA_URL="your_url"
 ODATA_USER="your_user"
 ODATA_PASSWORD="your_password"
+ODATA_MESSAGE="未匹配到项目"
 
 # Default AI Provider 
 AI_PROVIDER="claude"
