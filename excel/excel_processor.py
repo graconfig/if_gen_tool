@@ -29,10 +29,11 @@ warnings.filterwarnings(
 
 
 class ExcelProcessor:
-    def __init__(self, data_dir: Path, ai_service, config_manager):
+    def __init__(self, data_dir: Path, ai_service, config_manager, hana_client=None):
         self.data_dir = data_dir
         self.ai_service = ai_service
         self.config_manager = config_manager
+        self.hana_client = hana_client
 
         self.excel_config = config_manager.get_excel_config()
         self.column_mappings = None
@@ -118,10 +119,10 @@ class ExcelProcessor:
         if_desc = batch_input_fields[0].if_desc
         module_query = ",".join([module, if_name, if_desc])
 
-        with HANADBClient() as hana_client:
-            log_filename = logger.get_excel_log_filename(excel_filename)
+        log_filename = logger.get_excel_log_filename(excel_filename)
 
-            cat_find_by_module = hana_client.run_vector_search(
+        try:
+            cat_find_by_module = self.hana_client.run_vector_search(
                 query=module_query, k=3, log_filename=log_filename
             )
             if cat_find_by_module.empty:
@@ -132,7 +133,7 @@ class ExcelProcessor:
                 return
 
             category_string = cat_find_by_module.iloc[0]["VIEWCATEGORY"]
-            views_find_by_cat = hana_client.get_views(
+            views_find_by_cat = self.hana_client.get_views(
                 category=category_string, log_filename=log_filename
             )
             if views_find_by_cat.empty:
@@ -175,12 +176,12 @@ class ExcelProcessor:
                     )
                 )
             # 获取视图的字段
-            llm_return_views_fields = hana_client.get_fields(
+            llm_return_views_fields = self.hana_client.get_fields(
                 cds_views=llm_return_views, log_filename=log_filename
             )
 
             # Get Custom views fields
-            custom_views_fields = hana_client.get_custom_fields(
+            custom_views_fields = self.hana_client.get_custom_fields(
                 log_filename=log_filename
             )
 
@@ -245,6 +246,12 @@ class ExcelProcessor:
                 logger.get_excel_log_filename(excel_filename),
             )
             self.write_results(worksheet, final_results)
+        except Exception as e:
+            logger.error(
+                f"Error processing file: {e}",
+                logger.get_excel_log_filename(excel_filename),
+            )
+            raise
 
     def _process_in_batches(
         self, worksheet, input_fields: List[InterfaceField], excel_filename: str
@@ -263,11 +270,11 @@ class ExcelProcessor:
         if_desc = input_fields[0].if_desc
         module_query = ",".join([module, if_name, if_desc])
 
-        with HANADBClient() as hana_client:
-            log_filename = logger.get_excel_log_filename(excel_filename)
+        log_filename = logger.get_excel_log_filename(excel_filename)
 
+        try:
             # Get CDS views once for all batches
-            cat_find_by_module = hana_client.run_vector_search(
+            cat_find_by_module = self.hana_client.run_vector_search(
                 query=module_query, k=3, log_filename=log_filename
             )
             if cat_find_by_module.empty:
@@ -278,7 +285,7 @@ class ExcelProcessor:
                 return
 
             category_string = cat_find_by_module.iloc[0]["VIEWCATEGORY"]
-            views_find_by_cat = hana_client.get_views(
+            views_find_by_cat = self.hana_client.get_views(
                 category=category_string, log_filename=log_filename
             )
             if views_find_by_cat.empty:
@@ -314,12 +321,12 @@ class ExcelProcessor:
             )
 
             # Get fields from selected views once for all batches
-            llm_return_views_fields = hana_client.get_fields(
+            llm_return_views_fields = self.hana_client.get_fields(
                 cds_views=llm_return_views, log_filename=log_filename
             )
 
             # Get Custom views fields
-            # custom_views_fields = hana_client.get_custom_fields(log_filename=log_filename)
+            # custom_views_fields = self.hana_client.get_custom_fields(log_filename=log_filename)
 
             # Merge fields
             # llm_return_views_fields.extend(custom_views_fields)
@@ -432,6 +439,12 @@ class ExcelProcessor:
                 logger.get_excel_log_filename(excel_filename),
             )
             self.write_results(worksheet, all_results)
+        except Exception as e:
+            logger.error(
+                f"Error processing batch file: {e}",
+                logger.get_excel_log_filename(excel_filename),
+            )
+            raise
 
     def _process_batch(
         self,
@@ -483,7 +496,7 @@ class ExcelProcessor:
 
         for row in range(start_row, (worksheet.max_row or 1000) + 1):
             field_name = worksheet[f"{input_row_cols['field_name']}{row}"].value
-            if field_name == '' or field_name == 'e':
+            if field_name is None or field_name == '' or field_name == 'e':
                 continue
 
             interface_field = InterfaceField(
@@ -579,6 +592,10 @@ class ExcelProcessor:
         for interface_field, match_result in results:
             row = interface_field.row_index
             isverify = interface_field.verify
+            field_name = interface_field.field_name
+            
+            if field_name is None or field_name == '' or field_name == 'e':
+                continue
 
             if isverify == "" or isverify == "-":
                 try:

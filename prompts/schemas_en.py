@@ -74,7 +74,7 @@ class ClaudeSchemas:
                                                     "description": "Notes explaining the match choice from context OR why no suitable match was found in the provided context",
                                                 },
                                             },
-                                            "required": ["row_index","table_id","field_id","field_desc","data_type","length_total","length_dec","key_flag","obligatory","sample_value","match_confidence", "notes"]
+                                            "required": ["row_index","table_id","field_id","field_desc","data_type","length_total","length_dec","key_flag","obligatory","sample_value","match", "notes"]
                                         },
                                     }
                                 },
@@ -126,70 +126,68 @@ class OpenAISchemas:
             "type": "function",
             "function": {
                 "name": "review_field_matches",
-                "description": "Match input fields with SAP CDS fields based on semantic similarity",
+                "description": "Matches input fields with SAP CDS fields STRICTLY from the provided context - NO field names outside the context are allowed",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "review": {
                             "type": "array",
+                            "description": "A list containing the matching results for all input fields",
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "row_index": {"type": "integer"},
-                                    "table_id": {"type": "string"},
-                                    "field_id": {"type": "string"},
-                                    "field_desc": {"type": "string"},
-                                    "data_type": {"type": "string"},
-                                    "length_total": {"type": "string"},
-                                    "length_dec": {"type": "string"},
-                                    "key_flag": {"type": "string"},
-                                    "match_confidence": {"type": "integer"},
-                                    "notes": {"type": "string"},
+                                    "row_index": {
+                                        "type": "integer",
+                                        "description": "Row index of the input field",
+                                    },
+                                    "table_id": {
+                                        "type": "string",
+                                        "description": "EXACT SAP CDS view name from context list - must match exactly, empty string if no match found",
+                                    },
+                                    "field_id": {
+                                        "type": "string",
+                                        "description": "EXACT SAP CDS field name from context list (without view prefix) - must match exactly, empty string if no match found",
+                                    },
+                                    "field_desc": {
+                                        "type": "string",
+                                        "description": "SAP CDS field description from context, empty string if no match found",
+                                    },
+                                    "data_type": {
+                                        "type": "string",
+                                        "description": "SAP CDS field data type from context, empty string if no match found",
+                                    },
+                                    "length_total": {
+                                        "type": "string",
+                                        "description": "SAP CDS field total length from context, empty string if no match found",
+                                    },
+                                    "length_dec": {
+                                        "type": "string",
+                                        "description": "SAP CDS field decimal length from context, empty string if no match found",
+                                    },
+                                    "key_flag": {
+                                        "type": "string",
+                                        "description": "Whether the field is a key field - use '○' if true from context, empty string otherwise",
+                                    },
+                                    "obligatory": {
+                                        "type": "string",
+                                        "description": "Whether the field is required or optional from context - use '○' if required from context, empty string otherwise",
+                                    },
+                                    "sample_value": {
+                                        "type": "string",
+                                        "description": "Sample value for SAP CDS field",
+                                    },
+                                    "match": {
+                                        "type": "integer",
+                                        "description": "Match confidence percentage (0-100)",
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "description": "Notes explaining the match choice from context OR why no suitable match was found in the provided context",
+                                    },
                                 },
-                                "required": ["row_index", "match_confidence", "notes"],
-                            },
-                        }
-                    },
-                    "required": ["review"],
-                },
-            },
-        }
-
-    @staticmethod
-    def get_field_review_tool() -> Dict[str, Any]:
-        """
-        Get OpenAI-compatible function schema for field review.
-
-        Returns:
-            Dictionary containing OpenAI function configuration for field review
-        """
-        return {
-            "type": "function",
-            "function": {
-                "name": "review_field_matches",
-                "description": "Analyzes the compatibility between input and matched fields, returning a review with match rate, description, and alerts.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "review": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "row_index": {"type": "integer"},
-                                    "match_rate": {"type": "integer"},
-                                    "match_description": {"type": "string"},
-                                    "notes": {"type": "string"},
-                                    "data_type_alert": {"type": "boolean"},
-                                    "length_alert": {"type": "boolean"},
-                                    "decimal_alert": {"type": "boolean"},
-                                    "key_field_alert": {"type": "boolean"},
-                                },
-                                "required": [
-                                    "row_index",
-                                    "match_rate",
-                                    "match_description",
-                                ],
+                                "required": ["row_index", "table_id", "field_id", "field_desc", "data_type",
+                                             "length_total", "length_dec", "key_flag", "obligatory", "sample_value",
+                                             "match", "notes"]
                             },
                         }
                     },
@@ -239,69 +237,68 @@ class GeminiSchemas:
             "function_declarations": [
                 {
                     "name": "review_field_matches",
-                    "description": "Match input fields with SAP CDS fields based on semantic similarity",
+                    "description": "Matches input fields with SAP CDS fields STRICTLY from the provided context - NO field names outside the context are allowed",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "review": {
                                 "type": "array",
+                                "description": "A list containing the matching results for all input fields",
                                 "items": {
                                     "type": "object",
                                     "properties": {
-                                        "row_index": {"type": "integer"},
-                                        "table_id": {"type": "string"},
-                                        "field_id": {"type": "string"},
-                                        "field_desc": {"type": "string"},
-                                        "data_type": {"type": "string"},
-                                        "length_total": {"type": "string"},
-                                        "length_dec": {"type": "string"},
-                                        "key_flag": {"type": "string"},
-                                        "match_confidence": {"type": "integer"},
-                                        "notes": {"type": "string"},
+                                        "row_index": {
+                                            "type": "integer",
+                                            "description": "Row index of the input field",
+                                        },
+                                        "table_id": {
+                                            "type": "string",
+                                            "description": "EXACT SAP CDS view name from context list - must match exactly, empty string if no match found",
+                                        },
+                                        "field_id": {
+                                            "type": "string",
+                                            "description": "EXACT SAP CDS field name from context list (without view prefix) - must match exactly, empty string if no match found",
+                                        },
+                                        "field_desc": {
+                                            "type": "string",
+                                            "description": "SAP CDS field description from context, empty string if no match found",
+                                        },
+                                        "data_type": {
+                                            "type": "string",
+                                            "description": "SAP CDS field data type from context, empty string if no match found",
+                                        },
+                                        "length_total": {
+                                            "type": "string",
+                                            "description": "SAP CDS field total length from context, empty string if no match found",
+                                        },
+                                        "length_dec": {
+                                            "type": "string",
+                                            "description": "SAP CDS field decimal length from context, empty string if no match found",
+                                        },
+                                        "key_flag": {
+                                            "type": "string",
+                                            "description": "Whether the field is a key field - use '○' if true from context, empty string otherwise",
+                                        },
+                                        "obligatory": {
+                                            "type": "string",
+                                            "description": "Whether the field is required or optional from context - use '○' if required from context, empty string otherwise",
+                                        },
+                                        "sample_value": {
+                                            "type": "string",
+                                            "description": "Sample value for SAP CDS field",
+                                        },
+                                        "match": {
+                                            "type": "integer",
+                                            "description": "Match confidence percentage (0-100)",
+                                        },
+                                        "notes": {
+                                            "type": "string",
+                                            "description": "Notes explaining the match choice from context OR why no suitable match was found in the provided context",
+                                        },
                                     },
-                                    "required": [
-                                        "row_index",
-                                        "match_confidence",
-                                        "notes",
-                                    ],
-                                },
-                            }
-                        },
-                        "required": ["review"],
-                    },
-                }
-            ]
-        }
-
-    @staticmethod
-    def get_field_review_tool() -> Dict[str, Any]:
-        return {
-            "function_declarations": [
-                {
-                    "name": "review_field_matches",
-                    "description": "Analyzes the compatibility between input and matched fields, returning a review with match rate, description, and alerts.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "review": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "row_index": {"type": "integer"},
-                                        "match_rate": {"type": "integer"},
-                                        "match_description": {"type": "string"},
-                                        "notes": {"type": "string"},
-                                        "data_type_alert": {"type": "boolean"},
-                                        "length_alert": {"type": "boolean"},
-                                        "decimal_alert": {"type": "boolean"},
-                                        "key_field_alert": {"type": "boolean"},
-                                    },
-                                    "required": [
-                                        "row_index",
-                                        "match_rate",
-                                        "match_description",
-                                    ],
+                                    "required": ["row_index", "table_id", "field_id", "field_desc",
+                                                 "data_type", "length_total", "length_dec", "key_flag",
+                                                 "obligatory", "sample_value", "match", "notes"]
                                 },
                             }
                         },

@@ -30,7 +30,7 @@ class HANADBClient:
 
         self.hana_client: ConnectionContext = None
 
-    def connect(self, log_filename: str = None) -> None:
+    def connect(self) -> None:
         if self.hana_client:
             return
 
@@ -43,21 +43,14 @@ class HANADBClient:
                 encrypt=True,
             )
         except HanaDbError as e:
-            logger.error(_("HANA Cloud connection failed: {}").format(e), log_filename)
+            logger.error(_("HANA Cloud connection failed: {}").format(e))
             raise
 
-    def close(self, log_filename: str = None) -> None:
+    def close(self) -> None:
         """Close database connection."""
         if self.hana_client:
             self.hana_client.close()
-            logger.info(_("Database connection closed."), log_filename)
-
-    def __enter__(self):
-        self.connect()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+            logger.info(_("Database connection closed."))
 
     def _format_in_clause(self, items: List[str]) -> str:
         if not items:
@@ -407,35 +400,37 @@ class HANADBClient:
 if __name__ == "__main__":
     query_text = "purchase"
     try:
-        with HANADBClient() as db:
-            logger.info(
-                _("--- Step 1: Executing vector search for query '{}' ---").format(
-                    query_text
-                )
+        db = HANADBClient()
+        db.connect()
+        
+        logger.info(
+            _("--- Step 1: Executing vector search for query '{}' ---").format(
+                query_text
             )
-            vector_search_results = db.run_vector_search(query=query_text, k=1)
+        )
+        vector_search_results = db.run_vector_search(query=query_text, k=1)
 
-            logger.info(_("\nVector search results:"))
-            logger.info(str(vector_search_results))
-            logger.info("-" * 80)
+        logger.info(_("\nVector search results:"))
+        logger.info(str(vector_search_results))
+        logger.info("-" * 80)
 
-            if not vector_search_results.empty:
-                category_string = vector_search_results.iloc[0]["VIEWCATEGORY"]
+        if not vector_search_results.empty:
+            category_string = vector_search_results.iloc[0]["VIEWCATEGORY"]
+            logger.info(
+                _(
+                    "\n--- Step 2: Getting all related CDS views using category string '{}' ---"
+                ).format(category_string)
+            )
+
+            views_in_category = db.get_views(category=category_string)
+
+            if not views_in_category.empty:
                 logger.info(
-                    _(
-                        "\n--- Step 2: Getting all related CDS views using category string '{}' ---"
-                    ).format(category_string)
+                    _("\nFound {} CDS views:").format(len(views_in_category))
                 )
+                logger.info("-" * 80)
 
-                views_in_category = db.get_views(category=category_string)
-
-                if not views_in_category.empty:
-                    logger.info(
-                        _("\nFound {} CDS views:").format(len(views_in_category))
-                    )
-                    logger.info("-" * 80)
-
-            else:
-                logger.info(_("\nVector search returned no results."))
+        else:
+            logger.info(_("\nVector search returned no results."))
     except Exception as e:
         logger.error(_("\nProgram execution failed: {}").format(e))
