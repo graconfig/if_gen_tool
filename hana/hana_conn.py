@@ -356,6 +356,84 @@ class HANADBClient:
             logger.error(error_msg, log_filename)
             raise HanaDbError(error_msg) from e
 
+    def search_custom_field_by_vector(
+        self, 
+        field_query: str,
+        threshold: float = 0.75,
+        log_filename: str = None
+    ) -> Dict[str, Any]:
+        """
+        对单个字段进行客户化字段表的向量检索（基于 SOURCEDESC 字段）
+        
+        Args:
+            field_query: 字段查询文本（字段名+描述+示例值）
+            threshold: 相似度阈值，默认 0.75
+            log_filename: 日志文件名
+            
+        Returns:
+            匹配结果字典，如果未匹配返回空字典
+        """
+        if not self.hana_client:
+            error_msg = _("HANA Cloud not connected.")
+            logger.error(error_msg, log_filename)
+            raise ConnectionError(error_msg)
+        
+        # 清理查询文本
+        clean_query = field_query.replace("'", "''").replace('"', '""')
+        
+        sql = """
+            SELECT TOP 1
+                "TARGETTABLE",
+                "TARGETFIELD",
+                "TARGETDESC",
+                "TARGETTYPE",
+                "TARGETLENGTH",
+                "TARGETDECIMALS",
+                "KEYFLAG",
+                "OBLIGATORY",
+                COSINE_SIMILARITY(
+                    VECTOR_EMBEDDING('{query}', 'QUERY', 'SAP_NEB.20240715'),
+                    VECTOR_EMBEDDING("SOURCEDESC", 'DOCUMENT', 'SAP_NEB.20240715')
+                ) as SIMILARITY
+            FROM "{schema}"."{table}"
+            WHERE COSINE_SIMILARITY(
+                VECTOR_EMBEDDING('{query}', 'QUERY', 'SAP_NEB.20240715'),
+                VECTOR_EMBEDDING("SOURCEDESC", 'DOCUMENT', 'SAP_NEB.20240715')
+            ) >= {threshold}
+            ORDER BY SIMILARITY DESC
+        """.format(
+            query=clean_query,
+            threshold=threshold,
+            schema=self._db_schema_cust,
+            table=self.cust_fields_table
+        )
+        
+        try:
+            result_df = self.hana_client.sql(sql).collect()
+            
+            if result_df.empty:
+                return {}
+            
+            row = result_df.iloc[0]
+            return {
+                "table_name": row["TARGETTABLE"],
+                "field_name": row["TARGETFIELD"],
+                "field_desc": row["TARGETDESC"],
+                "data_type": row["TARGETTYPE"],
+                "length_total": row["TARGETLENGTH"],
+                "length_dec": row["TARGETDECIMALS"],
+                "is_key": row["KEYFLAG"],
+                "obligatory": row["OBLIGATORY"],
+                "similarity": float(row["SIMILARITY"])
+            }
+            
+        except HanaDbError as e:
+            logger.error(
+                _("Custom field vector search failed: {}").format(e), 
+                log_filename
+            )
+            return {}
+
     @staticmethod
     def parse_fields(content_str: str) -> str:
         result_chars = []

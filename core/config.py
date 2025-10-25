@@ -21,6 +21,7 @@ class ConfigurationManager:
             "max_concurrent_batches": int(os.getenv("LLM_MAX_WORKERS", 5)),
             "input_system_col": "F",
             "input_system_row": 6,
+            "custom_field_threshold": float(os.getenv("CUSTOM_FIELD_THRESHOLD", 0.75)),
         }
 
     def get_file_config(self) -> Dict[str, Any]:
