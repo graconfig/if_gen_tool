@@ -74,6 +74,7 @@ class ConfigurationManager:
                 "field_id": "W",
                 "length_total": "Y",
                 "length_dec": "Z",
+                "field_text": "S",
                 "remark": "AA",
                 "sample_value": "AB",
                 "verify": "AD",
