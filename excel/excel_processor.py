@@ -64,10 +64,16 @@ class ExcelProcessor:
         workbook = openpyxl.load_workbook(file_path)
 
         sheet_name = self.excel_config["sheet_name"]
+        sheet_name_head = self.excel_config["sheet_name_head"] 
+
+        if sheet_name_head not in workbook.sheetnames:
+            raise ValueError(_("Sheet '{}' not found in workbook").format(sheet_name_head))
+        
         if sheet_name not in workbook.sheetnames:
             raise ValueError(_("Sheet '{}' not found in workbook").format(sheet_name))
 
-        self._process_worksheet(workbook, sheet_name, file_path.name)
+
+        self._process_worksheet(workbook, sheet_name_head, sheet_name, file_path.name)
 
         workbook.save(output_path)
         logger.info(
@@ -90,12 +96,14 @@ class ExcelProcessor:
             )
 
     def _process_worksheet(
-        self, workbook: openpyxl.Workbook, sheet_name: str, excel_filename: str
+        self, workbook: openpyxl.Workbook, sheet_name_head: str, sheet_name: str, excel_filename: str
     ) -> None:
+        
+        worksheet_head = workbook[sheet_name_head]
         worksheet = workbook[sheet_name]
 
         # 提前输入列的字段
-        input_fields = self.extract_fields(worksheet)
+        input_fields = self.extract_fields(worksheet_head,worksheet)
 
         # If we have a small number of fields, process normally
         if len(input_fields) <= self.batch_size:
@@ -456,13 +464,13 @@ class ExcelProcessor:
             # Return empty results for failed batch
             return [{} for _ in batch_fields]
 
-    def extract_fields(self, worksheet) -> List[InterfaceField]:
+    def extract_fields(self, worksheet_head, worksheet) -> List[InterfaceField]:
         input_fields = []
 
         # Detect SAP format by checking the detection cell
         input_system_col = self.excel_config.get("input_system_col", "F")
         input_system_row = self.excel_config.get("input_system_row", 6)
-        cell_value = worksheet[f"{input_system_col}{input_system_row}"].value
+        cell_value = worksheet_head[f"{input_system_col}{input_system_row}"].value
 
         # Determine which column mappings to use based on cell value
         if cell_value and "SAP" in str(cell_value).upper():
@@ -474,9 +482,9 @@ class ExcelProcessor:
         input_header_cols = self.column_mappings["input_header_cols"]
 
         # 抬头module、接口信息
-        module = worksheet[f"{input_header_cols['module']}{header_row}"].value or ""
-        if_name = worksheet[f"{input_header_cols['if_name']}{header_row}"].value or ""
-        if_desc = worksheet[f"{input_header_cols['if_desc']}{header_row}"].value or ""
+        module = worksheet_head[f"{input_header_cols['module']}{header_row}"].value or ""
+        if_name = worksheet_head[f"{input_header_cols['if_name']}{header_row}"].value or ""
+        if_desc = worksheet_head[f"{input_header_cols['if_desc']}{header_row}"].value or ""
 
         start_row = self.excel_config["start_row"]
         input_row_cols = self.column_mappings["input_row_cols"]
@@ -492,6 +500,7 @@ class ExcelProcessor:
                 if_desc=if_desc,
                 field_name=str(field_name).strip(),
                 key_flag=worksheet[f"{input_row_cols['key_flag']}{row}"].value or "",
+                is_append=worksheet[f"{input_row_cols['is_append']}{row}"].value or "",
                 obligatory=worksheet[f"{input_row_cols['obligatory']}{row}"].value
                 or "",
                 data_type=worksheet[f"{input_row_cols['data_type']}{row}"].value or "",
@@ -574,14 +583,15 @@ class ExcelProcessor:
         processed_count = 0
         for interface_field, match_result in results:
             row = interface_field.row_index
-
+            is_append = interface_field.is_append
             try:
                 worksheet[f"{output_columns['field_name']}{row}"] = match_result.get(
                     "field_name", ""
-                )  # Field description
+                )  
                 worksheet[f"{output_columns['field_id']}{row}"] = match_result.get(
                     "field_id", ""
-                )  # Technical field name
+                )  
+                worksheet[f"{output_columns['is_append']}{row}"] = is_append, 
                 worksheet[f"{output_columns['key_flag']}{row}"] = match_result.get(
                     "key_flag", ""
                 )

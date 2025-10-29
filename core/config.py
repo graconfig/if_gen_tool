@@ -14,9 +14,10 @@ class ConfigurationManager:
 
     def get_excel_config(self) -> Dict[str, Any]:
         return {
-            "sheet_name": "IF項目定義",
+            "sheet_name_head": "対象IF",
+            "sheet_name": "IFマッピング定義",#"IF項目定義",
             "header_row": 6,
-            "start_row": 11,
+            "start_row": 5,#11,
             "batch_size": int(os.getenv("LLM_BATCH_SIZE", 30)),
             "max_concurrent_batches": int(os.getenv("LLM_MAX_WORKERS", 5)),
             "input_system_col": "F",
@@ -31,7 +32,7 @@ class ConfigurationManager:
     def get_column_mappings(self) -> Dict[str, Dict[str, str]]:
         # excel输入输出列映射
         return {
-            "input_header_cols": {"module": "C", "if_name": "H", "if_desc": "I"},
+            "input_header_cols": {"module": "D", "if_name": "C", "if_desc": "E"},
             "input_row_cols": {
                 "field_name": "C",
                 "key_flag": "D",
@@ -54,38 +55,41 @@ class ConfigurationManager:
                 "length_dec": "Z",
                 "notes": "AA",
                 "sample_value": "AB",
-                "match": "AC",
-                "verify": "AD",
+                "match": "AE",
+                "verify": "AF",
             },
         }
 
     def get_column_mappings_sap(self) -> Dict[str, Dict[str, str]]:
         # excel输入输出列映射
         return {
-            "input_header_cols": {"module": "C", "if_name": "H", "if_desc": "I"},
+            "input_header_cols": {"module": "D", "if_name": "C", "if_desc": "E"},
             "input_row_cols": {
                 "field_name": "S",
-                "key_flag": "T",
-                "obligatory": "U",
-                "data_type": "X",
-                "field_id": "W",
-                "length_total": "Y",
-                "length_dec": "Z",
-                "field_text": "AA",
-                "sample_value": "AB",
+                "is_append": "T",
+                "key_flag": "U",
+                "obligatory": "V",
+                "data_type": "Y",
+                "field_id": "X",
+                "length_total": "Z",
+                "length_dec": "AA",
+                "field_text": "AB",
+                "sample_value": "AC",
             },
             "output_columns": {
                 "field_name": "C",
-                "key_flag": "D",
-                "obligatory": "E",
-                "table_id": "F",
-                "field_id": "G",
+                "is_append": "D",
+                "key_flag": "E",
+                "obligatory": "F",
+                "table_id": "G",
+                "field_id": "H",
                 "data_type": "I",
                 "length_total": "J",
                 "length_dec": "K",
                 "notes": "M",
                 "sample_value": "N",
-                "match": "O",
+                "match": "AE",
+                "verify": "AF",
             },
         }
 

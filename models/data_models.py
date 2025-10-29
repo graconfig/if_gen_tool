@@ -16,6 +16,7 @@ class InterfaceField:
     if_name: str = ""
     if_desc: str = ""
     field_name: str = ""
+    is_append: str = ""
     key_flag: str = ""
     obligatory: str = ""
     data_type: str = ""
@@ -33,6 +34,7 @@ class InterfaceField:
             "if_name": self.if_name,
             "if_desc": self.if_desc,
             "field_name": self.field_name,
+            "is_append": self.is_append,
             "key_flag": self.key_flag,
             "obligatory": self.obligatory,
             "data_type": self.data_type,
