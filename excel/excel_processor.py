@@ -15,7 +15,6 @@ import pandas as pd
 
 from utils.i18n import _
 from utils.sap_logger import logger
-from hana.hana_conn import HANADBClient
 from models.data_models import InterfaceField
 from tqdm import tqdm
 from odata.odata import odata_verify
@@ -29,10 +28,11 @@ warnings.filterwarnings(
 
 
 class ExcelProcessor:
-    def __init__(self, data_dir: Path, ai_service, config_manager):
+    def __init__(self, data_dir: Path, ai_service, config_manager, hana_client=None):
         self.data_dir = data_dir
         self.ai_service = ai_service
         self.config_manager = config_manager
+        self.hana_client = hana_client
 
         self.excel_config = config_manager.get_excel_config()
         self.column_mappings = None
@@ -63,15 +63,14 @@ class ExcelProcessor:
 
         workbook = openpyxl.load_workbook(file_path)
 
-        sheet_name = self.excel_config["sheet_name"]
         sheet_name_head = self.excel_config["sheet_name_head"] 
 
         if sheet_name_head not in workbook.sheetnames:
             raise ValueError(_("Sheet '{}' not found in workbook").format(sheet_name_head))
         
+        sheet_name = self.excel_config["sheet_name"]
         if sheet_name not in workbook.sheetnames:
             raise ValueError(_("Sheet '{}' not found in workbook").format(sheet_name))
-
 
         self._process_worksheet(workbook, sheet_name_head, sheet_name, file_path.name)
 
@@ -98,12 +97,11 @@ class ExcelProcessor:
     def _process_worksheet(
         self, workbook: openpyxl.Workbook, sheet_name_head: str, sheet_name: str, excel_filename: str
     ) -> None:
-        
         worksheet_head = workbook[sheet_name_head]
         worksheet = workbook[sheet_name]
-
+        
         # 提前输入列的字段
-        input_fields = self.extract_fields(worksheet_head,worksheet)
+        input_fields = self.extract_fields(worksheet_head, worksheet)
 
         # If we have a small number of fields, process normally
         if len(input_fields) <= self.batch_size:
@@ -115,21 +113,53 @@ class ExcelProcessor:
     def _process_single(
         self, worksheet, input_fields: List[InterfaceField], excel_filename: str
     ) -> None:
-        """Process a single batch of fields (original method)"""
-        # 提前输入列的字段
-        batch_input_fields = input_fields[:]
-
-        # 1、根据输入内容查找视图
+        """Process a single batch of fields with custom field priority"""
+        
+        # ========== 新增：客户化字段优先匹配 ==========
+        logger.info(
+            _("Step 1: Matching custom fields..."),
+            logger.get_excel_log_filename(excel_filename),
+        )
+        
+        matched_rows, unmatched_rows = self._match_custom_fields(
+            input_fields, excel_filename
+        )
+        
+        logger.info(
+            _("Custom field matching: {} matched rows, {} unmatched rows").format(
+                len(matched_rows), len(unmatched_rows)
+            ),
+            logger.get_excel_log_filename(excel_filename),
+        )
+        
+        # ========== 如果全部匹配成功，直接写入结果 ==========
+        if not unmatched_rows:
+            logger.info(
+                _("All fields matched from custom table, skipping CDS view process."),
+                logger.get_excel_log_filename(excel_filename),
+            )
+            self.write_results(worksheet, matched_rows)
+            return
+        
+        # ========== 如果有未匹配字段，继续原有流程 ==========
+        logger.info(
+            _("Step 2: Processing {} unmatched rows with CDS views...").format(
+                len(unmatched_rows)
+            ),
+            logger.get_excel_log_filename(excel_filename),
+        )
+        
+        # 1、根据输入内容查找视图（只处理未匹配字段）
         final_context_for_llm = []
-        module = batch_input_fields[0].module
-        if_name = batch_input_fields[0].if_name
-        if_desc = batch_input_fields[0].if_desc
+        module = unmatched_rows[0].module
+        if_name = unmatched_rows[0].if_name
+        if_desc = unmatched_rows[0].if_desc
         module_query = ",".join([module, if_name, if_desc])
 
-        with HANADBClient() as hana_client:
-            log_filename = logger.get_excel_log_filename(excel_filename)
+        log_filename = logger.get_excel_log_filename(excel_filename)
 
-            cat_find_by_module = hana_client.run_vector_search(
+        try:
+            cat_find_by_module = self.hana_client.run_vector_search(
                 query=module_query, k=3, log_filename=log_filename
             )
             if cat_find_by_module.empty:
@@ -137,10 +167,11 @@ class ExcelProcessor:
                     _("No categories for module."),
                     logger.get_excel_log_filename(excel_filename),
                 )
+                self.write_results(worksheet, matched_rows)
                 return
 
             category_string = cat_find_by_module.iloc[0]["VIEWCATEGORY"]
-            views_find_by_cat = hana_client.get_views(
+            views_find_by_cat = self.hana_client.get_views(
                 category=category_string, log_filename=log_filename
             )
             if views_find_by_cat.empty:
@@ -148,6 +179,8 @@ class ExcelProcessor:
                     _("No views for category."),
                     logger.get_excel_log_filename(excel_filename),
                 )
+                self.write_results(worksheet, matched_rows)
+                return
             logger.info(
                 "-" * 80,
                 logger.get_excel_log_filename(excel_filename),
@@ -156,9 +189,9 @@ class ExcelProcessor:
                 _("Found {} candidate CDS views").format(len(views_find_by_cat)),
                 logger.get_excel_log_filename(excel_filename),
             )
-            # 根据输入内容查找最相关的视图
+            # 根据输入内容查找最相关的视图（传入未匹配字段）
             llm_return_views = self._select_relevant_views(
-                views_find_by_cat, batch_input_fields, excel_filename
+                views_find_by_cat, unmatched_rows, excel_filename
             )
             if not llm_return_views:
                 logger.warning(
@@ -171,47 +204,23 @@ class ExcelProcessor:
                 logger.get_excel_log_filename(excel_filename),
             )
 
-            # If no views were selected, treat as processing failure and skip this file
+            # If no views were selected, write matched results and return
             if not llm_return_views:
                 logger.error(
-                    _("No CDS views selected - unable to process this file."),
+                    _("No CDS views selected for unmatched fields."),
                     logger.get_excel_log_filename(excel_filename),
                 )
-                raise RuntimeError(
-                    _(
-                        "Processing failed: No relevant CDS views found for this interface."
-                    )
-                )
+                self.write_results(worksheet, matched_rows)
+                return
             # 获取视图的字段
-            llm_return_views_fields = hana_client.get_fields(
+            llm_return_views_fields = self.hana_client.get_fields(
                 cds_views=llm_return_views, log_filename=log_filename
             )
 
-            # Get Custom views fields
-            custom_views_fields = hana_client.get_custom_fields(
-                log_filename=log_filename
-            )
-
-            # Merge fields (both are dictionaries)
-            for view_name, fields_list in custom_views_fields.items():
-                if view_name in llm_return_views_fields:
-                    llm_return_views_fields[view_name].extend(fields_list)
-                else:
-                    llm_return_views_fields[view_name] = fields_list
-
-            # 3. Prepare the final context for the LLM using filtered fields
+            #Prepare the final context for the LLM using filtered fields
             llm_return_views_df = views_find_by_cat[
                 views_find_by_cat["VIEWNAME"].isin(llm_return_views)
             ]
-
-            # 获取custom视图对应的DataFrame
-            custom_views_df = views_find_by_cat[
-                views_find_by_cat["VIEWNAME"].isin(custom_views_fields.keys())
-            ]
-
-            llm_return_views_df = pd.concat(
-                [llm_return_views_df, custom_views_df], ignore_index=True
-            )
 
             final_context_for_llm = self._prepare_llm_context(
                 llm_return_views_fields, llm_return_views_df
@@ -222,20 +231,21 @@ class ExcelProcessor:
                 logger.get_excel_log_filename(excel_filename),
             )
 
-            # 根据查找的视图和字段调用LLM匹配
+            # 根据查找的视图和字段调用LLM匹配（只匹配未匹配字段）
             logger.info(
-                _("Calling LLM to match result..."),
+                _("Calling LLM to match unmatched rows..."),
                 logger.get_excel_log_filename(excel_filename),
             )
             try:
-                batch_results = self._match_fields(
-                    batch_input_fields, final_context_for_llm, excel_filename
+                unmatched_batch_results = self._match_fields(
+                    unmatched_rows, final_context_for_llm, excel_filename
                 )
             except Exception as e:
                 logger.error(
                     f"❌ LLM function call failed: {e}",
                     logger.get_excel_log_filename(excel_filename),
                 )
+                self.write_results(worksheet, matched_rows)
                 raise RuntimeError(
                     _("Failed to process file due to LLM error: {}").format(e)
                 ) from e
@@ -244,20 +254,33 @@ class ExcelProcessor:
                 logger.get_excel_log_filename(excel_filename),
             )
 
-            # 输入输出组合，方便后续解析映射
-            final_results = list(zip(input_fields, batch_results))
+            # ========== 合并结果：已匹配 + 新匹配 ==========
+            unmatched_results = list(zip(unmatched_rows, unmatched_batch_results))
+            final_results = matched_rows + unmatched_results
+            
+            # 按行号排序，保持原始顺序
+            final_results.sort(key=lambda x: x[0].row_index)
 
             # Write results
             logger.info(
-                _("Writing results to file..."),
+                _("Writing results: {} rows from custom, {} rows from CDS").format(
+                    len(matched_rows), len(unmatched_results)
+                ),
                 logger.get_excel_log_filename(excel_filename),
             )
             self.write_results(worksheet, final_results)
+        except Exception as e:
+            logger.error(
+                f"Error processing file: {e}",
+                logger.get_excel_log_filename(excel_filename),
+            )
+            raise
 
     def _process_in_batches(
         self, worksheet, input_fields: List[InterfaceField], excel_filename: str
     ) -> None:
-        """Process large number of fields in batches"""
+        """Process large number of fields in batches with custom field priority"""
+        
         logger.info(
             _("Processing {} rows in batches of {}").format(
                 len(input_fields), self.batch_size
@@ -265,17 +288,51 @@ class ExcelProcessor:
             logger.get_excel_log_filename(excel_filename),
         )
 
+        # ========== 新增：客户化字段优先匹配 ==========
+        logger.info(
+            _("Step 1: Matching custom fields..."),
+            logger.get_excel_log_filename(excel_filename),
+        )
+        
+        matched_results, unmatched_rows = self._match_custom_fields(
+            input_fields, excel_filename
+        )
+        
+        logger.info(
+            _("Custom field matching: {} matched, {} unmatched").format(
+                len(matched_results), len(unmatched_rows)
+            ),
+            logger.get_excel_log_filename(excel_filename),
+        )
+        
+        # ========== 如果全部匹配成功，直接写入结果 ==========
+        if not unmatched_rows:
+            logger.info(
+                _("All fields matched from custom table, skipping CDS view process."),
+                logger.get_excel_log_filename(excel_filename),
+            )
+            self.write_results(worksheet, matched_results)
+            return
+        
+        # ========== 如果有未匹配字段，继续原有批处理流程 ==========
+        logger.info(
+            _("Step 2: Processing {} unmatched rows with CDS views in batches...").format(
+                len(unmatched_rows)
+            ),
+            logger.get_excel_log_filename(excel_filename),
+        )
+
         # 1. Get common context for all batches (same module/interface)
-        module = input_fields[0].module
-        if_name = input_fields[0].if_name
-        if_desc = input_fields[0].if_desc
+        module = unmatched_rows[0].module
+        if_name = unmatched_rows[0].if_name
+        if_desc = unmatched_rows[0].if_desc
         module_query = ",".join([module, if_name, if_desc])
 
-        with HANADBClient() as hana_client:
-            log_filename = logger.get_excel_log_filename(excel_filename)
+        log_filename = logger.get_excel_log_filename(excel_filename)
 
+        try:
             # Get CDS views once for all batches
-            cat_find_by_module = hana_client.run_vector_search(
+            cat_find_by_module = self.hana_client.run_vector_search(
                 query=module_query, k=3, log_filename=log_filename
             )
             if cat_find_by_module.empty:
@@ -283,10 +340,11 @@ class ExcelProcessor:
                     _("No categories for module."),
                     logger.get_excel_log_filename(excel_filename),
                 )
+                self.write_results(worksheet, matched_results)
                 return
 
             category_string = cat_find_by_module.iloc[0]["VIEWCATEGORY"]
-            views_find_by_cat = hana_client.get_views(
+            views_find_by_cat = self.hana_client.get_views(
                 category=category_string, log_filename=log_filename
             )
             if views_find_by_cat.empty:
@@ -294,6 +352,7 @@ class ExcelProcessor:
                     _("No views for category."),
                     logger.get_excel_log_filename(excel_filename),
                 )
+                self.write_results(worksheet, matched_results)
                 return
 
             logger.info(
@@ -301,20 +360,17 @@ class ExcelProcessor:
                 logger.get_excel_log_filename(excel_filename),
             )
 
-            # Select relevant views once for all batches
+            # Select relevant views once for all batches (传入未匹配字段)
             llm_return_views = self._select_relevant_views(
-                views_find_by_cat, input_fields, excel_filename
+                views_find_by_cat, unmatched_rows, excel_filename
             )
             if not llm_return_views:
                 logger.warning(
                     _("No views found by LLM."),
                     logger.get_excel_log_filename(excel_filename),
                 )
-                raise RuntimeError(
-                    _(
-                        "Processing failed: No relevant CDS views found for this interface."
-                    )
-                )
+                self.write_results(worksheet, matched_results)
+                return
 
             logger.info(
                 _("LLM selected {} CDS views.").format(len(llm_return_views)),
@@ -322,26 +378,13 @@ class ExcelProcessor:
             )
 
             # Get fields from selected views once for all batches
-            llm_return_views_fields = hana_client.get_fields(
+            llm_return_views_fields = self.hana_client.get_fields(
                 cds_views=llm_return_views, log_filename=log_filename
             )
-
-            # Get Custom views fields
-            # custom_views_fields = hana_client.get_custom_fields(log_filename=log_filename)
-
-            # Merge fields
-            # llm_return_views_fields.extend(custom_views_fields)
 
             llm_return_views_df = views_find_by_cat[
                 views_find_by_cat["VIEWNAME"].isin(llm_return_views)
             ]
-
-            # 获取custom视图对应的DataFrame
-            # custom_views_df = views_find_by_cat[
-            #     views_find_by_cat["VIEWNAME"].isin(custom_views_fields)
-            # ]
-            #
-            # llm_return_views_df = pd.concat([llm_return_views_df, custom_views_df],ignore_index=True)
 
             final_context_for_llm = self._prepare_llm_context(
                 llm_return_views_fields, llm_return_views_df
@@ -352,17 +395,17 @@ class ExcelProcessor:
                 logger.get_excel_log_filename(excel_filename),
             )
 
-            # 2. Process fields in batches (with parallel processing)
-            all_results = []
+            # 2. Process unmatched fields in batches (with parallel processing)
+            unmatched_results = []
 
-            # Split input fields into batches
+            # Split unmatched fields into batches
             batches = []
-            for i in range(0, len(input_fields), self.batch_size):
-                batch_fields = input_fields[i : i + self.batch_size]
+            for i in range(0, len(unmatched_rows), self.batch_size):
+                batch_fields = unmatched_rows[i : i + self.batch_size]
                 batches.append((i, batch_fields))
 
             logger.info(
-                _("Processing {} batches...").format(len(batches)),
+                _("Processing {} batches for unmatched fields...").format(len(batches)),
                 logger.get_excel_log_filename(excel_filename),
             )
 
@@ -398,12 +441,12 @@ class ExcelProcessor:
 
                         try:
                             batch_results = future.result()
-                            # Combine input fields with results for this batch
-                            batch_fields = input_fields[
+                            # Combine unmatched fields with results for this batch
+                            batch_fields = unmatched_rows[
                                 batch_index : batch_index + batch_size
                             ]
                             batch_final_results = list(zip(batch_fields, batch_results))
-                            all_results.extend(batch_final_results)
+                            unmatched_results.extend(batch_final_results)
 
                             logger.info(
                                 _("Row {}-{} processed successfully").format(
@@ -431,15 +474,24 @@ class ExcelProcessor:
                         # Add newline to separate progress bar from logger output
                         print()  # Add newline after progress update
 
-            # Sort results by row index to maintain order
+            # ========== 合并结果：已匹配 + 新匹配 ==========
+            all_results = matched_results + unmatched_results
             all_results.sort(key=lambda x: x[0].row_index)
 
             # 3. Write all results
             logger.info(
-                _("Writing {} results to file...").format(len(all_results)),
+                _("Writing {} results: {} from custom, {} from CDS").format(
+                    len(all_results), len(matched_results), len(unmatched_results)
+                ),
                 logger.get_excel_log_filename(excel_filename),
             )
             self.write_results(worksheet, all_results)
+        except Exception as e:
+            logger.error(
+                f"Error processing batch file: {e}",
+                logger.get_excel_log_filename(excel_filename),
+            )
+            raise
 
     def _process_batch(
         self,
@@ -463,6 +515,71 @@ class ExcelProcessor:
             )
             # Return empty results for failed batch
             return [{} for _ in batch_fields]
+
+    def _match_custom_fields(
+        self,
+        input_fields: List[InterfaceField],
+        excel_filename: str
+    ) -> Tuple[List[Tuple[InterfaceField, Dict]], List[InterfaceField]]:
+        """
+        优先匹配客户化字段表（基于 SOURCEDESC 向量检索）
+        
+        Args:
+            input_fields: 输入字段列表
+            excel_filename: Excel 文件名
+            
+        Returns:
+            (已匹配的字段结果列表, 未匹配的字段列表)
+        """
+        matched_rows = []
+        unmatched_rows= []
+
+        log_filename = logger.get_excel_log_filename(excel_filename)
+            
+        for field in input_fields:
+            # 构建查询文本：字段名 + 字段描述 + 示例值
+            query_parts = [
+                field.field_name,
+                field.field_text,
+                field.sample_value
+            ]
+
+            query_text = " ".join([str(p).strip() for p in query_parts if p])
+                
+            # 向量检索客户化字段表
+            custom_match = self.hana_client.get_custom_fields(
+                field_query=query_text,
+                log_filename=log_filename
+            )
+                
+            if custom_match:
+                # 匹配成功，构建结果
+                match_result = {
+                    "table_id": custom_match.get("table_name", ""),
+                    "field_id": custom_match.get("field_id", ""),
+                    "field_name": custom_match.get("field_name", ""),
+                    "key_flag": "○" if custom_match.get("is_key") else "",
+                    "obligatory": "○" if custom_match.get("obligatory") else "",
+                    "data_type": custom_match.get("data_type", ""),
+                    "length_total": custom_match.get("length_total", ""),
+                    "length_dec": custom_match.get("length_dec", ""),
+                    "field_desc": custom_match.get("field_desc", ""),
+                    "sample_value": custom_match.get("sample_value", ""),
+                    "match": "100",
+                    "notes": custom_match.get("notes", ""),
+                }
+
+                matched_rows.append((field, match_result))
+                    
+                logger.debug(
+                    f"Row {field.row_index}: Custom match (similarity: {custom_match.get('similarity', 0):.2%})",
+                    log_filename
+                )
+            else:
+                # 未匹配，加入未匹配列表
+                unmatched_rows.append(field)
+        
+        return matched_rows, unmatched_rows
 
     def extract_fields(self, worksheet_head, worksheet) -> List[InterfaceField]:
         input_fields = []
@@ -491,7 +608,7 @@ class ExcelProcessor:
 
         for row in range(start_row, (worksheet.max_row or 1000) + 1):
             field_name = worksheet[f"{input_row_cols['field_name']}{row}"].value
-            if field_name == '' or field_name == 'e':
+            if field_name is None or field_name == '' or field_name == 'e':
                 continue
 
             interface_field = InterfaceField(
@@ -499,8 +616,8 @@ class ExcelProcessor:
                 if_name=if_name,
                 if_desc=if_desc,
                 field_name=str(field_name).strip(),
-                key_flag=worksheet[f"{input_row_cols['key_flag']}{row}"].value or "",
                 is_append=worksheet[f"{input_row_cols['is_append']}{row}"].value or "",
+                key_flag=worksheet[f"{input_row_cols['key_flag']}{row}"].value or "",
                 obligatory=worksheet[f"{input_row_cols['obligatory']}{row}"].value
                 or "",
                 data_type=worksheet[f"{input_row_cols['data_type']}{row}"].value or "",
@@ -512,6 +629,10 @@ class ExcelProcessor:
                 field_text=worksheet[f"{input_row_cols['field_text']}{row}"].value
                 or "",
                 sample_value=worksheet[f"{input_row_cols['sample_value']}{row}"].value
+                or "",
+                remark=worksheet[f"{input_row_cols['remark']}{row}"].value
+                or "",
+                verify=worksheet[f"{input_row_cols['verify']}{row}"].value
                 or "",
                 row_index=row,
             )
@@ -583,50 +704,57 @@ class ExcelProcessor:
         processed_count = 0
         for interface_field, match_result in results:
             row = interface_field.row_index
+            isverify = interface_field.verify
+            field_name = interface_field.field_name
             is_append = interface_field.is_append
-            try:
-                worksheet[f"{output_columns['field_name']}{row}"] = match_result.get(
-                    "field_name", ""
-                )  
-                worksheet[f"{output_columns['field_id']}{row}"] = match_result.get(
-                    "field_id", ""
-                )  
-                worksheet[f"{output_columns['is_append']}{row}"] = is_append, 
-                worksheet[f"{output_columns['key_flag']}{row}"] = match_result.get(
-                    "key_flag", ""
-                )
-                worksheet[f"{output_columns['obligatory']}{row}"] = match_result.get(
-                    "obligatory", ""
-                )
-                worksheet[f"{output_columns['table_id']}{row}"] = match_result.get(
-                    "table_id", ""
-                )
-                worksheet[f"{output_columns['data_type']}{row}"] = match_result.get(
-                    "data_type", ""
-                )
-                worksheet[f"{output_columns['length_total']}{row}"] = match_result.get(
-                    "length_total", ""
-                )
-                worksheet[f"{output_columns['length_dec']}{row}"] = match_result.get(
-                    "length_dec", ""
-                )
-                worksheet[f"{output_columns['match']}{row}"] = match_result.get(
-                    "match", ""
-                )
-                worksheet[f"{output_columns['notes']}{row}"] = match_result.get(
-                    "notes", ""
-                )
-                worksheet[f"{output_columns['sample_value']}{row}"] = match_result.get(
-                    "sample_value", ""
-                )
-                worksheet[f"{output_columns['verify']}{row}"] = match_result.get(
-                    "verify", ""
-                )
-
-                processed_count += 1
-
-            except Exception as e:
+            
+            if field_name is None or field_name == '' or field_name == 'e':
                 continue
+
+            if isverify == "" or isverify == "-":
+                try:
+                    worksheet[f"{output_columns['field_name']}{row}"] = match_result.get(
+                        "field_name", ""
+                    )  # Field description
+                    worksheet[f"{output_columns['is_append']}{row}"] = is_append
+                    worksheet[f"{output_columns['field_id']}{row}"] = match_result.get(
+                        "field_id", ""
+                    )  # Technical field name
+                    worksheet[f"{output_columns['key_flag']}{row}"] = match_result.get(
+                        "key_flag", ""
+                    )
+                    worksheet[f"{output_columns['obligatory']}{row}"] = match_result.get(
+                        "obligatory", ""
+                    )
+                    worksheet[f"{output_columns['table_id']}{row}"] = match_result.get(
+                        "table_id", ""
+                    )
+                    worksheet[f"{output_columns['data_type']}{row}"] = match_result.get(
+                        "data_type", ""
+                    )
+                    worksheet[f"{output_columns['length_total']}{row}"] = match_result.get(
+                        "length_total", ""
+                    )
+                    worksheet[f"{output_columns['length_dec']}{row}"] = match_result.get(
+                        "length_dec", ""
+                    )
+                    worksheet[f"{output_columns['match']}{row}"] = match_result.get(
+                        "match", ""
+                    )
+                    worksheet[f"{output_columns['notes']}{row}"] = match_result.get(
+                        "notes", ""
+                    )
+                    worksheet[f"{output_columns['sample_value']}{row}"] = match_result.get(
+                        "sample_value", ""
+                    )
+                    worksheet[f"{output_columns['verify']}{row}"] = match_result.get(
+                        "verify", ""
+                    )
+
+                    processed_count += 1
+
+                except Exception as e:
+                        continue
 
     # ========== Field Matching Logic ==========
 

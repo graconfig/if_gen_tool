@@ -22,6 +22,7 @@ class ConfigurationManager:
             "max_concurrent_batches": int(os.getenv("LLM_MAX_WORKERS", 5)),
             "input_system_col": "F",
             "input_system_row": 6,
+            "custom_field_threshold": float(os.getenv("CUSTOM_FIELD_THRESHOLD", 0.75)),
         }
 
     def get_file_config(self) -> Dict[str, Any]:
@@ -35,14 +36,17 @@ class ConfigurationManager:
             "input_header_cols": {"module": "D", "if_name": "C", "if_desc": "E"},
             "input_row_cols": {
                 "field_name": "C",
-                "key_flag": "D",
-                "obligatory": "E",
+                "is_append": "D",
+                "key_flag": "E",
+                "obligatory": "F",
                 "data_type": "I",
                 "field_id": "H",
                 "length_total": "J",
                 "length_dec": "K",
                 "field_text": "L",
                 "sample_value": "N",
+                "remark":"M",
+                "verify":"AF"
             },
             "output_columns": {
                 "field_name": "S",
@@ -69,12 +73,14 @@ class ConfigurationManager:
                 "is_append": "T",
                 "key_flag": "U",
                 "obligatory": "V",
-                "data_type": "Y",
                 "field_id": "X",
+                "data_type": "Y",
                 "length_total": "Z",
                 "length_dec": "AA",
-                "field_text": "AB",
+                "field_text": "S",
+                "remark": "AB",
                 "sample_value": "AC",
+                "verify": "AF",
             },
             "output_columns": {
                 "field_name": "C",
