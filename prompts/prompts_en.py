@@ -44,8 +44,9 @@ class EnPromptTemplates:
             data_type = getattr(field, "data_type", "")
             field_id  = getattr(field, "field_id", "")
             length_total = getattr(field, "length_total", "")
+            remark = getattr(field, "remark", "")
             prompt_parts.append(
-                f"{row_idx};{field_name};{field_text};{is_key};{data_type};{field_id};{length_total}")
+                f"{row_idx};{field_name};{field_text};{is_key};{data_type};{field_id};{length_total};{remark}")
 
         prompt_parts.append("")
         prompt_parts.extend(

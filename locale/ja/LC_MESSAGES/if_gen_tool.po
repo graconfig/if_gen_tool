@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-09-25 14:13+0800\n"
+"POT-Creation-Date: 2025-10-27 17:11+0800\n"
 "PO-Revision-Date: 2025-09-17 14:16+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -24,7 +24,7 @@ msgstr "データディレクトリが見つかりません: {}"
 msgid "{}h {}m {:.2f}s"
 msgstr "{}時間 {}分 {:.2f}秒"
 
-#: main.py:98 main.py:358
+#: main.py:98 main.py:367
 #, python-brace-format
 msgid "Language: {}"
 msgstr "言語: {}"
@@ -97,235 +97,241 @@ msgstr "インターフェース言語を設定する（en、zh、ja）"
 msgid "Choose AI provider (claude, gemini, openai) - all via AI Core"
 msgstr "AIプロバイダを選択する（claude、gemini、openai）- すべてAI Core経由"
 
-#: main.py:345
+#: main.py:354
 #, python-brace-format
 msgid "File not found: {}"
 msgstr "ファイルが見つかりません: {}"
 
-#: main.py:362
+#: main.py:371
 msgid "❌ No Excel files found in data/excel_input/ directory"
 msgstr "❌ data/excel_input/ディレクトリにExcelファイルが見つかりません"
 
-#: main.py:367
+#: main.py:376
 msgid "❌ Please add Excel files to process or use --file to specify a file"
 msgstr "❌ 処理するExcelファイルを追加するか、--fileでファイルを指定してください"
 
-#: main.py:372
+#: main.py:381
 msgid "Application ended - No files to process"
 msgstr "処理対象のExcelファイルを{}件発見しました:"
 
-#: main.py:381
+#: main.py:390
 #, python-brace-format
 msgid "Found {} Excel files to process"
 msgstr "処理対象のExcelファイルを{}件発見しました:"
 
-#: main.py:411
+#: main.py:421
 #, python-brace-format
 msgid "✅ Successfully processed: {}"
 msgstr "✅ 正常に処理完了: {}"
 
-#: main.py:414
+#: main.py:424
 #, python-brace-format
 msgid "❌ Failed to process: {} - {}"
 msgstr "LLMエラーのため、ファイルの処理に失敗しました: {}"
 
-#: main.py:417
+#: main.py:427
 #, python-brace-format
 msgid "❌ Exception processing: {} - {}"
 msgstr "❌ 処理中に例外発生: {} - {}"
 
-#: main.py:424
+#: main.py:437
 #, python-brace-format
 msgid "❌ Application error: {}"
 msgstr "❌ アプリケーションエラー: {}"
 
-#: main.py:428
+#: main.py:441
 #, python-brace-format
 msgid "Application error occurred: {}"
 msgstr "❌ アプリケーションエラー: {}"
 
-#: main.py:432
+#: main.py:445
 #, python-brace-format
 msgid "Error timestamp: {}"
 msgstr "   ❌ エラー: {}"
 
-#: excel/excel_processor.py:48
+#: excel/excel_processor.py:49
 #, python-brace-format
 msgid "❌ Input file not found: {}"
 msgstr "❌ 入力ファイルが見つかりません: {}"
 
-#: excel/excel_processor.py:67
+#: excel/excel_processor.py:68
 #, python-brace-format
 msgid "Sheet '{}' not found in workbook"
 msgstr "ワークブック内にシート'{}'が見つかりません"
 
-#: excel/excel_processor.py:73
+#: excel/excel_processor.py:74
 #, python-brace-format
 msgid "Processed file saved: {} ✅"
 msgstr "処理済みファイルを保存しました: {} ✅"
 
-#: excel/excel_processor.py:80
+#: excel/excel_processor.py:81
 msgid "Source file moved to archive folder."
 msgstr "ソースファイルをアーカイブフォルダに移動しました。"
 
-#: excel/excel_processor.py:86
+#: excel/excel_processor.py:87
 msgid ""
 "⚠️ Warning: Could not archive source file, but processing completed "
 "successfully."
 msgstr "⚠️ 警告: ソースファイルをアーカイブできませんでしたが、処理は正常に完了しました。"
 
-#: excel/excel_processor.py:128 excel/excel_processor.py:266
+#: excel/excel_processor.py:114 excel/excel_processor.py:287
+msgid "Step 1: Matching custom fields..."
+msgstr "ステップ 1：カスタムフィールドの照合中..."
+
+#: excel/excel_processor.py:123
+msgid "Custom field matching: {} matched rows, {} unmatched rows"
+msgstr "カスタムフィールド照合：一致行 {} 件、不一致行 {} 件"
+
+#: excel/excel_processor.py:132 excel/excel_processor.py:305
+msgid "All fields matched from custom table, skipping CDS view process."
+msgstr "カスタムテーブルのフィールドは全て一致しました。CDS ビューの処理をスキップします。"
+
+#: excel/excel_processor.py:140
+msgid "Step 2: Processing {} unmatched rows with CDS views..."
+msgstr "ステップ 2：CDS ビューで {} 件の不一致行を処理中..."
+
+#: excel/excel_processor.py:161 excel/excel_processor.py:334
 msgid "No categories for module."
 msgstr "モジュールのカテゴリがありません。"
 
-#: excel/excel_processor.py:139 excel/excel_processor.py:277
+#: excel/excel_processor.py:173 excel/excel_processor.py:346
 msgid "No views for category."
 msgstr "カテゴリのビューがありません。"
 
-#: excel/excel_processor.py:147 excel/excel_processor.py:283
+#: excel/excel_processor.py:183 excel/excel_processor.py:353
 #, python-brace-format
 msgid "Found {} candidate CDS views"
 msgstr "候補のCDSビューを{}件発見しました。"
 
-#: excel/excel_processor.py:156 excel/excel_processor.py:293
+#: excel/excel_processor.py:192 excel/excel_processor.py:363
 msgid "No views found by LLM."
 msgstr "LLMによってビューが見つかりませんでした。"
 
-#: excel/excel_processor.py:161 excel/excel_processor.py:303
+#: excel/excel_processor.py:197 excel/excel_processor.py:370
 #, python-brace-format
 msgid "LLM selected {} CDS views."
 msgstr "LLMが{}件のCDSビューを選択しました。"
 
-#: excel/excel_processor.py:168
-msgid "No CDS views selected - unable to process this file."
+#: excel/excel_processor.py:204
+msgid "No CDS views selected for unmatched fields."
 msgstr "CDSビューが選択されていません - このファイルを処理できません。"
 
-#: excel/excel_processor.py:173 excel/excel_processor.py:298
-msgid "Processing failed: No relevant CDS views found for this interface."
-msgstr "処理に失敗しました: このインターフェースに関連するCDSビューが見つかりません。"
-
-#: excel/excel_processor.py:210
-msgid "Calling LLM to match result..."
+#: excel/excel_processor.py:230
+msgid "Calling LLM to match unmatched rows..."
 msgstr "結果を一致させるためにLLMを呼び出しています..."
 
-#: excel/excel_processor.py:223
+#: excel/excel_processor.py:244
 #, python-brace-format
 msgid "Failed to process file due to LLM error: {}"
 msgstr "LLMエラーのため、ファイルの処理に失敗しました: {}"
 
-#: excel/excel_processor.py:235
-msgid "Writing results to file..."
-msgstr "結果をファイルに書き込んでいます..."
+#: excel/excel_processor.py:260
+#, python-brace-format
+msgid "Writing results: {} rows from custom, {} rows from CDS"
+msgstr "結果を書き込み中：カスタム由来 {} 行、CDS 由来 {} 行"
 
-#: excel/excel_processor.py:245
+#: excel/excel_processor.py:279
 #, python-brace-format
 msgid "Processing {} rows in batches of {}"
 msgstr "{}行を{}のバッチで処理中"
 
-#: excel/excel_processor.py:348
+#: excel/excel_processor.py:296
 #, python-brace-format
-msgid "Processing {} batches..."
+msgid "Custom field matching: {} matched, {} unmatched"
+msgstr "カスタムフィールド照合：一致 {} 件、不一致 {} 件"
+
+#: excel/excel_processor.py:313
+#, python-brace-format
+msgid "Step 2: Processing {} unmatched rows with CDS views in batches..."
+msgstr "ステップ 2：CDS ビューで {} 件の不一致行をバッチ処理しています..."
+
+#: excel/excel_processor.py:402
+msgid "Processing {} batches for unmatched fields..."
 msgstr "{}件のバッチを処理中..."
 
-#: excel/excel_processor.py:355
+#: excel/excel_processor.py:409
 msgid "Processing batches"
 msgstr "ファイル処理時間: {}"
 
-#: excel/excel_processor.py:392
-#, python-brace-format
+#: excel/excel_processor.py:446
 msgid "Row {}-{} processed successfully"
 msgstr "Row {}-{} 処理成功"
 
-#: excel/excel_processor.py:399
-#, python-brace-format
+#: excel/excel_processor.py:453
 msgid "Failed to process row {}-{}: {}"
 msgstr "LLMエラーのため、ファイルの処理に失敗しました: {}"
 
-#: excel/excel_processor.py:409
-#, python-brace-format
+#: excel/excel_processor.py:463
 msgid "Completed: {}/{}"
 msgstr "完了: {} ✅"
 
-#: excel/excel_processor.py:422
-#, python-brace-format
-msgid "Writing {} results to file..."
+#: excel/excel_processor.py:477
+msgid "Writing {} results: {} from custom, {} from CDS"
 msgstr "{}件の結果をファイルに書き込み中..."
 
-#: excel/excel_processor.py:444
-#, python-brace-format
+#: excel/excel_processor.py:507
 msgid "Error in batch {}: {}"
 msgstr "   ❌ エラー: {}"
 
-#: excel/excel_processor.py:636
+#: excel/excel_processor.py:787
 msgid "LLM returned empty response for field matching"
 msgstr "フィールドマッチングのためのLLMレスポンスが空です"
 
-#: hana/hana_conn.py:45
+#: hana/hana_conn.py:46
 #, python-brace-format
 msgid "HANA Cloud connection failed: {}"
 msgstr "HANA Cloud接続に失敗しました: {}"
 
-#: hana/hana_conn.py:52
+#: hana/hana_conn.py:53
 msgid "Database connection closed."
 msgstr "データベース接続を閉じました。"
 
-#: hana/hana_conn.py:75
+#: hana/hana_conn.py:69
 msgid "HANA Cloud not connected."
 msgstr "HANA Cloudに接続されていません。"
 
-#: hana/hana_conn.py:96
+#: hana/hana_conn.py:90
 #, python-brace-format
 msgid "SQL execution failed: {}"
 msgstr "SQL実行に失敗しました: {}"
 
-#: hana/hana_conn.py:101 hana/hana_conn.py:139
+#: hana/hana_conn.py:95
 msgid "Database not connected."
 msgstr "データベースに接続されていません。"
 
-#: hana/hana_conn.py:107
+#: hana/hana_conn.py:101
 msgid "No valid categories provided"
 msgstr "モジュールのカテゴリがありません。"
 
-#: hana/hana_conn.py:125
+#: hana/hana_conn.py:119
 #, python-brace-format
 msgid "SQL error occurred while getting views: {}"
 msgstr "ビューを取得中にSQLエラーが発生しました: {}"
 
-#: hana/hana_conn.py:170
-msgid "Applying fields filtering..."
-msgstr "フィールドフィルタリングを適用しています..."
-
-#: hana/hana_conn.py:245
-#, python-brace-format
-msgid "⚠️ Warning: Could not parse CONTENT JSON for view {}"
-msgstr "⚠️ 警告: ビュー{}のCONTENT JSONを解析できませんでした"
-
-#: hana/hana_conn.py:260
-#, python-brace-format
-msgid "SQL error in get_fields: {}"
-msgstr "ビューを取得中にSQLエラーが発生しました: {}"
-
-#: hana/hana_conn.py:313
+#: hana/hana_conn.py:173
 #, python-brace-format
 msgid "⚠️ Warning: Could not parse CONTENT JSON for view {} error: {}"
 msgstr "⚠️ 警告: ビュー{}のCONTENT JSONを解析できませんでした"
 
-#: hana/hana_conn.py:319
+#: hana/hana_conn.py:179
 #, python-brace-format
 msgid "Error parse fields:{}"
 msgstr "フィールド解析エラー:{}"
 
-#: hana/hana_conn.py:322 hana/hana_conn.py:356
+#: hana/hana_conn.py:182
 #, python-brace-format
 msgid "Error: {}"
 msgstr "   ❌ エラー: {}"
 
-#: hana/hana_conn.py:413
-#, python-brace-format
+#: hana/hana_conn.py:270
+msgid "Custom field vector search failed: {}"
+msgstr "カスタムフィールドのベクトル検索に失敗しました：{}"
+
+#: hana/hana_conn.py:330
 msgid "--- Step 1: Executing vector search for query '{}' ---"
 msgstr "--- ステップ1: クエリ'{}'のベクトル検索を実行中 ---"
 
-#: hana/hana_conn.py:419
+#: hana/hana_conn.py:336
 msgid ""
 "\n"
 "Vector search results:"
@@ -333,7 +339,7 @@ msgstr ""
 "\n"
 "ベクトル検索結果:"
 
-#: hana/hana_conn.py:427
+#: hana/hana_conn.py:344
 #, python-brace-format
 msgid ""
 "\n"
@@ -342,7 +348,7 @@ msgstr ""
 "\n"
 "--- ステップ2: カテゴリ文字列'{}'を使用して関連するすべてのCDSビューを取得中 ---"
 
-#: hana/hana_conn.py:435
+#: hana/hana_conn.py:352
 #, python-brace-format
 msgid ""
 "\n"
@@ -351,7 +357,7 @@ msgstr ""
 "\n"
 "{}件のCDSビューを発見しました:"
 
-#: hana/hana_conn.py:440
+#: hana/hana_conn.py:357
 msgid ""
 "\n"
 "Vector search returned no results."
@@ -359,7 +365,7 @@ msgstr ""
 "\n"
 "ベクトル検索に結果が返されませんでした。"
 
-#: hana/hana_conn.py:442
+#: hana/hana_conn.py:359
 #, python-brace-format
 msgid ""
 "\n"

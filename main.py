@@ -83,7 +83,7 @@ def format_execution_time(seconds):
 
 
 def process_single_excel_file(
-    file_path, data_dir, config_manager, target_language, provider, project_start_time
+    file_path, data_dir, config_manager, target_language, provider, project_start_time, hana_client
 ):
     """
     Process a single Excel file with its own configuration and logging.
@@ -126,8 +126,8 @@ def process_single_excel_file(
                 logger.get_excel_log_filename(file_path.name),
             )
 
-            # Initialize Excel processor with AI service (using environment config)
-            excel_processor = ExcelProcessor(data_dir, ai_service, config_manager)
+            # Initialize Excel processor with AI service and HANA client
+            excel_processor = ExcelProcessor(data_dir, ai_service, config_manager, hana_client)
 
             logger.info(
                 _("Processing file: {}").format(file_path.name),
@@ -317,104 +317,117 @@ def main():
         # Initialize token tracker
         base_dir = get_base_path()
         token_tracker = initialize_token_tracker(base_dir)
+        
+        # Initialize HANA connection once for all file processing
+        from hana.hana_conn import HANADBClient
+        
+        hana_client = HANADBClient()
+        hana_client.connect()
+        
+        try:
 
-        if args.file:
-            # Process specific file
-            from core.consts import Directories
+            if args.file:
+                # Process specific file
+                from core.consts import Directories
 
-            file_path = data_dir / Directories.EXCEL_INPUT / args.file
-            if file_path.exists():
-                # Process single file using the same function as multi-file processing
-                success, error_msg = process_single_excel_file(
-                    file_path,
-                    data_dir,
-                    config_manager,
-                    target_language,
-                    args.provider,
-                    project_start_time,
-                )
-
-                if not success:
-                    logger.error(f"Failed to process file: {error_msg}")
-                    sys.exit(1)
-            else:
-                # File not found - use general application log
-                app_log_name = f"app_error_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                with if_gen_logging(app_log_name) as app_log_path:
-                    logger.error(
-                        _("File not found: {}").format(args.file),
-                        logger.get_excel_log_filename(app_log_name),
-                    )
-                    sys.exit(1)
-        else:
-            # Auto-process all Excel files in input directory with multi-threading
-            excel_files = get_excel_files(data_dir)
-
-            if not excel_files:
-                # No files found - use general application log
-                app_log_name = f"error_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                with if_gen_logging(app_log_name) as app_log_path:
-                    logger.info(
-                        _("Language: {}").format(target_language),
-                        logger.get_excel_log_filename(app_log_name),
-                    )
-                    logger.error(
-                        _("❌ No Excel files found in data/excel_input/ directory"),
-                        logger.get_excel_log_filename(app_log_name),
-                    )
-                    logger.error(
-                        _(
-                            "❌ Please add Excel files to process or use --file to specify a file"
-                        ),
-                        logger.get_excel_log_filename(app_log_name),
-                    )
-                    logger.info(
-                        _("Application ended - No files to process"),
-                        logger.get_excel_log_filename(app_log_name),
-                    )
-                return
-
-            # Get processing configuration from environment variables
-            file_config = config_manager.get_file_config()
-            max_concurrent_files = file_config["max_concurrent_files"]
-
-            logger.info(_("Found {} Excel files to process").format(len(excel_files)))
-
-            # Process files in parallel using ThreadPoolExecutor
-            successful_files = []
-            failed_files = []
-
-            with ThreadPoolExecutor(
-                max_workers=max_concurrent_files, thread_name_prefix="FileProcessor"
-            ) as executor:
-                # Submit all files for processing
-                future_to_file = {
-                    executor.submit(
-                        process_single_excel_file,
+                file_path = data_dir / Directories.EXCEL_INPUT / args.file
+                if file_path.exists():
+                    # Process single file using the same function as multi-file processing
+                    success, error_msg = process_single_excel_file(
                         file_path,
                         data_dir,
                         config_manager,
                         target_language,
                         args.provider,
                         project_start_time,
-                    ): file_path
-                    for file_path in excel_files
-                }
+                        hana_client,
+                    )
 
-                # Process results as they complete
-                for future in as_completed(future_to_file):
-                    file_path = future_to_file[future]
-                    try:
-                        success, error_msg = future.result()
-                        if success:
-                            successful_files.append(file_path.name)
-                            logger.info(_("✅ Successfully processed: {}").format(file_path.name))
-                        else:
-                            failed_files.append((file_path.name, error_msg))
-                            logger.error(_( "❌ Failed to process: {} - {}").format(file_path.name,error_msg))
-                    except Exception as e:
-                        failed_files.append((file_path.name, str(e)))
-                        logger.error(_("❌ Exception processing: {} - {}").format(file_path.name,e))
+                    if not success:
+                        logger.error(f"Failed to process file: {error_msg}")
+                        sys.exit(1)
+                else:
+                    # File not found - use general application log
+                    app_log_name = f"app_error_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                    with if_gen_logging(app_log_name) as app_log_path:
+                        logger.error(
+                            _("File not found: {}").format(args.file),
+                            logger.get_excel_log_filename(app_log_name),
+                        )
+                        sys.exit(1)
+            else:
+                # Auto-process all Excel files in input directory with multi-threading
+                excel_files = get_excel_files(data_dir)
+
+                if not excel_files:
+                    # No files found - use general application log
+                    app_log_name = f"error_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                    with if_gen_logging(app_log_name) as app_log_path:
+                        logger.info(
+                            _("Language: {}").format(target_language),
+                            logger.get_excel_log_filename(app_log_name),
+                        )
+                        logger.error(
+                            _("❌ No Excel files found in data/excel_input/ directory"),
+                            logger.get_excel_log_filename(app_log_name),
+                        )
+                        logger.error(
+                            _(
+                                "❌ Please add Excel files to process or use --file to specify a file"
+                            ),
+                            logger.get_excel_log_filename(app_log_name),
+                        )
+                        logger.info(
+                            _("Application ended - No files to process"),
+                            logger.get_excel_log_filename(app_log_name),
+                        )
+                    return
+
+                # Get processing configuration from environment variables
+                file_config = config_manager.get_file_config()
+                max_concurrent_files = file_config["max_concurrent_files"]
+
+                logger.info(_("Found {} Excel files to process").format(len(excel_files)))
+
+                # Process files in parallel using ThreadPoolExecutor
+                successful_files = []
+                failed_files = []
+
+                with ThreadPoolExecutor(
+                    max_workers=max_concurrent_files, thread_name_prefix="FileProcessor"
+                ) as executor:
+                    # Submit all files for processing
+                    future_to_file = {
+                        executor.submit(
+                            process_single_excel_file,
+                            file_path,
+                            data_dir,
+                            config_manager,
+                            target_language,
+                            args.provider,
+                            project_start_time,
+                            hana_client,
+                        ): file_path
+                        for file_path in excel_files
+                    }
+
+                    # Process results as they complete
+                    for future in as_completed(future_to_file):
+                        file_path = future_to_file[future]
+                        try:
+                            success, error_msg = future.result()
+                            if success:
+                                successful_files.append(file_path.name)
+                                logger.info(_("✅ Successfully processed: {}").format(file_path.name))
+                            else:
+                                failed_files.append((file_path.name, error_msg))
+                                logger.error(_( "❌ Failed to process: {} - {}").format(file_path.name,error_msg))
+                        except Exception as e:
+                            failed_files.append((file_path.name, str(e)))
+                            logger.error(_("❌ Exception processing: {} - {}").format(file_path.name,e))
+        finally:
+            # Close HANA connection after all files are processed
+            hana_client.close()
 
     except Exception as e:
         # Create error log with proper context

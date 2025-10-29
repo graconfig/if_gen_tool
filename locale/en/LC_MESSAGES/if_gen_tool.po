@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: if_gen_tool 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-25 14:13+0800\n"
+"POT-Creation-Date: 2025-10-27 17:11+0800\n"
 "PO-Revision-Date: 2025-09-11 19:47+0800\n"
 "Last-Translator: SAP Team\n"
 "Language: en\n"
@@ -29,7 +29,7 @@ msgstr "Data directory not found: {}"
 msgid "{}h {}m {:.2f}s"
 msgstr "{}h {}m {:.2f}s"
 
-#: main.py:98 main.py:358
+#: main.py:98 main.py:367
 #, python-brace-format
 msgid "Language: {}"
 msgstr ""
@@ -107,240 +107,258 @@ msgstr "Set interface language (en, zh, ja)"
 msgid "Choose AI provider (claude, gemini, openai) - all via AI Core"
 msgstr ""
 
-#: main.py:345
+#: main.py:354
 #, python-brace-format
 msgid "File not found: {}"
 msgstr "File not found: {}"
 
-#: main.py:362
+#: main.py:371
 msgid "❌ No Excel files found in data/excel_input/ directory"
 msgstr "❌ No Excel files found in data/excel_input/ directory"
 
-#: main.py:367
+#: main.py:376
 msgid "❌ Please add Excel files to process or use --file to specify a file"
 msgstr "❌ Please add Excel files to process or use --file to specify a file"
 
-#: main.py:372
+#: main.py:381
 #, fuzzy
 msgid "Application ended - No files to process"
 msgstr "Found {} Excel file(s) to process:"
 
-#: main.py:381
+#: main.py:390
 #, fuzzy, python-brace-format
 msgid "Found {} Excel files to process"
 msgstr "Found {} Excel file(s) to process:"
 
-#: main.py:411
+#: main.py:421
 #, python-brace-format
 msgid "✅ Successfully processed: {}"
 msgstr ""
 
-#: main.py:414
+#: main.py:424
 #, fuzzy, python-brace-format
 msgid "❌ Failed to process: {} - {}"
 msgstr "Failed to process file due to LLM error: {}"
 
-#: main.py:417
+#: main.py:427
 #, python-brace-format
 msgid "❌ Exception processing: {} - {}"
-msgstr ""
+msgstr "❌ Exception processing: {} - {}"
 
-#: main.py:424
+#: main.py:437
 #, python-brace-format
 msgid "❌ Application error: {}"
 msgstr "❌ Application error: {}"
 
-#: main.py:428
+#: main.py:441
 #, fuzzy, python-brace-format
 msgid "Application error occurred: {}"
 msgstr "❌ Application error: {}"
 
-#: main.py:432
+#: main.py:445
 #, fuzzy, python-brace-format
 msgid "Error timestamp: {}"
 msgstr "   ❌ Error: {}"
 
 # Excel processor messages
-#: excel/excel_processor.py:48
+#: excel/excel_processor.py:49
 #, python-brace-format
 msgid "❌ Input file not found: {}"
 msgstr "❌ Input file not found: {}"
 
-#: excel/excel_processor.py:67
+#: excel/excel_processor.py:68
 #, python-brace-format
 msgid "Sheet '{}' not found in workbook"
 msgstr "Sheet '{}' not found in workbook"
 
-#: excel/excel_processor.py:73
+#: excel/excel_processor.py:74
 #, python-brace-format
 msgid "Processed file saved: {} ✅"
 msgstr "Processed file saved: {} ✅"
 
-#: excel/excel_processor.py:80
+#: excel/excel_processor.py:81
 msgid "Source file moved to archive folder."
-msgstr ""
+msgstr "Source file moved to archive folder."
 
-#: excel/excel_processor.py:86
+#: excel/excel_processor.py:87
 msgid ""
 "⚠️ Warning: Could not archive source file, but processing completed "
 "successfully."
 msgstr ""
 
-#: excel/excel_processor.py:128 excel/excel_processor.py:266
+#: excel/excel_processor.py:114 excel/excel_processor.py:287
+msgid "Step 1: Matching custom fields..."
+msgstr "Step 1: Matching custom fields..."
+
+#: excel/excel_processor.py:123
+#, python-brace-format
+msgid "Custom field matching: {} matched rows, {} unmatched rows"
+msgstr "Custom field matching: {} matched rows, {} unmatched rows"
+
+#: excel/excel_processor.py:132 excel/excel_processor.py:305
+msgid "All fields matched from custom table, skipping CDS view process."
+msgstr "All fields matched from custom table, skipping CDS view process."
+
+#: excel/excel_processor.py:140
+#, python-brace-format
+msgid "Step 2: Processing {} unmatched rows with CDS views..."
+msgstr "Step 2: Processing {} unmatched rows with CDS views..."
+
+#: excel/excel_processor.py:161 excel/excel_processor.py:334
 msgid "No categories for module."
 msgstr "No categories for module."
 
-#: excel/excel_processor.py:139 excel/excel_processor.py:277
+#: excel/excel_processor.py:173 excel/excel_processor.py:346
 msgid "No views for category."
 msgstr "No views for category."
 
-#: excel/excel_processor.py:147 excel/excel_processor.py:283
+#: excel/excel_processor.py:183 excel/excel_processor.py:353
 #, fuzzy, python-brace-format
 msgid "Found {} candidate CDS views"
 msgstr "Found {} candidate CDS views."
 
-#: excel/excel_processor.py:156 excel/excel_processor.py:293
+#: excel/excel_processor.py:192 excel/excel_processor.py:363
 msgid "No views found by LLM."
 msgstr "No views found by LLM."
 
-#: excel/excel_processor.py:161 excel/excel_processor.py:303
+#: excel/excel_processor.py:197 excel/excel_processor.py:370
 #, python-brace-format
 msgid "LLM selected {} CDS views."
 msgstr "LLM selected {} CDS views."
 
-#: excel/excel_processor.py:168
-msgid "No CDS views selected - unable to process this file."
+#: excel/excel_processor.py:204
+#, fuzzy
+msgid "No CDS views selected for unmatched fields."
 msgstr "No CDS views selected - unable to process this file."
 
-#: excel/excel_processor.py:173 excel/excel_processor.py:298
-msgid "Processing failed: No relevant CDS views found for this interface."
-msgstr "Processing failed: No relevant CDS views found for this interface."
-
-#: excel/excel_processor.py:210
-msgid "Calling LLM to match result..."
+#: excel/excel_processor.py:230
+#, fuzzy
+msgid "Calling LLM to match unmatched rows..."
 msgstr "Calling LLM to match result..."
 
-#: excel/excel_processor.py:223
+#: excel/excel_processor.py:244
 #, python-brace-format
 msgid "Failed to process file due to LLM error: {}"
 msgstr "Failed to process file due to LLM error: {}"
 
-#: excel/excel_processor.py:235
-msgid "Writing results to file..."
-msgstr "Writing results to file..."
+#: excel/excel_processor.py:260
+#, python-brace-format
+msgid "Writing results: {} rows from custom, {} rows from CDS"
+msgstr ""
 
-#: excel/excel_processor.py:245
+#: excel/excel_processor.py:279
 #, fuzzy, python-brace-format
 msgid "Processing {} rows in batches of {}"
 msgstr "Processing {} completed at: {}"
 
-#: excel/excel_processor.py:348
+#: excel/excel_processor.py:296
 #, python-brace-format
-msgid "Processing {} batches..."
-msgstr ""
+msgid "Custom field matching: {} matched, {} unmatched"
+msgstr "Custom field matching: {} matched, {} unmatched"
 
-#: excel/excel_processor.py:355
+#: excel/excel_processor.py:313
+#, python-brace-format
+msgid "Step 2: Processing {} unmatched rows with CDS views in batches..."
+msgstr "Step 2: Processing {} unmatched rows with CDS views in batches..."
+
+#: excel/excel_processor.py:402
+#, fuzzy, python-brace-format
+msgid "Processing {} batches for unmatched fields..."
+msgstr "Processing {} completed at: {}"
+
+#: excel/excel_processor.py:409
 #, fuzzy
 msgid "Processing batches"
 msgstr "File processing time: {}"
 
-#: excel/excel_processor.py:392
+#: excel/excel_processor.py:446
 #, fuzzy, python-brace-format
 msgid "Row {}-{} processed successfully"
 msgstr "Processing {} completed at: {}"
 
-#: excel/excel_processor.py:399
+#: excel/excel_processor.py:453
 #, fuzzy, python-brace-format
 msgid "Failed to process row {}-{}: {}"
 msgstr "Failed to process file due to LLM error: {}"
 
-#: excel/excel_processor.py:409
+#: excel/excel_processor.py:463
 #, fuzzy, python-brace-format
 msgid "Completed: {}/{}"
 msgstr "Completed: {} ✅"
 
-#: excel/excel_processor.py:422
+#: excel/excel_processor.py:477
 #, fuzzy, python-brace-format
-msgid "Writing {} results to file..."
+msgid "Writing {} results: {} from custom, {} from CDS"
 msgstr "Writing results to file..."
 
-#: excel/excel_processor.py:444
+#: excel/excel_processor.py:507
 #, fuzzy, python-brace-format
 msgid "Error in batch {}: {}"
 msgstr "   ❌ Error: {}"
 
-#: excel/excel_processor.py:636
+#: excel/excel_processor.py:787
 msgid "LLM returned empty response for field matching"
 msgstr ""
 
 # HANA connection messages
-#: hana/hana_conn.py:45
+#: hana/hana_conn.py:46
 #, python-brace-format
 msgid "HANA Cloud connection failed: {}"
 msgstr "HANA Cloud connection failed: {}"
 
-#: hana/hana_conn.py:52
+#: hana/hana_conn.py:53
 msgid "Database connection closed."
 msgstr "Database connection closed."
 
-#: hana/hana_conn.py:75
+#: hana/hana_conn.py:69
 msgid "HANA Cloud not connected."
 msgstr "HANA Cloud not connected."
 
-#: hana/hana_conn.py:96
+#: hana/hana_conn.py:90
 #, python-brace-format
 msgid "SQL execution failed: {}"
 msgstr "SQL execution failed: {}"
 
-#: hana/hana_conn.py:101 hana/hana_conn.py:139
+#: hana/hana_conn.py:95
 msgid "Database not connected."
 msgstr "Database not connected."
 
-#: hana/hana_conn.py:107
+#: hana/hana_conn.py:101
 #, fuzzy
 msgid "No valid categories provided"
 msgstr "No categories for module."
 
-#: hana/hana_conn.py:125
+#: hana/hana_conn.py:119
 #, python-brace-format
 msgid "SQL error occurred while getting views: {}"
 msgstr "SQL error occurred while getting views: {}"
 
-#: hana/hana_conn.py:170
-msgid "Applying fields filtering..."
-msgstr ""
-
-#: hana/hana_conn.py:245
-#, python-brace-format
-msgid "⚠️ Warning: Could not parse CONTENT JSON for view {}"
-msgstr "⚠️ Warning: Could not parse CONTENT JSON for view {}"
-
-#: hana/hana_conn.py:260
-#, fuzzy, python-brace-format
-msgid "SQL error in get_fields: {}"
-msgstr "SQL error occurred while getting views: {}"
-
-#: hana/hana_conn.py:313
+#: hana/hana_conn.py:173
 #, fuzzy, python-brace-format
 msgid "⚠️ Warning: Could not parse CONTENT JSON for view {} error: {}"
 msgstr "⚠️ Warning: Could not parse CONTENT JSON for view {}"
 
-#: hana/hana_conn.py:319
+#: hana/hana_conn.py:179
 #, python-brace-format
 msgid "Error parse fields:{}"
-msgstr ""
+msgstr "Error parse fields:{}"
 
-#: hana/hana_conn.py:322 hana/hana_conn.py:356
+#: hana/hana_conn.py:182
 #, fuzzy, python-brace-format
 msgid "Error: {}"
 msgstr "   ❌ Error: {}"
 
-#: hana/hana_conn.py:413
+#: hana/hana_conn.py:270
+#, python-brace-format
+msgid "Custom field vector search failed: {}"
+msgstr "Custom field vector search failed: {}"
+
+#: hana/hana_conn.py:330
 #, python-brace-format
 msgid "--- Step 1: Executing vector search for query '{}' ---"
 msgstr "--- Step 1: Executing vector search for query '{}' ---"
 
-#: hana/hana_conn.py:419
+#: hana/hana_conn.py:336
 msgid ""
 "\n"
 "Vector search results:"
@@ -348,7 +366,7 @@ msgstr ""
 "\n"
 "Vector search results:"
 
-#: hana/hana_conn.py:427
+#: hana/hana_conn.py:344
 #, python-brace-format
 msgid ""
 "\n"
@@ -357,7 +375,7 @@ msgstr ""
 "\n"
 "--- Step 2: Getting all related CDS views using category string '{}' ---"
 
-#: hana/hana_conn.py:435
+#: hana/hana_conn.py:352
 #, python-brace-format
 msgid ""
 "\n"
@@ -366,7 +384,7 @@ msgstr ""
 "\n"
 "Found {} CDS views:"
 
-#: hana/hana_conn.py:440
+#: hana/hana_conn.py:357
 msgid ""
 "\n"
 "Vector search returned no results."
@@ -374,7 +392,7 @@ msgstr ""
 "\n"
 "Vector search returned no results."
 
-#: hana/hana_conn.py:442
+#: hana/hana_conn.py:359
 #, python-brace-format
 msgid ""
 "\n"
@@ -586,66 +604,4 @@ msgstr "❌ Failed: {}"
 #, fuzzy, python-brace-format
 msgid "Start Time: {}"
 msgstr "[Project Start Time]: {}"
-
-#~ msgid "Log file created: {}"
-#~ msgstr "❌ Failed: {}"
-
-#~ msgid "[Project End Time]: {} ====="
-#~ msgstr "[Project End Time]: {} ====="
-
-#~ msgid "===== Total Time: {} ====="
-#~ msgstr "===== Total Time: {} ====="
-
-#~ msgid "Application completed successfully"
-#~ msgstr ""
-
-#~ msgid "Processing file {} of {}: {}"
-#~ msgstr "Processing {} completed at: {}"
-
-#~ msgid "LLM Process Finished"
-#~ msgstr "LLM Process Finished"
-
-#~ msgid "SAP IF Design Generation Tool - Processing Log"
-#~ msgstr "SAP IF Design Generation Tool"
-
-#~ msgid "Application Log"
-#~ msgstr "❌ Application error: {}"
-
-#~ msgid "Excel File: {}"
-#~ msgstr "❌ Failed: {}"
-
-#~ msgid "📊 TOKEN USAGE SUMMARY"
-#~ msgstr ""
-
-#~ msgid "Session: {}"
-#~ msgstr ""
-
-#~ msgid "Embedding: {:,}"
-#~ msgstr "   Embedding: {}"
-
-#~ msgid "LLM Input: {:,}"
-#~ msgstr "   LLM: {}"
-
-#~ msgid "LLM Output: {:,}"
-#~ msgstr "   LLM Model: {}"
-
-#~ msgid "LLM Total: {:,}"
-#~ msgstr "   LLM Model: {}"
-
-#~ msgid "Total: {:,}"
-#~ msgstr ""
-
-#~ msgid "🤖 By Provider:"
-#~ msgstr ""
-
-#~ msgid "  {}: {:,}"
-#~ msgstr ""
-
-#~ msgid "Processing batch {} with {} fields in thread {}"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "After filtering: {} fields selected from"
-#~ " {} total fields ({:.1f}% reduction)"
-#~ msgstr ""
 
