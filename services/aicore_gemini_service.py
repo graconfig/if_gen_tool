@@ -50,28 +50,37 @@ class AICoreGeminiService:
             if self.llm_deployment_id:
                 kwargs = {"deployment_id": self.llm_deployment_id}
             else:
-                kwargs = {"model_name": self.llm_model}
+                kwargs = dict({'model_name': self.llm_model})
             self._llm_client = GenerativeModel(proxy_client=self.proxy_client, **kwargs)
         return self._llm_client
 
     def call_with_function(
         self, prompt: str, function_schema: Dict[str, Any]
     ) -> Dict[str, Any]:
-        # Convert prompt to Gemini content format
-        content = [{"role": "user", "parts": [{"text": prompt}]}]
-
-        # Use function_schema directly as it's already in the correct format
-        tools = [function_schema] if function_schema else []
-
         try:
-            response = self.llm_client.generate_content(
-                content,
-                tools=tools if tools else None,
-                generation_config={
-                    "temperature": 0.1,
-                    "top_p": 0.9,
-                    "max_output_tokens": 2048,
-                },
+            from vertexai.generative_models import Tool, FunctionDeclaration
+            
+            chat = self.llm_client.start_chat()
+
+            # For SAP AI Core with Gemini, convert to Vertex AI Tool format
+            tools = None
+            if function_schema and "function_declarations" in function_schema:
+                # Create Tool with function declarations using Vertex AI types
+                function_declarations = []
+                for func_decl in function_schema["function_declarations"]:
+                    function_declarations.append(
+                        FunctionDeclaration(
+                            name=func_decl["name"],
+                            description=func_decl["description"],
+                            parameters=func_decl["parameters"]
+                        )
+                    )
+                tools = [Tool(function_declarations=function_declarations)]
+
+            # Send message with function calling tools
+            response = chat.send_message(
+                prompt,
+                tools=tools  # type: ignore
             )
 
             # Track token usage if available
