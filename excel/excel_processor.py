@@ -706,7 +706,9 @@ class ExcelProcessor:
             row = interface_field.row_index
             isverify = interface_field.verify
             field_name = interface_field.field_name
-            is_append = interface_field.is_append
+            
+            if match_result.get("field_id") is not None and match_result.get("field_id") != '':
+                is_append = interface_field.is_append
             
             if field_name is None or field_name == '' or field_name == 'e':
                 continue

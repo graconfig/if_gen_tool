@@ -14,7 +14,7 @@ class ClaudeSchemas:
                 {
                     "toolSpec": {
                         "name": "review_field_matches",
-                        "description": "Matches input fields with SAP CDS fields STRICTLY from the provided context - NO field names outside the context are allowed",
+                        "description": "Matches input fields with SAP CDS fields",
                         "inputSchema": {
                             "json": {
                                 "type": "object",
@@ -63,7 +63,7 @@ class ClaudeSchemas:
                                                 },
                                                 "sample_value": {
                                                     "type": "string",
-                                                    "description": "Sample value for SAP CDS field",
+                                                    "description": "Sample value for SAP CDS field, if not provided, generate a possible value",
                                                 },
                                                 "match": {
                                                     "type": "integer",

@@ -3,6 +3,7 @@ Optimized English AI prompt templates for SAP field matching
 Default language templates for the system
 """
 
+import os
 from typing import Dict, List, Any
 
 import pandas as pd
@@ -16,7 +17,27 @@ class EnPromptTemplates:
             input_fields: List[Dict[str, Any]], context: List[Dict[str, Any]]
     ) -> str:
         """Generate optimized two-stage field matching prompt"""
-        prompt_parts = [
+        
+        if os.getenv("VERIFY_FLAG") == "true":
+         prompt_parts = [
+            "You are an SAP expert for intelligent field mapping.",
+            "",
+            "**Task:** Find the best CDS field matches for the following input fields. A pre-filtered, highly relevant list of CDS fields is provided as context. Your task is to perform the detailed field-level matching.",
+            "",
+            "Critical Rules:",
+            "• Set empty strings if no suitable match found",
+            "",
+            "Weighted Matching Criteria (total 100%):",
+            "1.field_text semantic similarity (60%, primary)",
+            "2.Business context alignment (20%)",
+            "3.data_type compatibility (15%)",
+            "4.length/precision alignment (5%)",
+            "Note: Semantic meaning > technical attributes; fuzzy match for descriptions.",
+            "",
+            "Input Fields to Match (row_index:field_name;field_desc;key_flag;data_type;field_id;length_total):",
+        ]
+        else:
+          prompt_parts = [
             "You are an SAP expert for intelligent field mapping.",
             "",
             "**Task:** Find the best CDS field matches for the following input fields. A pre-filtered, highly relevant list of CDS fields is provided as context. Your task is to perform the detailed field-level matching.",
@@ -85,6 +106,7 @@ class EnPromptTemplates:
                 "• field_desc: Human-readable description from CDS context",
                 "• data_type, length_total, length_dec: From matched CDS field",
                 "• key_flag: 'X' if CDS field is marked as key, empty otherwise",
+                "• sample_value: Sample value，if not provided, generate a possible value",
                 "",
                 "Review notes in Japanese",
                 "[A one-sentence summary]",
