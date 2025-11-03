@@ -22,9 +22,11 @@ class EnPromptTemplates:
          prompt_parts = [
             "You are an SAP expert for intelligent field mapping.",
             "",
-            "**Task:** Find the best CDS field matches for the following input fields. A pre-filtered, highly relevant list of CDS fields is provided as context. Your task is to perform the detailed field-level matching.",
+            "**Task:** Find the best CDS field matches for the following input fields. A pre-filtered, highly relevant list of CDS fields is provided as context. "
+            "Your task is to perform the detailed field-level matching based on tables or CDS in SAP or provided context.",
             "",
             "Critical Rules:",
+            "• Priority matching in provided context, If cannot match from the provided context, you can match from the table or CDS existing in SAP",
             "• Set empty strings if no suitable match found",
             "",
             "Weighted Matching Criteria (total 100%):",
@@ -101,9 +103,9 @@ class EnPromptTemplates:
             [
                 "Output Requirements(Use review_field_matches function with EXACT row_index from input):",
                 "For each field provide (exact row_index):",
-                "• table_id: Exact CDS view name from context (e.g., 'I_TIMESHEETRECORD')",
+                "• table_id: Exact CDS view name (e.g., 'I_TIMESHEETRECORD')",
                 "• field_id: Technical field name only (e.g., 'RECEIVERCOSTCENTER')",
-                "• field_desc: Human-readable description from CDS context",
+                "• field_desc: Human-readable description",
                 "• data_type, length_total, length_dec: From matched CDS field",
                 "• key_flag: 'X' if CDS field is marked as key, empty otherwise",
                 "• sample_value: Sample value，if not provided, generate a possible value",

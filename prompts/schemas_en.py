@@ -31,35 +31,35 @@ class ClaudeSchemas:
                                                 },
                                                 "table_id": {
                                                     "type": "string",
-                                                    "description": "EXACT SAP CDS view name from context list - must match exactly, empty string if no match found",
+                                                    "description": "EXACT SAP CDS view name",
                                                 },
                                                 "field_id": {
                                                     "type": "string",
-                                                    "description": "EXACT SAP CDS field name from context list (without view prefix) - must match exactly, empty string if no match found",
+                                                    "description": "EXACT SAP CDS field name",
                                                 },
                                                 "field_desc": {
                                                     "type": "string",
-                                                    "description": "SAP CDS field description from context, empty string if no match found",
+                                                    "description": "SAP CDS field description",
                                                 },
                                                 "data_type": {
                                                     "type": "string",
-                                                    "description": "SAP CDS field data type from context, empty string if no match found",
+                                                    "description": "SAP CDS field data type",
                                                 },
                                                 "length_total": {
                                                     "type": "string",
-                                                    "description": "SAP CDS field total length from context, empty string if no match found",
+                                                    "description": "SAP CDS field total length",
                                                 },
                                                 "length_dec": {
                                                     "type": "string",
-                                                    "description": "SAP CDS field decimal length from context, empty string if no match found",
+                                                    "description": "SAP CDS field decimal length",
                                                 },
                                                 "key_flag": {
                                                     "type": "string",
-                                                    "description": "Whether the field is a key field - use '○' if true from context, empty string otherwise",
+                                                    "description": "Whether the field is a key field - use '○' if true, empty string otherwise",
                                                 },
                                                 "obligatory": {
                                                     "type": "string",
-                                                    "description": "Whether the field is required or optional from context - use '○' if required from context, empty string otherwise",
+                                                    "description": "Whether the field is required or optional - use '○' if required, empty string otherwise",
                                                 },
                                                 "sample_value": {
                                                     "type": "string",
@@ -71,7 +71,7 @@ class ClaudeSchemas:
                                                 },
                                                 "notes": {
                                                     "type": "string",
-                                                    "description": "Notes explaining the match choice from context OR why no suitable match was found in the provided context",
+                                                    "description": "Notes explaining the match choice OR why no suitable match was found",
                                                 },
                                             },
                                             "required": ["row_index","table_id","field_id","field_desc","data_type","length_total","length_dec","key_flag","obligatory","sample_value","match", "notes"]
