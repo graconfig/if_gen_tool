@@ -63,16 +63,11 @@ class ExcelProcessor:
 
         workbook = openpyxl.load_workbook(file_path)
 
-        sheet_name_head = self.excel_config["sheet_name_head"] 
-
-        if sheet_name_head not in workbook.sheetnames:
-            raise ValueError(_("Sheet '{}' not found in workbook").format(sheet_name_head))
-        
         sheet_name = self.excel_config["sheet_name"]
         if sheet_name not in workbook.sheetnames:
             raise ValueError(_("Sheet '{}' not found in workbook").format(sheet_name))
 
-        self._process_worksheet(workbook, sheet_name_head, sheet_name, file_path.name)
+        self._process_worksheet(workbook, sheet_name, file_path.name)
 
         workbook.save(output_path)
         logger.info(
@@ -95,13 +90,15 @@ class ExcelProcessor:
             )
 
     def _process_worksheet(
-        self, workbook: openpyxl.Workbook, sheet_name_head: str, sheet_name: str, excel_filename: str
+        self,
+        workbook: openpyxl.Workbook,
+        sheet_name: str,
+        excel_filename: str,
     ) -> None:
-        worksheet_head = workbook[sheet_name_head]
         worksheet = workbook[sheet_name]
-        
+
         # 提前输入列的字段
-        input_fields = self.extract_fields(worksheet_head, worksheet)
+        input_fields = self.extract_fields(worksheet)
 
         # If we have a small number of fields, process normally
         if len(input_fields) <= self.batch_size:
@@ -114,24 +111,24 @@ class ExcelProcessor:
         self, worksheet, input_fields: List[InterfaceField], excel_filename: str
     ) -> None:
         """Process a single batch of fields with custom field priority"""
-        
+
         # ========== 新增：客户化字段优先匹配 ==========
         logger.info(
             _("Step 1: Matching custom fields..."),
             logger.get_excel_log_filename(excel_filename),
         )
-        
+
         matched_rows, unmatched_rows = self._match_custom_fields(
             input_fields, excel_filename
         )
-        
+
         logger.info(
             _("Custom field matching: {} matched rows, {} unmatched rows").format(
                 len(matched_rows), len(unmatched_rows)
             ),
             logger.get_excel_log_filename(excel_filename),
         )
-        
+
         # ========== 如果全部匹配成功，直接写入结果 ==========
         if not unmatched_rows:
             logger.info(
@@ -140,7 +137,7 @@ class ExcelProcessor:
             )
             self.write_results(worksheet, matched_rows)
             return
-        
+
         # ========== 如果有未匹配字段，继续原有流程 ==========
         logger.info(
             _("Step 2: Processing {} unmatched rows with CDS views...").format(
@@ -148,7 +145,7 @@ class ExcelProcessor:
             ),
             logger.get_excel_log_filename(excel_filename),
         )
-        
+
         # 1、根据输入内容查找视图（只处理未匹配字段）
         final_context_for_llm = []
         module = unmatched_rows[0].module
@@ -217,7 +214,7 @@ class ExcelProcessor:
                 cds_views=llm_return_views, log_filename=log_filename
             )
 
-            #Prepare the final context for the LLM using filtered fields
+            # Prepare the final context for the LLM using filtered fields
             llm_return_views_df = views_find_by_cat[
                 views_find_by_cat["VIEWNAME"].isin(llm_return_views)
             ]
@@ -257,7 +254,7 @@ class ExcelProcessor:
             # ========== 合并结果：已匹配 + 新匹配 ==========
             unmatched_results = list(zip(unmatched_rows, unmatched_batch_results))
             final_results = matched_rows + unmatched_results
-            
+
             # 按行号排序，保持原始顺序
             final_results.sort(key=lambda x: x[0].row_index)
 
@@ -280,7 +277,7 @@ class ExcelProcessor:
         self, worksheet, input_fields: List[InterfaceField], excel_filename: str
     ) -> None:
         """Process large number of fields in batches with custom field priority"""
-        
+
         logger.info(
             _("Processing {} rows in batches of {}").format(
                 len(input_fields), self.batch_size
@@ -293,18 +290,18 @@ class ExcelProcessor:
             _("Step 1: Matching custom fields..."),
             logger.get_excel_log_filename(excel_filename),
         )
-        
+
         matched_results, unmatched_rows = self._match_custom_fields(
             input_fields, excel_filename
         )
-        
+
         logger.info(
             _("Custom field matching: {} matched, {} unmatched").format(
                 len(matched_results), len(unmatched_rows)
             ),
             logger.get_excel_log_filename(excel_filename),
         )
-        
+
         # ========== 如果全部匹配成功，直接写入结果 ==========
         if not unmatched_rows:
             logger.info(
@@ -313,12 +310,12 @@ class ExcelProcessor:
             )
             self.write_results(worksheet, matched_results)
             return
-        
+
         # ========== 如果有未匹配字段，继续原有批处理流程 ==========
         logger.info(
-            _("Step 2: Processing {} unmatched rows with CDS views in batches...").format(
-                len(unmatched_rows)
-            ),
+            _(
+                "Step 2: Processing {} unmatched rows with CDS views in batches..."
+            ).format(len(unmatched_rows)),
             logger.get_excel_log_filename(excel_filename),
         )
 
@@ -517,41 +514,34 @@ class ExcelProcessor:
             return [{} for _ in batch_fields]
 
     def _match_custom_fields(
-        self,
-        input_fields: List[InterfaceField],
-        excel_filename: str
+        self, input_fields: List[InterfaceField], excel_filename: str
     ) -> Tuple[List[Tuple[InterfaceField, Dict]], List[InterfaceField]]:
         """
         优先匹配客户化字段表（基于 SOURCEDESC 向量检索）
-        
+
         Args:
             input_fields: 输入字段列表
             excel_filename: Excel 文件名
-            
+
         Returns:
             (已匹配的字段结果列表, 未匹配的字段列表)
         """
         matched_rows = []
-        unmatched_rows= []
+        unmatched_rows = []
 
         log_filename = logger.get_excel_log_filename(excel_filename)
-            
+
         for field in input_fields:
             # 构建查询文本：字段名 + 字段描述 + 示例值
-            query_parts = [
-                field.field_name,
-                field.field_text,
-                field.sample_value
-            ]
+            query_parts = [field.field_name, field.field_text, field.sample_value]
 
             query_text = " ".join([str(p).strip() for p in query_parts if p])
-                
+
             # 向量检索客户化字段表
             custom_match = self.hana_client.get_custom_fields(
-                field_query=query_text,
-                log_filename=log_filename
+                field_query=query_text, log_filename=log_filename
             )
-                
+
             if custom_match:
                 # 匹配成功，构建结果
                 match_result = {
@@ -570,24 +560,24 @@ class ExcelProcessor:
                 }
 
                 matched_rows.append((field, match_result))
-                    
+
                 logger.debug(
                     f"Row {field.row_index}: Custom match (similarity: {custom_match.get('similarity', 0):.2%})",
-                    log_filename
+                    log_filename,
                 )
             else:
                 # 未匹配，加入未匹配列表
                 unmatched_rows.append(field)
-        
+
         return matched_rows, unmatched_rows
 
-    def extract_fields(self, worksheet_head, worksheet) -> List[InterfaceField]:
+    def extract_fields(self, worksheet) -> List[InterfaceField]:
         input_fields = []
 
         # Detect SAP format by checking the detection cell
-        input_system_col = self.excel_config.get("input_system_col", "F")
-        input_system_row = self.excel_config.get("input_system_row", 6)
-        cell_value = worksheet_head[f"{input_system_col}{input_system_row}"].value
+        input_system_col = self.excel_config.get("input_system_col", "D")
+        input_system_row = self.excel_config.get("input_system_row", 3)
+        cell_value = worksheet[f"{input_system_col}{input_system_row}"].value
 
         # Determine which column mappings to use based on cell value
         if cell_value and "SAP" in str(cell_value).upper():
@@ -599,16 +589,16 @@ class ExcelProcessor:
         input_header_cols = self.column_mappings["input_header_cols"]
 
         # 抬头module、接口信息
-        module = worksheet_head[f"{input_header_cols['module']}{header_row}"].value or ""
-        if_name = worksheet_head[f"{input_header_cols['if_name']}{header_row}"].value or ""
-        if_desc = worksheet_head[f"{input_header_cols['if_desc']}{header_row}"].value or ""
+        module = worksheet[f"{input_header_cols['module']}{header_row}"].value or ""
+        if_name = worksheet[f"{input_header_cols['if_name']}{header_row}"].value or ""
+        if_desc = worksheet[f"{input_header_cols['if_desc']}{header_row}"].value or ""
 
         start_row = self.excel_config["start_row"]
         input_row_cols = self.column_mappings["input_row_cols"]
 
         for row in range(start_row, (worksheet.max_row or 1000) + 1):
             field_name = worksheet[f"{input_row_cols['field_name']}{row}"].value
-            if field_name is None or field_name == '' or field_name == 'e':
+            if field_name is None or field_name == "" or field_name == "e":
                 continue
 
             interface_field = InterfaceField(
@@ -616,7 +606,6 @@ class ExcelProcessor:
                 if_name=if_name,
                 if_desc=if_desc,
                 field_name=str(field_name).strip(),
-                is_append=worksheet[f"{input_row_cols['is_append']}{row}"].value or "",
                 key_flag=worksheet[f"{input_row_cols['key_flag']}{row}"].value or "",
                 obligatory=worksheet[f"{input_row_cols['obligatory']}{row}"].value
                 or "",
@@ -630,10 +619,8 @@ class ExcelProcessor:
                 or "",
                 sample_value=worksheet[f"{input_row_cols['sample_value']}{row}"].value
                 or "",
-                remark=worksheet[f"{input_row_cols['remark']}{row}"].value
-                or "",
-                verify=worksheet[f"{input_row_cols['verify']}{row}"].value
-                or "",
+                remark=worksheet[f"{input_row_cols['remark']}{row}"].value or "",
+                verify=worksheet[f"{input_row_cols['verify']}{row}"].value or "",
                 row_index=row,
             )
 
@@ -700,33 +687,29 @@ class ExcelProcessor:
         self, worksheet, results: List[Tuple[InterfaceField, Dict[str, Any]]]
     ) -> None:
         output_columns = self.column_mappings["output_columns"]
-        
+
         processed_count = 0
         for interface_field, match_result in results:
             row = interface_field.row_index
             isverify = interface_field.verify
             field_name = interface_field.field_name
-            
-            if match_result.get("field_id") is not None and match_result.get("field_id") != '':
-                is_append = interface_field.is_append
-            
-            if field_name is None or field_name == '' or field_name == 'e':
+
+            if field_name is None or field_name == "" or field_name == "e":
                 continue
 
             if isverify == "" or isverify == "-":
                 try:
-                    worksheet[f"{output_columns['field_name']}{row}"] = match_result.get(
-                        "field_name", ""
+                    worksheet[f"{output_columns['field_name']}{row}"] = (
+                        match_result.get("field_name", "")
                     )  # Field description
-                    worksheet[f"{output_columns['is_append']}{row}"] = is_append
                     worksheet[f"{output_columns['field_id']}{row}"] = match_result.get(
                         "field_id", ""
                     )  # Technical field name
                     worksheet[f"{output_columns['key_flag']}{row}"] = match_result.get(
                         "key_flag", ""
                     )
-                    worksheet[f"{output_columns['obligatory']}{row}"] = match_result.get(
-                        "obligatory", ""
+                    worksheet[f"{output_columns['obligatory']}{row}"] = (
+                        match_result.get("obligatory", "")
                     )
                     worksheet[f"{output_columns['table_id']}{row}"] = match_result.get(
                         "table_id", ""
@@ -734,11 +717,11 @@ class ExcelProcessor:
                     worksheet[f"{output_columns['data_type']}{row}"] = match_result.get(
                         "data_type", ""
                     )
-                    worksheet[f"{output_columns['length_total']}{row}"] = match_result.get(
-                        "length_total", ""
+                    worksheet[f"{output_columns['length_total']}{row}"] = (
+                        match_result.get("length_total", "")
                     )
-                    worksheet[f"{output_columns['length_dec']}{row}"] = match_result.get(
-                        "length_dec", ""
+                    worksheet[f"{output_columns['length_dec']}{row}"] = (
+                        match_result.get("length_dec", "")
                     )
                     worksheet[f"{output_columns['match']}{row}"] = match_result.get(
                         "match", ""
@@ -746,8 +729,8 @@ class ExcelProcessor:
                     worksheet[f"{output_columns['notes']}{row}"] = match_result.get(
                         "notes", ""
                     )
-                    worksheet[f"{output_columns['sample_value']}{row}"] = match_result.get(
-                        "sample_value", ""
+                    worksheet[f"{output_columns['sample_value']}{row}"] = (
+                        match_result.get("sample_value", "")
                     )
                     worksheet[f"{output_columns['verify']}{row}"] = match_result.get(
                         "verify", ""
@@ -756,7 +739,7 @@ class ExcelProcessor:
                     processed_count += 1
 
                 except Exception as e:
-                        continue
+                    continue
 
     # ========== Field Matching Logic ==========
 
@@ -798,9 +781,11 @@ class ExcelProcessor:
             error_msg = _("LLM returned empty response for field matching")
             logger.error(
                 error_msg,
-                logger.get_excel_log_filename(excel_filename)
-                if excel_filename
-                else None,
+                (
+                    logger.get_excel_log_filename(excel_filename)
+                    if excel_filename
+                    else None
+                ),
             )
             raise RuntimeError(error_msg)
 
@@ -864,9 +849,11 @@ class ExcelProcessor:
             if not match_result:
                 logger.warning(
                     f"⚠️ No LLM match found for row {row_index}, using empty values",
-                    logger.get_excel_log_filename(excel_filename)
-                    if excel_filename
-                    else None,
+                    (
+                        logger.get_excel_log_filename(excel_filename)
+                        if excel_filename
+                        else None
+                    ),
                 )
 
             key_flag_raw = match_result.get("key_flag", "")
@@ -992,4 +979,3 @@ class ExcelProcessor:
                 logger.get_excel_log_filename(source_file_path.name),
             )
             return False
-               

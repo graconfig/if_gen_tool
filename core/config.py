@@ -15,13 +15,13 @@ class ConfigurationManager:
     def get_excel_config(self) -> Dict[str, Any]:
         return {
             "sheet_name_head": "対象IF",
-            "sheet_name": "IFマッピング定義",#"IF項目定義",
-            "header_row": 6,
-            "start_row": 5,#11,
+            "sheet_name": "IF項目定義",  # "IF項目定義",
+            "header_row": 2,
+            "start_row": 10,  # 11,
             "batch_size": int(os.getenv("LLM_BATCH_SIZE", 30)),
             "max_concurrent_batches": int(os.getenv("LLM_MAX_WORKERS", 5)),
-            "input_system_col": "F",
-            "input_system_row": 6,
+            "input_system_col": "D",
+            "input_system_row": 3,
             "custom_field_threshold": float(os.getenv("CUSTOM_FIELD_THRESHOLD", 0.75)),
         }
 
@@ -33,35 +33,32 @@ class ConfigurationManager:
     def get_column_mappings(self) -> Dict[str, Dict[str, str]]:
         # excel输入输出列映射
         return {
-            "input_header_cols": {"module": "D", "if_name": "C", "if_desc": "E"},
+            "input_header_cols": {"module": "P", "if_name": "H", "if_desc": "H"},
             "input_row_cols": {
                 "field_name": "C",
-                "is_append": "D",
-                "key_flag": "E",
-                "obligatory": "F",
-                "data_type": "I",
-                "field_id": "H",
-                "length_total": "J",
-                "length_dec": "K",
-                "field_text": "L",
-                "sample_value": "N",
-                "remark":"M",
-                "verify":"AF"
+                "key_flag": "D",
+                "obligatory": "E",
+                "data_type": "H",
+                "field_id": "G",
+                "length_total": "I",
+                "length_dec": "J",
+                "field_text": "K",
+                "sample_value": "M",
+                "remark": "L",
+                "verify": "AD",
             },
             "output_columns": {
-                "field_name": "S",
-                "is_append": "T",
-                "key_flag": "U",
-                "obligatory": "V",
-                "table_id": "W",
-                "field_id": "X",
-                "data_type": "Y",
-                "length_total": "Z",
-                "length_dec": "AA",
-                "notes": "AB",
-                "sample_value": "AC",
-                "match": "AE",
-                "verify": "AF",
+                "field_name": "R",
+                "key_flag": "S",
+                "obligatory": "T",
+                "table_id": "U",
+                "field_id": "V",
+                "data_type": "W",
+                "length_total": "X",
+                "length_dec": "Y",
+                "notes": "Z",
+                "match": "AB",
+                "verify": "AD",
             },
         }
 
@@ -71,7 +68,6 @@ class ConfigurationManager:
             "input_header_cols": {"module": "D", "if_name": "C", "if_desc": "E"},
             "input_row_cols": {
                 "field_name": "S",
-                "is_append": "T",
                 "key_flag": "U",
                 "obligatory": "V",
                 "field_id": "X",
@@ -85,7 +81,6 @@ class ConfigurationManager:
             },
             "output_columns": {
                 "field_name": "C",
-                "is_append": "D",
                 "key_flag": "E",
                 "obligatory": "F",
                 "table_id": "G",
