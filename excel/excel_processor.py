@@ -567,6 +567,7 @@ class ExcelProcessor:
                     "sample_value": custom_match.get("sample_value", ""),
                     "match": "100",
                     "notes": custom_match.get("notes", ""),
+                    "source": "custom"
                 }
 
                 matched_rows.append((field, match_result))
@@ -713,7 +714,7 @@ class ExcelProcessor:
             if field_name is None or field_name == '' or field_name == 'e':
                 continue
 
-            if isverify == "" or isverify == "-":
+            if isverify != "○":
                 try:
                     worksheet[f"{output_columns['field_name']}{row}"] = match_result.get(
                         "field_name", ""
@@ -911,6 +912,7 @@ class ExcelProcessor:
                     "sample_value": match_result.get("sample_value", ""),
                     "match": match_result.get("match"),
                     "notes": match_result.get("notes", ""),
+                    "source": match_result.get("source", ""),
                 }
             )
 

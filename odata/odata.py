@@ -39,7 +39,15 @@ def odata_verify(
 
         # 遍历 match_result 并生成所需的结构
         for i, result in enumerate(results, start=1):
+              
             if result["table_id"] and result["table_id"] != "":
+              
+              if os.getenv("SKIP_STANDARD") == "true" and result.get("source") != "custom":
+                continue
+            
+              if os.getenv("SKIP_CUSTOM") == "true" and result.get("source") == "custom":
+                continue
+              
               item_field = {
                 "TabFdPos": str(i),
                 "ToEntity": result["table_id"],
@@ -71,7 +79,8 @@ def odata_verify(
                if key in checkresults_dict:
                   checkresult = checkresults_dict[key]
                   if checkresult["ReturnCode"] == 0:
-                    result["verify"] = "√"
+                    # result["verify"] = "√"
+                    continue
                   else:
                     result["table_id"] = ""
                     result["field_id"] = ""
@@ -82,8 +91,8 @@ def odata_verify(
                     result["match"] = ""
                     result["notes"] = os.getenv("ODATA_MESSAGE") 
                     # result["verify"] = checkresult["ReturnMessage"]
-               else:
-                 result["verify"] = "-"
+              #  else:
+              #    result["verify"] = "-"
         else:
            print(f"错误: {response.text}")
       return results
