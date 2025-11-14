@@ -1,91 +1,112 @@
-# SAP IF Design Generation Tool - Technical Architecture Diagram
+# SAP IF Design Generation Tool - Technical Architecture
 
 ## System Architecture Overview
 
 ```mermaid
 graph TB
-    %% Input Layer
-    subgraph "Input Layer"
-        A[Excel Files] --> B[Excel Processor]
-        A1[Configuration Files] --> B
+    subgraph APP["🎯 Application Layer"]
+        direction LR
+        CLI["CLI Interface<br/>--file, --langu, --provider"]
+        MAIN["Main Orchestrator<br/>Multi-file Processing"]
+        CFG["Configuration<br/>Environment & Settings"]
     end
 
-    %% Core Processing Layer
-    subgraph "Core Processing Layer"
-        B --> C[Field Extraction Engine]
-        C --> D{Custom Field Priority Match}
-        D -->|Found| E[Direct Match Results]
-        D -->|Not Found| F[CDS View Processing]
-
-        F --> G[Business Scenario Discovery]
-        G --> H[AI-Powered View Selection]
-        H --> I[Vector-based Field Matching]
-        I --> J[AI Field Mapping]
+    subgraph BIZ["💼 Business Logic Layer"]
+        direction LR
+        EXCEL["Excel Processor<br/>Field Extraction"]
+        CUSTOM["Custom CDS Matcher<br/>Priority Search"]
+        CDS["Standard CDS Matcher<br/>LLM Selection"]
+        BATCH["Batch Processor<br/>Concurrent Tasks"]
     end
 
-    %% AI Services Layer
-    subgraph "AI Services Layer"
-        K[AI Service Manager]
-        L[Claude Service]
-        M[Gemini Service]
-        N[OpenAI Service]
-        K --> L
-        K --> M
-        K --> N
-        J --> K
-        H --> K
+    subgraph AI["🤖 SAP AICore Service Layer"]
+        direction LR
+        SELECTOR["AICore Selector<br/>Auto-detection"]
+        CLAUDE["Claude<br/>Bedrock API"]
+        GEMINI["Gemini<br/>Vertex AI"]
+        OPENAI["OpenAI<br/>GPT"]
     end
 
-    %% Data Layer
-    subgraph "Data Layer (SAP HANA)"
-        O[HANA DB Client]
-        P[Business Scenarios Table]
-        Q[CDS Views Table]
-        R[View Fields Table]
-        S[Custom Fields Table]
-
-        O --> P
-        O --> Q
-        O --> R
-        O --> S
-
-        G --> O
-        I --> O
+    subgraph PROMPT["📝 Prompt & Schema Layer"]
+        direction LR
+        PMGR["Prompt Manager<br/>Templates"]
+        SMGR["Schema Manager<br/>Function Schemas"]
+        I18N["i18n<br/>en/zh/ja"]
     end
 
-    %% Verification Layer
-    subgraph "Verification Layer"
-        T[OData Verification Service]
-        E --> U[Result Aggregation]
-        J --> U
-        U --> V{OData Verification Enabled?}
-        V -->|Yes| T
-        V -->|No| W[Final Results]
-        T --> W
+    subgraph DATA["💾 Data Access Layer"]
+        direction LR
+        HANA["HANA Client<br/>Vector Ops"]
+        VSEARCH["Vector Search<br/>Cosine Similarity"]
+        TABLES["Tables<br/>Scenarios/Views/Fields"]
     end
 
-    %% Output Layer
-    subgraph "Output Layer"
-        W --> X[Processed Excel Files]
-        W --> Y[Processing Logs]
-        W --> Z[Token Usage Reports]
+    subgraph INTG["🔗 Integration Layer"]
+        direction LR
+        ODATA["OData Service<br/>Verification"]
+        FS["File System<br/>I/O/Archive"]
+        TOKEN["Token Tracker<br/>Usage Stats"]
     end
 
-    %% Cross-cutting Concerns
-    subgraph "Cross-cutting Services"
-        AA[Configuration Manager]
-        AB[Logging Service]
-        AC[i18n Service]
-        AD[Token Statistics Tracker]
+    subgraph UTIL["🔧 Utility Layer"]
+        direction LR
+        LOG["Logger<br/>Multi-file Logs"]
+        MODEL["Data Models<br/>InterfaceField"]
+        HELP["Helpers<br/>Utilities"]
     end
 
-    AA --> B
-    AA --> K
-    AA --> O
-    AB --> B
-    AB --> K
-    AC --> B
-    AD --> K
+    %% Layer connections
+    CLI -.-> MAIN
+    MAIN --> CFG
+    MAIN --> EXCEL
+    MAIN --> LOG
+    
+    EXCEL --> CUSTOM
+    EXCEL --> CDS
+    EXCEL --> BATCH
+    EXCEL --> MODEL
+    
+    CUSTOM --> HANA
+    CDS --> SELECTOR
+    CDS --> HANA
+    BATCH --> SELECTOR
+    
+    SELECTOR --> CLAUDE
+    SELECTOR --> GEMINI
+    SELECTOR --> OPENAI
+    
+    CLAUDE --> PMGR
+    GEMINI --> PMGR
+    OPENAI --> PMGR
+    CLAUDE -.-> SMGR
+    GEMINI -.-> SMGR
+    OPENAI -.-> SMGR
+    
+    PMGR --> I18N
+    
+    HANA --> VSEARCH
+    HANA --> TABLES
+    
+    EXCEL --> ODATA
+    EXCEL --> FS
+    SELECTOR --> TOKEN
+    
+    %% Styling
+    classDef appStyle fill:#e1f5ff,stroke:#0066cc,stroke-width:2px,color:#000
+    classDef bizStyle fill:#fff4e1,stroke:#ff9900,stroke-width:2px,color:#000
+    classDef aiStyle fill:#ffe1f5,stroke:#cc00cc,stroke-width:2px,color:#000
+    classDef promptStyle fill:#f0e1ff,stroke:#6600cc,stroke-width:2px,color:#000
+    classDef dataStyle fill:#e1ffe1,stroke:#009900,stroke-width:2px,color:#000
+    classDef intgStyle fill:#ffe1e1,stroke:#cc0000,stroke-width:2px,color:#000
+    classDef utilStyle fill:#f5f5f5,stroke:#666666,stroke-width:2px,color:#000
+    
+    class CLI,MAIN,CFG appStyle
+    class EXCEL,CUSTOM,CDS,BATCH bizStyle
+    class SELECTOR,CLAUDE,GEMINI,OPENAI aiStyle
+    class PMGR,SMGR,I18N promptStyle
+    class HANA,VSEARCH,TABLES dataStyle
+    class ODATA,FS,TOKEN intgStyle
+    class LOG,MODEL,HELP utilStyle
 ```
 
 ## Component Interaction Flow
