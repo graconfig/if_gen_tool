@@ -103,8 +103,8 @@ class EnPromptTemplates:
             [
                 "Output Requirements(Use review_field_matches function with EXACT row_index from input):",
                 "For each field provide (exact row_index):",
-                "• table_id: Exact CDS view name (e.g., 'I_TIMESHEETRECORD')",
-                "• field_id: Technical field name only (e.g., 'RECEIVERCOSTCENTER')",
+                "• table_id: Exact CDS view name",
+                "• field_id: Technical field name only",
                 "• field_desc: Human-readable description",
                 "• data_type, length_total, length_dec: From matched CDS field",
                 "• key_flag: 'X' if CDS field is marked as key, empty otherwise",
