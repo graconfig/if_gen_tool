@@ -378,6 +378,7 @@ class ExcelProcessor:
             )
 
             # Get fields from selected views once for all batches
+
             llm_return_views_fields = self.hana_client.get_fields(
                 cds_views=llm_return_views, log_filename=log_filename
             )
@@ -622,6 +623,7 @@ class ExcelProcessor:
                 obligatory=worksheet[f"{input_row_cols['obligatory']}{row}"].value
                 or "",
                 data_type=worksheet[f"{input_row_cols['data_type']}{row}"].value or "",
+                table_id=worksheet[f"{input_row_cols['table_id']}{row}"].value or "",
                 field_id=worksheet[f"{input_row_cols['field_id']}{row}"].value or "",
                 length_total=worksheet[f"{input_row_cols['length_total']}{row}"].value
                 or "",

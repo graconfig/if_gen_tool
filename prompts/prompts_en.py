@@ -28,6 +28,7 @@ class EnPromptTemplates:
             "Critical Rules:",
             "• Priority matching in provided context, If cannot match from the provided context, you can match from the table or CDS existing in SAP",
             "• Set empty strings if no suitable match found",
+            "• Consider the business relationships between fields to ensure that the matched fields are logically coherent in terms of business logic",
             "",
             "Weighted Matching Criteria (total 100%):",
             "1.field_text semantic similarity (60%, primary)",
@@ -47,15 +48,16 @@ class EnPromptTemplates:
             "Critical Rules:",
             "• Use ONLY exact field/view names from provided context",
             "• Set empty strings if no suitable match found",
+            "• Consider the business relationships between fields to ensure that the matched fields are logically coherent in terms of business logic",
             "",
             "Weighted Matching Criteria (total 100%):",
             "1.field_text semantic similarity (60%, primary)",
-            "2. Business context alignment (20%)",
+            "2.Business context alignment (20%)",
             "3.data_type compatibility (15%)",
             "4.length/precision alignment (5%)",
             "Note: Semantic meaning > technical attributes; fuzzy match for descriptions.",
             "",
-            "Input Fields to Match (row_index:field_name;field_desc;key_flag;data_type;field_id;length_total):",
+            "Input Fields to Match (row_index:field_name;field_desc;key_flag;data_type;table_id;field_id;length_total):",
         ]
 
         # Add input fields with enhanced details
@@ -65,11 +67,12 @@ class EnPromptTemplates:
             field_text = getattr(field, "field_text", "")
             is_key = getattr(field, 'key_flag')
             data_type = getattr(field, "data_type", "")
+            table_id  = getattr(field, "table_id", "")
             field_id  = getattr(field, "field_id", "")
             length_total = getattr(field, "length_total", "")
             remark = getattr(field, "remark", "")
             prompt_parts.append(
-                f"{row_idx};{field_name};{field_text};{is_key};{data_type};{field_id};{length_total};{remark}")
+                f"{row_idx};{field_name};{field_text};{is_key};{data_type};{table_id};{field_id};{length_total};{remark}")
 
         prompt_parts.append("")
         prompt_parts.extend(
@@ -139,6 +142,7 @@ class EnPromptTemplates:
             "1.**Analyze the Interface Context:** Carefully review the module, interface name, and the descriptions of the input fields to understand the business purpose of the interface.",
             "2.**Evaluate Candidate Views:** For each candidate CDS view, assess its description to determine its relevance to the interface's purpose.",
             "3.**Prioritize Semantic Relevance:** The selection should be based on the semantic meaning and business context, not just keyword matching.",
+            # "4.** If the interface requires master data fields, ensure that all relevant master data CDS views are included in your selection.",
             "4.**Return Only a List of Names:** Your final output must be a list of the names of the selected CDS views.",
             "",
             "---",
