@@ -14,7 +14,7 @@ class ClaudeSchemas:
                 {
                     "toolSpec": {
                         "name": "review_field_matches",
-                        "description": "Matches input fields with SAP CDS fields",
+                        "description": "Matches input fields with TOP 3 SAP CDS fields, separated by line breaks",
                         "inputSchema": {
                             "json": {
                                 "type": "object",
@@ -31,11 +31,11 @@ class ClaudeSchemas:
                                                 },
                                                 "table_id": {
                                                     "type": "string",
-                                                    "description": "EXACT SAP CDS view name",
+                                                    "description": "TOP 3 SAP CDS view name, separated by line breaks",
                                                 },
                                                 "field_id": {
                                                     "type": "string",
-                                                    "description": "EXACT SAP CDS field name",
+                                                    "description": "TOP 3 SAP CDS field names, separated by line breaks",
                                                 },
                                                 "field_desc": {
                                                     "type": "string",

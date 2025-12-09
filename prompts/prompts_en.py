@@ -29,6 +29,7 @@ class EnPromptTemplates:
             "• Priority matching in provided context, If cannot match from the provided context, you can match from the table or CDS existing in SAP",
             "• Set empty strings if no suitable match found",
             "• Consider the business relationships between fields to ensure that the matched fields are logically coherent in terms of business logic",
+            "• Match top 3 SAP fields with the highest correlation for each input field",
             "",
             "Weighted Matching Criteria (total 100%):",
             "1.field_text semantic similarity (60%, primary)",
@@ -45,10 +46,16 @@ class EnPromptTemplates:
             "",
             "**Task:** Find the best CDS field matches for the following input fields. A pre-filtered, highly relevant list of CDS fields is provided as context. Your task is to perform the detailed field-level matching.",
             "",
+            "【业务术语映射规则】:",
+            "届け先 = Customer",
+            "出荷 = Delivery",
+            "税金コード = Tax Code",
+            "",
             "Critical Rules:",
             "• Use ONLY exact field/view names from provided context",
             "• Set empty strings if no suitable match found",
             "• Consider the business relationships between fields to ensure that the matched fields are logically coherent in terms of business logic",
+            "• Match top 3 SAP fields with the highest correlation for each input field",
             "",
             "Weighted Matching Criteria (total 100%):",
             "1.field_text semantic similarity (60%, primary)",
@@ -138,6 +145,10 @@ class EnPromptTemplates:
             "",
             "**Primary Goal:** Identify and select the CDS views that are most likely to contain the data needed for the interface.",
             "",
+            "【业务术语映射规则】:",
+            "届け先 = Customer",
+            "出荷 = Delivery"
+            "",
             "**Critical Instructions:**",
             "1.**Analyze the Interface Context:** Carefully review the module, interface name, and the descriptions of the input fields to understand the business purpose of the interface.",
             "2.**Evaluate Candidate Views:** For each candidate CDS view, assess its description to determine its relevance to the interface's purpose.",
@@ -163,15 +174,16 @@ class EnPromptTemplates:
                     f"-**Interface Description:** {if_desc}",
                     "",
                     "Required Fields for the Interface:",
-                    "format:field_name,field_description",
+                    "format:field_id,field_name,field_description",
                 ]
             )
 
             for field in input_fields:
+                field_id = getattr(field, "field_id", "N/A")
                 field_name = getattr(field, "field_name", "N/A")
                 field_text = getattr(field, "field_text", "N/A")
                 prompt_parts.append(
-                    f"{field_name},{field_text}"
+                    f"{field_id},{field_name},{field_text}"
                 )
 
         prompt_parts.extend(
