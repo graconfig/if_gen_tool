@@ -2,19 +2,22 @@
 Function schemas for different LLM providers - English version.
 Defines the structure for AI function calling capabilities.
 """
-
+import os
 from typing import Dict, Any
 
 
 class ClaudeSchemas:
     @staticmethod
     def get_field_matching_tool() -> Dict[str, Any]:
+        
+        match_number = os.getenv("Match_Number", "1")
+        
         return {
             "tools": [
                 {
                     "toolSpec": {
                         "name": "review_field_matches",
-                        "description": "Matches input fields with TOP 3 SAP CDS fields, separated by line breaks",
+                        "description": f"Matches input fields with TOP {match_number} SAP CDS fields, separated by line breaks",
                         "inputSchema": {
                             "json": {
                                 "type": "object",
@@ -31,11 +34,11 @@ class ClaudeSchemas:
                                                 },
                                                 "table_id": {
                                                     "type": "string",
-                                                    "description": "TOP 3 SAP CDS view name, separated by line breaks",
+                                                    "description": f"TOP {match_number} SAP CDS view name, separated by line breaks",
                                                 },
                                                 "field_id": {
                                                     "type": "string",
-                                                    "description": "TOP 3 SAP CDS field names, separated by line breaks",
+                                                    "description": f"TOP {match_number} SAP CDS field names, separated by line breaks",
                                                 },
                                                 "field_desc": {
                                                     "type": "string",
