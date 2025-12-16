@@ -17,6 +17,7 @@ class EnPromptTemplates:
             input_fields: List[Dict[str, Any]], context: List[Dict[str, Any]]
     ) -> str:
         """Generate optimized two-stage field matching prompt"""
+        match_number = os.getenv("Match_Number", "1")
         
         if os.getenv("VERIFY_FLAG") == "true":
          prompt_parts = [
@@ -28,6 +29,8 @@ class EnPromptTemplates:
             "Critical Rules:",
             "• Priority matching in provided context, If cannot match from the provided context, you can match from the table or CDS existing in SAP",
             "• Set empty strings if no suitable match found",
+            "• Consider the business relationships between fields to ensure that the matched fields are logically coherent in terms of business logic",
+            f"• Match top {match_number} SAP fields with the highest correlation for each input field",
             "",
             "Weighted Matching Criteria (total 100%):",
             "1.field_text semantic similarity (60%, primary)",
@@ -44,18 +47,25 @@ class EnPromptTemplates:
             "",
             "**Task:** Find the best CDS field matches for the following input fields. A pre-filtered, highly relevant list of CDS fields is provided as context. Your task is to perform the detailed field-level matching.",
             "",
+            "【业务术语映射规则】:",
+            "届け先 = Customer",
+            "出荷 = Delivery",
+            "税金コード = Tax Code",
+            "",
             "Critical Rules:",
             "• Use ONLY exact field/view names from provided context",
             "• Set empty strings if no suitable match found",
+            "• Consider the business relationships between fields to ensure that the matched fields are logically coherent in terms of business logic",
+            f"• Match top {match_number} SAP fields with the highest correlation for each input field",
             "",
             "Weighted Matching Criteria (total 100%):",
             "1.field_text semantic similarity (60%, primary)",
-            "2. Business context alignment (20%)",
+            "2.Business context alignment (20%)",
             "3.data_type compatibility (15%)",
             "4.length/precision alignment (5%)",
             "Note: Semantic meaning > technical attributes; fuzzy match for descriptions.",
             "",
-            "Input Fields to Match (row_index:field_name;field_desc;key_flag;data_type;field_id;length_total):",
+            "Input Fields to Match (row_index:field_name;field_desc;key_flag;data_type;table_id;field_id;length_total):",
         ]
 
         # Add input fields with enhanced details
@@ -65,11 +75,12 @@ class EnPromptTemplates:
             field_text = getattr(field, "field_text", "")
             is_key = getattr(field, 'key_flag')
             data_type = getattr(field, "data_type", "")
+            table_id  = getattr(field, "table_id", "")
             field_id  = getattr(field, "field_id", "")
             length_total = getattr(field, "length_total", "")
             remark = getattr(field, "remark", "")
             prompt_parts.append(
-                f"{row_idx};{field_name};{field_text};{is_key};{data_type};{field_id};{length_total};{remark}")
+                f"{row_idx};{field_name};{field_text};{is_key};{data_type};{table_id};{field_id};{length_total};{remark}")
 
         prompt_parts.append("")
         prompt_parts.extend(
@@ -135,10 +146,15 @@ class EnPromptTemplates:
             "",
             "**Primary Goal:** Identify and select the CDS views that are most likely to contain the data needed for the interface.",
             "",
+            "【业务术语映射规则】:",
+            "届け先 = Customer",
+            "出荷 = Delivery"
+            "",
             "**Critical Instructions:**",
             "1.**Analyze the Interface Context:** Carefully review the module, interface name, and the descriptions of the input fields to understand the business purpose of the interface.",
             "2.**Evaluate Candidate Views:** For each candidate CDS view, assess its description to determine its relevance to the interface's purpose.",
             "3.**Prioritize Semantic Relevance:** The selection should be based on the semantic meaning and business context, not just keyword matching.",
+            # "4.** If the interface requires master data fields, ensure that all relevant master data CDS views are included in your selection.",
             "4.**Return Only a List of Names:** Your final output must be a list of the names of the selected CDS views.",
             "",
             "---",
@@ -159,15 +175,16 @@ class EnPromptTemplates:
                     f"-**Interface Description:** {if_desc}",
                     "",
                     "Required Fields for the Interface:",
-                    "format:field_name,field_description",
+                    "format:field_id,field_name,field_description",
                 ]
             )
 
             for field in input_fields:
+                field_id = getattr(field, "field_id", "N/A")
                 field_name = getattr(field, "field_name", "N/A")
                 field_text = getattr(field, "field_text", "N/A")
                 prompt_parts.append(
-                    f"{field_name},{field_text}"
+                    f"{field_id},{field_name},{field_text}"
                 )
 
         prompt_parts.extend(

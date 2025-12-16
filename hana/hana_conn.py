@@ -17,9 +17,9 @@ load_dotenv()
 
 class HANADBClient:
     def __init__(self):
-        self.scenario_table = "AI_ORCHESTRATION_RAG_BUSINESSSCENARIOS"
-        self.cds_view_table = "AI_ORCHESTRATION_RAG_CDSVIEWS"
-        self.view_fields_table = "AI_ORCHESTRATION_RAG_VIEWFIELDS"
+        self.scenario_table = "PWC_HAND_AI2REPORT_DEV_BUSINESSSCENARIOS"
+        self.cds_view_table = "PWC_HAND_AI2REPORT_DEV_CDSVIEWS"
+        self.view_fields_table = "PWC_HAND_AI2REPORT_DEV_VIEWFIELDS"
         self.cust_fields_table = "PWC_HAND_AI2REPORT_DEV_CUSTFIELDS"
 
         self.db_addr = os.getenv("HANA_ADDRESS")
@@ -150,8 +150,16 @@ class HANADBClient:
                     try:
                         # 2. 解析字段
                         content_str_re = self.parse_fields(content_str)
-                        parsed_fields = json.loads(content_str_re)
+                        # 直接找到[[的位置
+                        start_idx = content_str_re.find('[[')
+                        end_idx = content_str_re.rfind(']]')
 
+                        if start_idx != -1 and end_idx != -1:
+                             # 提取完整的内容（包含[[和]]）
+                            full_content = content_str_re[start_idx:end_idx+2]
+                            
+                        parsed_fields = json.loads(full_content)
+                        
                         # 3. 将解析后的列表转换为结构化的字典列表
                         for field_data in parsed_fields:
                             if not isinstance(field_data, list) or len(field_data) < 7:
@@ -242,7 +250,7 @@ class HANADBClient:
             schema=self._db_schema_cust,
             table=self.cust_fields_table,
             comparison_operator='>' if sort.strip().upper() == 'DESC' else '<',
-            threshold=0.6  # 示例阈值，您需要根据实际情况调整
+            threshold=0.7  # 示例阈值，您需要根据实际情况调整
         )
 
         try:

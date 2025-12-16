@@ -20,6 +20,7 @@ class InterfaceField:
     key_flag: str = ""
     obligatory: str = ""
     data_type: str = ""
+    table_id: str = ""
     field_id: str = ""
     length_total: str = ""
     length_dec: str = ""
@@ -40,6 +41,7 @@ class InterfaceField:
             "key_flag": self.key_flag,
             "obligatory": self.obligatory,
             "data_type": self.data_type,
+            "table_id": self.table_id,
             "field_id": self.field_id,
             "length_total": self.length_total,
             "length_dec": self.length_dec,
