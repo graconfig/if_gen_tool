@@ -14,7 +14,7 @@ class ConfigurationManager:
 
     def get_excel_config(self) -> Dict[str, Any]:
         return {
-            "sheet_name_head": "対象IF",
+            "sheet_name_head": "IF項目定義",
             "sheet_name": "IF項目定義",  # "IF項目定義",
             "header_row": 2,
             "start_row": 10,  # 11,
@@ -33,12 +33,13 @@ class ConfigurationManager:
     def get_column_mappings(self) -> Dict[str, Dict[str, str]]:
         # excel输入输出列映射
         return {
-            "input_header_cols": {"module": "P", "if_name": "H", "if_desc": "H"},
+            "input_header_cols": {"module": "P", "if_name": "D", "if_desc": "H"},
             "input_row_cols": {
                 "field_name": "C",
                 "key_flag": "D",
                 "obligatory": "E",
                 "data_type": "H",
+                "table_id": "F",
                 "field_id": "G",
                 "length_total": "I",
                 "length_dec": "J",
@@ -58,19 +59,20 @@ class ConfigurationManager:
                 "length_dec": "Y",
                 "notes": "Z",
                 "sample_value": "AA",
-                "match": "AC",
-                "verify": "AB",
+                "match": "AB",
+                "verify": "AC",
             },
         }
 
     def get_column_mappings_sap(self) -> Dict[str, Dict[str, str]]:
         # excel输入输出列映射
         return {
-            "input_header_cols": {"module": "D", "if_name": "C", "if_desc": "E"},
+            "input_header_cols": {"module": "P", "if_name": "D", "if_desc": "H"},
             "input_row_cols": {
                 "field_name": "R",
                 "key_flag": "S",
                 "obligatory": "T",
+                "table_id": "U",
                 "field_id": "V",
                 "data_type": "W",
                 "length_total": "X",

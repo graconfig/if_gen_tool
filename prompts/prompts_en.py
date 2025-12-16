@@ -17,7 +17,6 @@ class EnPromptTemplates:
             input_fields: List[Dict[str, Any]], context: List[Dict[str, Any]]
     ) -> str:
         """Generate optimized two-stage field matching prompt"""
-        match_number = os.getenv("Match_Number", "1")
         
         if os.getenv("VERIFY_FLAG") == "true":
          prompt_parts = [
@@ -30,7 +29,6 @@ class EnPromptTemplates:
             "• Priority matching in provided context, If cannot match from the provided context, you can match from the table or CDS existing in SAP",
             "• Set empty strings if no suitable match found",
             "• Consider the business relationships between fields to ensure that the matched fields are logically coherent in terms of business logic",
-            f"• Match top {match_number} SAP fields with the highest correlation for each input field",
             "",
             "Weighted Matching Criteria (total 100%):",
             "1.field_text semantic similarity (60%, primary)",
@@ -47,16 +45,10 @@ class EnPromptTemplates:
             "",
             "**Task:** Find the best CDS field matches for the following input fields. A pre-filtered, highly relevant list of CDS fields is provided as context. Your task is to perform the detailed field-level matching.",
             "",
-            "【业务术语映射规则】:",
-            "届け先 = Customer",
-            "出荷 = Delivery",
-            "税金コード = Tax Code",
-            "",
             "Critical Rules:",
             "• Use ONLY exact field/view names from provided context",
             "• Set empty strings if no suitable match found",
             "• Consider the business relationships between fields to ensure that the matched fields are logically coherent in terms of business logic",
-            f"• Match top {match_number} SAP fields with the highest correlation for each input field",
             "",
             "Weighted Matching Criteria (total 100%):",
             "1.field_text semantic similarity (60%, primary)",
