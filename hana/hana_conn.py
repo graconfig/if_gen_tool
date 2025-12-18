@@ -239,7 +239,6 @@ class HANADBClient:
                     "NOTES",
                     {metric}(VECTOR_EMBEDDING('{query}', 'QUERY', 'SAP_NEB.20240715'),"EMBEDDINGS") AS SIMILARITY_SCORE
                 FROM "{schema}"."{table}"
-                WHERE "ISACTIVE"=0
             ) AS SubqueryAlias
             WHERE SIMILARITY_SCORE {comparison_operator} {threshold}
             ORDER BY SIMILARITY_SCORE {sort}
@@ -252,7 +251,7 @@ class HANADBClient:
             comparison_operator='>' if sort.strip().upper() == 'DESC' else '<',
             threshold=0.7  # 示例阈值，您需要根据实际情况调整
         )
-
+                # WHERE "ISACTIVE"=0
         try:
             result_df = self.hana_client.sql(sql).collect()
             

@@ -17,14 +17,14 @@ class ClaudeSchemas:
                 {
                     "toolSpec": {
                         "name": "review_field_matches",
-                        "description": f"Matches input fields with TOP {match_number} SAP CDS fields, separated by line breaks",
+                        "description": f"Matches input fields with TOP {match_number} SAP CDS fields separated by line breaks, or analyze the fields which matching results already provided",
                         "inputSchema": {
                             "json": {
                                 "type": "object",
                                 "properties": {
                                     "review": {
                                         "type": "array",
-                                        "description": "A list containing the matching results for all input fields",
+                                        "description": "A list containing the matching results for all input fields, including the manually matched ones",
                                         "items": {
                                             "type": "object",
                                             "properties": {
@@ -34,11 +34,11 @@ class ClaudeSchemas:
                                                 },
                                                 "table_id": {
                                                     "type": "string",
-                                                    "description": f"TOP {match_number} SAP CDS view name, separated by line breaks",
+                                                    "description": f"TOP {match_number} SAP CDS view name, separated by line breaks, OR the manually matched exact view name",
                                                 },
                                                 "field_id": {
                                                     "type": "string",
-                                                    "description": f"TOP {match_number} SAP CDS field names, separated by line breaks",
+                                                    "description": f"TOP {match_number} SAP CDS field names, separated by line breaks OR the manually matched exact field name",
                                                 },
                                                 "field_desc": {
                                                     "type": "string",
@@ -74,7 +74,7 @@ class ClaudeSchemas:
                                                 },
                                                 "notes": {
                                                     "type": "string",
-                                                    "description": "Notes explaining the match choice OR why no suitable match was found",
+                                                    "description": "Notes explaining the match choice OR why no suitable match was found, or analysis of matches provided",
                                                 },
                                             },
                                             "required": ["row_index","table_id","field_id","field_desc","data_type","length_total","length_dec","key_flag","obligatory","sample_value","match", "notes"]

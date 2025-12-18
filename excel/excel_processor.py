@@ -151,9 +151,9 @@ class ExcelProcessor:
         
         # 1、根据输入内容查找视图（只处理未匹配字段）
         final_context_for_llm = []
-        module = unmatched_rows[0].module
-        if_name = unmatched_rows[0].if_name
-        if_desc = unmatched_rows[0].if_desc
+        module = unmatched_rows[0][0].module
+        if_name = unmatched_rows[0][0].if_name
+        if_desc = unmatched_rows[0][0].if_desc
         module_query = ",".join([module, if_name, if_desc])
 
         log_filename = logger.get_excel_log_filename(excel_filename)
@@ -256,10 +256,10 @@ class ExcelProcessor:
 
             # ========== 合并结果：已匹配 + 新匹配 ==========
             unmatched_results = list(zip(unmatched_rows, unmatched_batch_results))
-            final_results = matched_rows + unmatched_results
+            final_results = unmatched_results
             
             # 按行号排序，保持原始顺序
-            final_results.sort(key=lambda x: x[0].row_index)
+            final_results.sort(key=lambda x: x[0][0].row_index)
 
             # Write results
             logger.info(
@@ -323,9 +323,9 @@ class ExcelProcessor:
         )
 
         # 1. Get common context for all batches (same module/interface)
-        module = unmatched_rows[0].module
-        if_name = unmatched_rows[0].if_name
-        if_desc = unmatched_rows[0].if_desc
+        module = unmatched_rows[0][0].module
+        if_name = unmatched_rows[0][0].if_name
+        if_desc = unmatched_rows[0][0].if_desc
         module_query = ",".join([module, if_name, if_desc])
 
         log_filename = logger.get_excel_log_filename(excel_filename)
@@ -476,8 +476,8 @@ class ExcelProcessor:
                         print()  # Add newline after progress update
 
             # ========== 合并结果：已匹配 + 新匹配 ==========
-            all_results = matched_results + unmatched_results
-            all_results.sort(key=lambda x: x[0].row_index)
+            all_results = unmatched_results
+            all_results.sort(key=lambda x: x[0][0].row_index)
 
             # 3. Write all results
             logger.info(
@@ -572,14 +572,15 @@ class ExcelProcessor:
                 }
 
                 matched_rows.append((field, match_result))
-                    
+                unmatched_rows.append((field, match_result))
+                   
                 logger.debug(
                     f"Row {field.row_index}: Custom match (similarity: {custom_match.get('similarity', 0):.2%})",
                     log_filename
                 )
             else:
                 # 未匹配，加入未匹配列表
-                unmatched_rows.append(field)
+                unmatched_rows.append((field, None))
         
         return matched_rows, unmatched_rows
 
@@ -706,13 +707,13 @@ class ExcelProcessor:
         
         processed_count = 0
         for interface_field, match_result in results:
-            row = interface_field.row_index
-            isverify = interface_field.verify
-            field_name = interface_field.field_name
+            row = interface_field[0].row_index
+            isverify = interface_field[0].verify
+            field_name = interface_field[0].field_name
             
             if match_result.get("field_id") is not None and match_result.get("field_id") != '':
-                is_append = interface_field.is_append
-            
+                is_append = interface_field[0].is_append
+
             if field_name is None or field_name == '' or field_name == 'e':
                 continue
 
@@ -854,12 +855,12 @@ class ExcelProcessor:
 
         for input_field in input_fields:
             # Handle both InterfaceField objects and dictionaries
-            if hasattr(input_field, "row_index"):
+            if hasattr(input_field[0], "row_index"):
                 # InterfaceField object
-                row_index = input_field.row_index
+                row_index = input_field[0].row_index
             else:
                 # Dictionary
-                row_index = input_field.get("row_index")
+                row_index = input_field[0][0].get("row_index")
 
             match_result = match_map.get(row_index, {})
 

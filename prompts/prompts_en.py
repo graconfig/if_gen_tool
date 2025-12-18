@@ -67,21 +67,40 @@ class EnPromptTemplates:
             "",
             "Input Fields to Match (row_index:field_name;field_desc;key_flag;data_type;table_id;field_id;length_total):",
         ]
-
         # Add input fields with enhanced details
         for field in input_fields:
-            row_idx = getattr(field, "row_index")
-            field_name = getattr(field, "field_name", "")
-            field_text = getattr(field, "field_text", "")
-            is_key = getattr(field, 'key_flag')
-            data_type = getattr(field, "data_type", "")
-            table_id  = getattr(field, "table_id", "")
-            field_id  = getattr(field, "field_id", "")
-            length_total = getattr(field, "length_total", "")
-            remark = getattr(field, "remark", "")
-            prompt_parts.append(
+            if field[1] is None:    
+             row_idx = getattr(field[0], "row_index")
+             field_name = getattr(field[0], "field_name", "")
+             field_text = getattr(field[0], "field_text", "")
+             is_key = getattr(field[0], 'key_flag')
+             data_type = getattr(field[0], "data_type", "")
+             table_id  = getattr(field[0], "table_id", "")
+             field_id  = getattr(field[0], "field_id", "")
+             length_total = getattr(field[0], "length_total", "")
+             remark = getattr(field[0], "remark", "")
+             prompt_parts.append(
                 f"{row_idx};{field_name};{field_text};{is_key};{data_type};{table_id};{field_id};{length_total};{remark}")
-
+            
+        prompt_parts.append("")
+        prompt_parts.append("The following fields have been manually matched, only need to analyze the matching results(row_index:field_name;field_desc;key_flag;data_type;table_id;field_id;length_total;sap_table;sap_field):")
+        
+        for field in input_fields:
+            if field[1] is not None:    
+                row_idx = getattr(field[0], "row_index")
+                field_name = getattr(field[0], "field_name", "")
+                field_text = getattr(field[0], "field_text", "")
+                is_key = getattr(field[0], 'key_flag')
+                data_type = getattr(field[0], "data_type", "")
+                table_id  = getattr(field[0], "table_id", "")
+                field_id  = getattr(field[0], "field_id", "")
+                length_total = getattr(field[0], "length_total", "")
+                remark = getattr(field[0], "remark", "")
+                sap_table = field[1].get("table_id", "")
+                sap_field = field[1].get("field_id", "")
+                prompt_parts.append(
+                f"{row_idx};{field_name};{field_text};{is_key};{data_type};{table_id};{field_id};{length_total};{remark};{sap_table};{sap_field}")
+                
         prompt_parts.append("")
         prompt_parts.extend(
             [
@@ -90,7 +109,8 @@ class EnPromptTemplates:
                 "",
             ]
         )
-
+        
+        
         # Group context by view for better organization
         compacted_context = []
         for ctx in context:
@@ -163,7 +183,7 @@ class EnPromptTemplates:
         ]
 
         if input_fields:
-            first_field = input_fields[0]
+            first_field = input_fields[0][0]
             module = getattr(first_field, "module", "N/A")
             if_name = getattr(first_field, "if_name", "N/A")
             if_desc = getattr(first_field, "if_desc", "N/A")
@@ -180,9 +200,9 @@ class EnPromptTemplates:
             )
 
             for field in input_fields:
-                field_id = getattr(field, "field_id", "N/A")
-                field_name = getattr(field, "field_name", "N/A")
-                field_text = getattr(field, "field_text", "N/A")
+                field_id = getattr(field[0], "field_id", "N/A")
+                field_name = getattr(field[0], "field_name", "N/A")
+                field_text = getattr(field[0], "field_text", "N/A")
                 prompt_parts.append(
                     f"{field_id},{field_name},{field_text}"
                 )
