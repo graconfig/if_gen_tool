@@ -159,6 +159,12 @@ class ExcelProcessor:
         log_filename = logger.get_excel_log_filename(excel_filename)
 
         try:
+        # ========== 获取术语表 ==========    
+            TerminologyMapping = self.hana_client.get_terms(
+                log_filename=log_filename
+            )
+            
+        # ========== 获取视图 ==========
             cat_find_by_module = self.hana_client.run_vector_search(
                 query=module_query, k=3, log_filename=log_filename
             )
@@ -191,7 +197,7 @@ class ExcelProcessor:
             )
             # 根据输入内容查找最相关的视图（传入未匹配字段）
             llm_return_views = self._select_relevant_views(
-                views_find_by_cat, unmatched_rows, excel_filename
+                views_find_by_cat, TerminologyMapping, unmatched_rows, excel_filename
             )
             if not llm_return_views:
                 logger.warning(
@@ -238,7 +244,7 @@ class ExcelProcessor:
             )
             try:
                 unmatched_batch_results = self._match_fields(
-                    unmatched_rows, final_context_for_llm, excel_filename
+                    unmatched_rows, final_context_for_llm, TerminologyMapping, excel_filename
                 )
             except Exception as e:
                 logger.error(
@@ -268,7 +274,7 @@ class ExcelProcessor:
                 ),
                 logger.get_excel_log_filename(excel_filename),
             )
-            self.write_results(worksheet, final_results)
+            self.write_results(worksheet, final_results, final_context_for_llm)
         except Exception as e:
             logger.error(
                 f"Error processing file: {e}",
@@ -329,7 +335,11 @@ class ExcelProcessor:
         module_query = ",".join([module, if_name, if_desc])
 
         log_filename = logger.get_excel_log_filename(excel_filename)
-
+        
+        # ========== 获取术语表 ==========    
+        TerminologyMapping = self.hana_client.get_terms(
+            log_filename=log_filename
+        )
         try:
             # Get CDS views once for all batches
             cat_find_by_module = self.hana_client.run_vector_search(
@@ -362,7 +372,7 @@ class ExcelProcessor:
 
             # Select relevant views once for all batches (传入未匹配字段)
             llm_return_views = self._select_relevant_views(
-                views_find_by_cat, unmatched_rows, excel_filename
+                views_find_by_cat, TerminologyMapping, unmatched_rows, excel_filename
             )
             if not llm_return_views:
                 logger.warning(
@@ -427,6 +437,7 @@ class ExcelProcessor:
                             self._process_batch,
                             batch_fields,
                             final_context_for_llm,
+                            TerminologyMapping,
                             excel_filename,
                             i,
                         ): (i, len(batch_fields))
@@ -486,7 +497,7 @@ class ExcelProcessor:
                 ),
                 logger.get_excel_log_filename(excel_filename),
             )
-            self.write_results(worksheet, all_results)
+            self.write_results(worksheet, all_results, final_context_for_llm)
         except Exception as e:
             logger.error(
                 f"Error processing batch file: {e}",
@@ -498,6 +509,7 @@ class ExcelProcessor:
         self,
         batch_fields: List[InterfaceField],
         context: List[Dict[str, Any]],
+        TerminologyMapping_df: pd.DataFrame,
         excel_filename: str,
         batch_index: int,
     ) -> List[Dict[str, Any]]:
@@ -508,7 +520,7 @@ class ExcelProcessor:
 
             set_current_file(excel_filename)
 
-            return self._match_fields(batch_fields, context, excel_filename)
+            return self._match_fields(batch_fields, context, TerminologyMapping_df, excel_filename)
         except Exception as e:
             logger.error(
                 _("Error in batch {}: {}").format(batch_index, e),
@@ -648,11 +660,12 @@ class ExcelProcessor:
     def _select_relevant_views(
         self,
         candidate_views_df: pd.DataFrame,
+        TerminologyMapping: pd.DataFrame,
         input_fields: List[InterfaceField],
         excel_filename: str,
     ) -> List[str]:
         views_prompt = self.ai_service.get_view_selection_prompt(
-            candidate_views_df, input_fields
+            candidate_views_df, TerminologyMapping, input_fields, 
         )
 
         views_function_schema = self.ai_service.get_view_selection_schema()
@@ -701,7 +714,7 @@ class ExcelProcessor:
         return context_list
 
     def write_results(
-        self, worksheet, results: List[Tuple[InterfaceField, Dict[str, Any]]]
+        self, worksheet, results: List[Tuple[InterfaceField, Dict[str, Any]]], rag_view_fields: Optional[List[Dict[str, Any]]]=None
     ) -> None:
         output_columns = self.column_mappings["output_columns"]
         
@@ -710,14 +723,33 @@ class ExcelProcessor:
             row = interface_field[0].row_index
             isverify = interface_field[0].verify
             field_name = interface_field[0].field_name
-            
+
             if match_result.get("field_id") is not None and match_result.get("field_id") != '':
                 is_append = interface_field[0].is_append
-
+                
             if field_name is None or field_name == '' or field_name == 'e':
                 continue
 
             if isverify != "○":
+                table_lines = match_result.get("table_id", "").splitlines()
+                field_lines = match_result.get("field_id", "").splitlines()
+                is_key = ""
+                obligatory = ""
+                
+                # 使用zip同时遍历两个列表
+                for table_line, field_line in zip(table_lines, field_lines):
+                    # 查找 RAG 视图字段以确定是否为关键字段
+                    rag_field = next(
+                    (entry for entry in rag_view_fields  
+                    if entry.get("view_name") == table_line
+                    and entry.get("field_name") == field_line),
+                    None
+                    )
+                    is_key_line = "○" if rag_field and rag_field.get("is_key") else ""
+                    obligatory_line = "必須" if rag_field and rag_field.get("is_key") else "任意"
+                    is_key = is_key + is_key_line + "\n"
+                    obligatory = obligatory + obligatory_line + "\n"
+
                 try:
                     worksheet[f"{output_columns['field_name']}{row}"] = match_result.get(
                         "field_name", ""
@@ -726,12 +758,8 @@ class ExcelProcessor:
                     worksheet[f"{output_columns['field_id']}{row}"] = match_result.get(
                         "field_id", ""
                     )  # Technical field name
-                    worksheet[f"{output_columns['key_flag']}{row}"] = match_result.get(
-                        "key_flag", ""
-                    )
-                    worksheet[f"{output_columns['obligatory']}{row}"] = match_result.get(
-                        "obligatory", ""
-                    )
+                    worksheet[f"{output_columns['key_flag']}{row}"] = is_key
+                    worksheet[f"{output_columns['obligatory']}{row}"] = obligatory
                     worksheet[f"{output_columns['table_id']}{row}"] = match_result.get(
                         "table_id", ""
                     )
@@ -768,6 +796,7 @@ class ExcelProcessor:
         self,
         input_fields: List,
         context: Optional[List[Dict[str, Any]]] = None,
+        TerminologyMapping_df: pd.DataFrame = None,
         excel_filename: str = None,
     ) -> List[Dict[str, Any]]:
         """Field matching using AI services with HANA context"""
@@ -777,18 +806,19 @@ class ExcelProcessor:
         if context is None:
             return []
 
-        return self._match_fields_with_context(input_fields, context, excel_filename)
+        return self._match_fields_with_context(input_fields, context, TerminologyMapping_df, excel_filename)
 
     def _match_fields_with_context(
         self,
         input_fields: List,
         context: List[Dict[str, Any]],
+        TerminologyMapping_df: pd.DataFrame,
         excel_filename: str = None,
     ) -> List[Dict[str, Any]]:
         all_fields_context = self._extract_fields_from_context(context)
 
         resulsts_prompt = self.ai_service.get_rag_matching_prompt(
-            input_fields, all_fields_context
+            input_fields, all_fields_context, TerminologyMapping_df
         )
 
         results_function_schema = self.ai_service.get_field_matching_schema()

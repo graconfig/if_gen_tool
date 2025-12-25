@@ -21,11 +21,12 @@ class HANADBClient:
         self.cds_view_table = "PWC_HAND_AI2REPORT_DEV_CDSVIEWS"
         self.view_fields_table = "PWC_HAND_AI2REPORT_DEV_VIEWFIELDS"
         self.cust_fields_table = "PWC_HAND_AI2REPORT_DEV_CUSTFIELDS"
-
+        self.TerminologyMapping = "PWC_HAND_AI2REPORT_DEV_TERMINOLOGYMAPPING"
+        
         self.db_addr = os.getenv("HANA_ADDRESS")
         self.db_user = os.getenv("HANA_USER")
         self.db_pwd = os.getenv("HANA_PASSWORD")
-        self._db_schema = os.getenv("HANA_SCHEMA")
+        self._db_schema = os.getenv("HANA_SCHEMA")  
         self._db_schema_cust = os.getenv("HANA_SCHEMA_CUST")
 
         self.hana_client: ConnectionContext = None
@@ -279,6 +280,41 @@ class HANADBClient:
             )
             return {}
 
+
+    def get_terms(self,log_filename: str = None) -> pd.DataFrame:
+        if not self.hana_client:
+            error_msg = _("Database not connected.")
+            logger.error(error_msg, log_filename)
+            raise ConnectionError(error_msg)
+
+        sql = """
+             SELECT "SOURCETERM", 
+                    "SOURCETERMALIAS", 
+                    "SOURCECONTEXT",
+                    "TARGETTERM", 
+                    "TARGETTERMALIAS",
+                    "SAPMODULE",
+                    "SAPTRANSACTION",
+                    "SAPOBJECTTYPE",
+                    "SAPTECHNICALNAME",
+                    "CATEGORY",
+                    "DOMAINAREA",
+                    "PRIORITY",
+                    "CONFIDENCE"
+               FROM "{schema}"."{table}"
+              WHERE "STATUS" = 'ACTIVE'
+        """.format(
+            schema=self._db_schema, table=self.TerminologyMapping
+        )
+        try:
+            result = self.hana_client.sql(sql).collect()
+            return result
+        except HanaDbError as e:
+            logger.error(
+                _("SQL error occurred while getting views: {}").format(e), log_filename
+            )
+            return pd.DataFrame()
+            
     @staticmethod
     def parse_fields(content_str: str) -> str:
         result_chars = []

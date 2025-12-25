@@ -58,7 +58,7 @@ class ClaudeSchemas:
                                                 },
                                                 "key_flag": {
                                                     "type": "string",
-                                                    "description": "Whether the field is a key field - use '○' if true, empty string otherwise",
+                                                    "description": "Whether the field is a key field in provided cds context- use '○' if true, empty string otherwise",
                                                 },
                                                 "obligatory": {
                                                     "type": "string",
@@ -69,7 +69,7 @@ class ClaudeSchemas:
                                                     "description": "Sample value for SAP CDS field, if not provided, generate a possible value",
                                                 },
                                                 "match": {
-                                                    "type": "integer",
+                                                    "type": "string",
                                                     "description": "Match confidence percentage (0-100)",
                                                 },
                                                 "notes": {
@@ -180,7 +180,7 @@ class OpenAISchemas:
                                         "description": "Sample value for SAP CDS field",
                                     },
                                     "match": {
-                                        "type": "integer",
+                                        "type": "string",
                                         "description": "Match confidence percentage (0-100)",
                                     },
                                     "notes": {

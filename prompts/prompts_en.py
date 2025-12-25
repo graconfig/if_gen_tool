@@ -14,7 +14,7 @@ class EnPromptTemplates:
 
     @staticmethod
     def get_field_matching_prompt(
-            input_fields: List[Dict[str, Any]], context: List[Dict[str, Any]]
+            input_fields: List[Dict[str, Any]], context: List[Dict[str, Any]],TerminologyMapping_df: pd.DataFrame,
     ) -> str:
         """Generate optimized two-stage field matching prompt"""
         match_number = os.getenv("Match_Number", "1")
@@ -46,11 +46,6 @@ class EnPromptTemplates:
             "You are an SAP expert for intelligent field mapping.",
             "",
             "**Task:** Find the best CDS field matches for the following input fields. A pre-filtered, highly relevant list of CDS fields is provided as context. Your task is to perform the detailed field-level matching.",
-            "",
-            "【业务术语映射规则】:",
-            "届け先 = Customer",
-            "出荷 = Delivery",
-            "税金コード = Tax Code",
             "",
             "Critical Rules:",
             "• Use ONLY exact field/view names from provided context",
@@ -110,13 +105,12 @@ class EnPromptTemplates:
             ]
         )
         
-        
         # Group context by view for better organization
         compacted_context = []
         for ctx in context:
             view_name = ctx.get('view_name', '')
             field_name = ctx.get('field_name', '')
-            is_key = 'X' if ctx.get('is_key', False) else ''
+            is_key = '○' if ctx.get('is_key', False) else ''
             field_desc = ctx.get('field_desc', '')
             data_type = ctx.get('data_type', '')
             length_total = ctx.get('length_total', '')
@@ -151,12 +145,40 @@ class EnPromptTemplates:
                 "[Question for business analyst if clarification needed, or 'None']",
             ]
         )
+        
+        prompt_parts.extend(
+            [
+                "",
+                "**Terminology Mapping Rules:**",
+                "Here is a list of Terminology Mapping you can refer to."
+                "format:sourceTerm,sourceTermAlias,sourceContext,targetTerm,targetTermAlias,sapModule,sapTransaction,sapObjectType,sapTechnicalName,category,domainArea,priority,confidence",
+            ]
+        )
+
+        for _, row in TerminologyMapping_df.iterrows():
+            sourceTerm = (row["SOURCETERM"], "") if row["SOURCETERM"] is not None else ""
+            sourceTermAlias = (row["SOURCETERMALIAS"], "") if row["SOURCETERMALIAS"] is not None else ""
+            sourceContext = row["SOURCECONTEXT"] if row["SOURCECONTEXT"] is not None else ""
+            targetTerm = (row["TARGETTERM"], "") if row["TARGETTERM"] is not None else ""    
+            targetTermAlias = (row["TARGETTERMALIAS"], "") if row["TARGETTERMALIAS"] is not None else ""
+            sapModule = (row["SAPMODULE"], "") if row["SAPMODULE"] is not None else ""
+            sapTransaction = (row["SAPTRANSACTION"], "") if row["SAPTRANSACTION"] is not None else ""
+            sapObjectType = (row["SAPOBJECTTYPE"], "") if row["SAPOBJECTTYPE"] is not None else ""
+            sapTechnicalName = (row["SAPTECHNICALNAME"], "") if row["SAPTECHNICALNAME"] is not None else ""
+            category = (row["CATEGORY"], "") if row["CATEGORY"] is not None else ""
+            domainArea = (row["DOMAINAREA"], "") if row["DOMAINAREA"] is not None else ""
+            priority = (row["PRIORITY"], "") if row["PRIORITY"] is not None else ""
+            confidence = (row["CONFIDENCE"], "") if row["CONFIDENCE"] is not None else ""
+
+            prompt_parts.append(
+                f"{sourceTerm},{sourceTermAlias},{sourceContext},{targetTerm},{targetTermAlias},{sapModule},{sapTransaction},{sapObjectType},{sapTechnicalName},{category},{domainArea},{priority},{confidence}"
+            )
 
         return "\n".join(prompt_parts)
 
     @staticmethod
     def get_view_selection_prompt(
-            candidate_views_df: pd.DataFrame, input_fields: List[Dict[str, Any]]
+            candidate_views_df: pd.DataFrame, TerminologyMapping_df: pd.DataFrame, input_fields: List[Dict[str, Any]]
     ) -> str:
         """
         Generates a prompt to instruct the LLM to select the most relevant CDS views.
@@ -166,10 +188,6 @@ class EnPromptTemplates:
             "",
             "**Primary Goal:** Identify and select the CDS views that are most likely to contain the data needed for the interface.",
             "",
-            "【业务术语映射规则】:",
-            "届け先 = Customer",
-            "出荷 = Delivery"
-            "",
             "**Critical Instructions:**",
             "1.**Analyze the Interface Context:** Carefully review the module, interface name, and the descriptions of the input fields to understand the business purpose of the interface.",
             "2.**Evaluate Candidate Views:** For each candidate CDS view, assess its description to determine its relevance to the interface's purpose.",
@@ -178,7 +196,7 @@ class EnPromptTemplates:
             "4.**Return Only a List of Names:** Your final output must be a list of the names of the selected CDS views.",
             "",
             "---",
-            "",
+            "",           
             "**Interface Context:**",
         ]
 
@@ -220,6 +238,43 @@ class EnPromptTemplates:
             view_name = row["VIEWNAME"]
             view_desc = row["VIEWDESC"]
             prompt_parts.append(f"{view_name},{view_desc}")
+
+        prompt_parts.extend(
+            [
+                "",
+                "**Your Task:**",
+                "Based on the interface context and the list of candidate views, please call the `select_relevant_views` function with a list of the names of the most appropriate CDS views.",
+                "Consider the overall business purpose of the interface and how well each candidate view's description aligns with it.",
+            ]
+        )
+
+        prompt_parts.extend(
+            [
+                "",
+                "**Terminology Mapping Rules:**",
+                "Here is a list of Terminology Mapping you can refer to."
+                "format:sourceTerm,sourceTermAlias,sourceContext,targetTerm,targetTermAlias,sapModule,sapTransaction,sapObjectType,sapTechnicalName,category,domainArea,priority,confidence",
+            ]
+        )
+
+        for _, row in TerminologyMapping_df.iterrows():
+            sourceTerm = (row["SOURCETERM"], "") if row["SOURCETERM"] is not None else ""
+            sourceTermAlias = (row["SOURCETERMALIAS"], "") if row["SOURCETERMALIAS"] is not None else ""
+            sourceContext = row["SOURCECONTEXT"] if row["SOURCECONTEXT"] is not None else ""
+            targetTerm = (row["TARGETTERM"], "") if row["TARGETTERM"] is not None else ""    
+            targetTermAlias = (row["TARGETTERMALIAS"], "") if row["TARGETTERMALIAS"] is not None else ""
+            sapModule = (row["SAPMODULE"], "") if row["SAPMODULE"] is not None else ""
+            sapTransaction = (row["SAPTRANSACTION"], "") if row["SAPTRANSACTION"] is not None else ""
+            sapObjectType = (row["SAPOBJECTTYPE"], "") if row["SAPOBJECTTYPE"] is not None else ""
+            sapTechnicalName = (row["SAPTECHNICALNAME"], "") if row["SAPTECHNICALNAME"] is not None else ""
+            category = (row["CATEGORY"], "") if row["CATEGORY"] is not None else ""
+            domainArea = (row["DOMAINAREA"], "") if row["DOMAINAREA"] is not None else ""
+            priority = (row["PRIORITY"], "") if row["PRIORITY"] is not None else ""
+            confidence = (row["CONFIDENCE"], "") if row["CONFIDENCE"] is not None else ""
+
+            prompt_parts.append(
+                f"{sourceTerm},{sourceTermAlias},{sourceContext},{targetTerm},{targetTermAlias},{sapModule},{sapTransaction},{sapObjectType},{sapTechnicalName},{category},{domainArea},{priority},{confidence}"
+            )
 
         prompt_parts.extend(
             [

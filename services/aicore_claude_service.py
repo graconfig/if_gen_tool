@@ -126,18 +126,18 @@ class AICoreClaudeService:
             return []
 
     def get_rag_matching_prompt(
-            self, input_fields: List[Dict[str, Any]], context: List[Dict[str, Any]]
+            self, input_fields: List[Dict[str, Any]], context: List[Dict[str, Any]], TerminologyMapping_df: pd.DataFrame
     ) -> str:
         return PromptTemplateManager.get_field_matching_prompt(
-            input_fields, context, 'en'
+            input_fields, context, TerminologyMapping_df, 'en'
             # input_fields, context, self.language
         )
 
     def get_view_selection_prompt(
-            self, candidate_views_df: pd.DataFrame, input_fields: List[Dict[str, Any]]
+            self, candidate_views_df: pd.DataFrame,TerminologyMapping_df: pd.DataFrame, input_fields: List[Dict[str, Any]]
     ) -> str:
         return PromptTemplateManager.get_view_selection_prompt(
-            candidate_views_df, input_fields, 'en'
+            candidate_views_df, TerminologyMapping_df,input_fields, 'en'
             # candidate_views_df, input_fields, self.language
         )
 
