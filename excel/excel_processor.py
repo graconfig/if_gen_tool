@@ -278,7 +278,7 @@ class ExcelProcessor:
                 ),
                 logger.get_excel_log_filename(excel_filename),
             )
-            self.write_results(worksheet, final_results)
+            self.write_results(worksheet, final_results, matched_cds)
         except Exception as e:
             logger.error(
                 f"Error processing file: {e}",
@@ -505,7 +505,7 @@ class ExcelProcessor:
                 ),
                 logger.get_excel_log_filename(excel_filename),
             )
-            self.write_results(worksheet, all_results)
+            self.write_results(worksheet, all_results, matched_cds)
         except Exception as e:
             logger.error(
                 f"Error processing batch file: {e}",
@@ -670,6 +670,8 @@ class ExcelProcessor:
                 row_index=row,
                 table_name=sap_sheet[f"{input_row_cols_sap['table_id']}{row}"].value or "",
                 field_name=sap_sheet[f"{input_row_cols_sap['field_id']}{row}"].value or "",
+                key_flag=sap_sheet[f"{input_row_cols_sap['key_flag']}{row}"].value or "",
+                obligatory=sap_sheet[f"{input_row_cols_sap['obligatory']}{row}"].value or "",
             )
 
             sap_fields.append(sap_field)
@@ -733,7 +735,7 @@ class ExcelProcessor:
         return context_list
 
     def write_results(
-        self, worksheet, results: List[Tuple[InterfaceField, Dict[str, Any]]]
+        self, worksheet, results: List[Tuple[InterfaceField, Dict[str, Any]]], matched_cds:  Optional[List[Dict[str, Any]]] = None
     ) -> None:
         output_columns = self.column_mappings["output_columns"]
 
@@ -747,6 +749,14 @@ class ExcelProcessor:
                 continue
 
             if isverify != "○":
+                is_key = match_result.get("key_flag", "")  
+                obligatory = match_result.get("obligatory", "")
+                
+                for sap_field, cds in matched_cds:
+                    if cds[0].get("EntityName") == match_result.get("table_id") and cds[0].get("EntityFieldName") == match_result.get("field_id"):
+                        is_key = sap_field.key_flag
+                        obligatory = sap_field.obligatory
+                
                 try:
                     worksheet[f"{output_columns['field_name']}{row}"] = (
                         match_result.get("field_name", "")
@@ -754,12 +764,8 @@ class ExcelProcessor:
                     worksheet[f"{output_columns['field_id']}{row}"] = match_result.get(
                         "field_id", ""
                     )  # Technical field name
-                    worksheet[f"{output_columns['key_flag']}{row}"] = match_result.get(
-                        "key_flag", ""
-                    )
-                    worksheet[f"{output_columns['obligatory']}{row}"] = (
-                        match_result.get("obligatory", "")
-                    )
+                    worksheet[f"{output_columns['key_flag']}{row}"] = is_key
+                    worksheet[f"{output_columns['obligatory']}{row}"] = obligatory
                     worksheet[f"{output_columns['table_id']}{row}"] = match_result.get(
                         "table_id", ""
                     )
