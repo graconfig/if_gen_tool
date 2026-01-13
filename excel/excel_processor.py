@@ -18,7 +18,8 @@ from utils.sap_logger import logger
 from models.data_models import InterfaceField
 from tqdm import tqdm
 from odata.odata import odata_verify
-
+import sap_cds_mapping.cds_skill as cds_skill
+    
 # Suppress the specific DrawingML warning by matching the message text
 warnings.filterwarnings(
     "ignore",
@@ -36,7 +37,7 @@ class ExcelProcessor:
 
         self.excel_config = config_manager.get_excel_config()
         self.column_mappings = None
-
+        self.column_mappings_sap = None
         # Use environment-based configuration
         self.batch_size = int(self.excel_config.get("batch_size", 30))
         self.max_concurrent_batches = int(
@@ -96,22 +97,34 @@ class ExcelProcessor:
         excel_filename: str,
     ) -> None:
         worksheet = workbook[sheet_name]
-
+        
+        sap_sheet_name = self.excel_config["sheet_name_sap"]
+        sap_sheet = workbook[sap_sheet_name]
         # 提前输入列的字段
-        input_fields = self.extract_fields(worksheet)
+        input_fields, sap_fields = self.extract_fields(worksheet, sap_sheet)
 
         # If we have a small number of fields, process normally
         if len(input_fields) <= self.batch_size:
-            self._process_single(worksheet, input_fields, excel_filename)
+         self._process_single(worksheet, input_fields, sap_sheet, sap_fields, excel_filename)
         else:
-            # For large files, process in batches
-            self._process_in_batches(worksheet, input_fields, excel_filename)
+        # For large files, process in batches
+         self._process_in_batches(worksheet, input_fields, sap_sheet,sap_fields, excel_filename)
 
     def _process_single(
-        self, worksheet, input_fields: List[InterfaceField], excel_filename: str
+        self, worksheet, input_fields: List[InterfaceField], sap_sheet, sap_fields: List[InterfaceField], excel_filename: str
     ) -> None:
         """Process a single batch of fields with custom field priority"""
-
+        
+        # 1、根据输入内容查找视图（先处理所有字段以获取 CDS 视图）
+        matched_cds = []
+        for field in sap_fields:   
+           cds = cds_skill.cmd_return_by_ddic_field(field)
+           if cds:
+                matched_cds.append((field, cds))
+           
+        if matched_cds:   
+            self.write_results_sap(sap_sheet, matched_cds)
+            
         # ========== 新增：客户化字段优先匹配 ==========
         logger.info(
             _("Step 1: Matching custom fields..."),
@@ -188,7 +201,7 @@ class ExcelProcessor:
             )
             # 根据输入内容查找最相关的视图（传入未匹配字段）
             llm_return_views = self._select_relevant_views(
-                views_find_by_cat, unmatched_rows, excel_filename
+                views_find_by_cat, unmatched_rows, matched_cds, excel_filename
             )
             if not llm_return_views:
                 logger.warning(
@@ -235,7 +248,7 @@ class ExcelProcessor:
             )
             try:
                 unmatched_batch_results = self._match_fields(
-                    unmatched_rows, final_context_for_llm, excel_filename
+                    unmatched_rows, matched_cds, final_context_for_llm, excel_filename
                 )
             except Exception as e:
                 logger.error(
@@ -274,7 +287,7 @@ class ExcelProcessor:
             raise
 
     def _process_in_batches(
-        self, worksheet, input_fields: List[InterfaceField], excel_filename: str
+        self, worksheet, input_fields: List[InterfaceField], sap_sheet, sap_fields, excel_filename: str
     ) -> None:
         """Process large number of fields in batches with custom field priority"""
 
@@ -284,7 +297,15 @@ class ExcelProcessor:
             ),
             logger.get_excel_log_filename(excel_filename),
         )
-
+        # 1、根据输入内容查找视图（先处理所有字段以获取 CDS 视图）
+        matched_cds = []
+        for field in sap_fields:   
+           cds = cds_skill.cmd_return_by_ddic_field(field)
+           if cds:
+                matched_cds.append((field, cds))
+           
+        if matched_cds:   
+            self.write_results_sap(sap_sheet, matched_cds)
         # ========== 新增：客户化字段优先匹配 ==========
         logger.info(
             _("Step 1: Matching custom fields..."),
@@ -359,7 +380,7 @@ class ExcelProcessor:
 
             # Select relevant views once for all batches (传入未匹配字段)
             llm_return_views = self._select_relevant_views(
-                views_find_by_cat, unmatched_rows, excel_filename
+                views_find_by_cat, unmatched_rows, matched_cds, excel_filename
             )
             if not llm_return_views:
                 logger.warning(
@@ -423,6 +444,7 @@ class ExcelProcessor:
                         executor.submit(
                             self._process_batch,
                             batch_fields,
+                            matched_cds,
                             final_context_for_llm,
                             excel_filename,
                             i,
@@ -494,6 +516,7 @@ class ExcelProcessor:
     def _process_batch(
         self,
         batch_fields: List[InterfaceField],
+        match_fields: List[Tuple[InterfaceField, Dict]],
         context: List[Dict[str, Any]],
         excel_filename: str,
         batch_index: int,
@@ -505,7 +528,7 @@ class ExcelProcessor:
 
             set_current_file(excel_filename)
 
-            return self._match_fields(batch_fields, context, excel_filename)
+            return self._match_fields(batch_fields, match_fields, context, excel_filename)
         except Exception as e:
             logger.error(
                 _("Error in batch {}: {}").format(batch_index, e),
@@ -573,7 +596,7 @@ class ExcelProcessor:
 
         return matched_rows, unmatched_rows
 
-    def extract_fields(self, worksheet) -> List[InterfaceField]:
+    def extract_fields(self, worksheet, sap_sheet) -> Tuple[List[InterfaceField], List[InterfaceField]]:
         input_fields = []
 
         # Detect SAP format by checking the detection cell
@@ -587,6 +610,8 @@ class ExcelProcessor:
         else:
             self.column_mappings = self.config_manager.get_column_mappings()
 
+        self.column_mappings_sap = self.config_manager.get_column_mappings_sap()
+        
         header_row = self.excel_config["header_row"]
         input_header_cols = self.column_mappings["input_header_cols"]
 
@@ -628,17 +653,38 @@ class ExcelProcessor:
             )
 
             input_fields.append(interface_field)
+            
+        #
+        sap_fields = []
+        input_row_cols_sap = self.column_mappings_sap["input_row_cols"]
+        
+        for row in range(start_row, (sap_sheet.max_row or 1000) + 1):
+            field_name = sap_sheet[f"{input_row_cols_sap['field_name']}{row}"].value
+            if field_name is None or field_name == "" or field_name == "e":
+                continue
 
-        return input_fields
+            sap_field = InterfaceField(
+                module=module,
+                if_name=if_name,
+                if_desc=if_desc,
+                row_index=row,
+                table_name=sap_sheet[f"{input_row_cols_sap['table_id']}{row}"].value or "",
+                field_name=sap_sheet[f"{input_row_cols_sap['field_id']}{row}"].value or "",
+            )
+
+            sap_fields.append(sap_field)
+        
+        return input_fields, sap_fields
 
     def _select_relevant_views(
         self,
         candidate_views_df: pd.DataFrame,
         input_fields: List[InterfaceField],
+        match_fields: List[InterfaceField],
         excel_filename: str,
     ) -> List[str]:
         views_prompt = self.ai_service.get_view_selection_prompt(
-            candidate_views_df, input_fields
+            candidate_views_df, input_fields, match_fields
         )
 
         views_function_schema = self.ai_service.get_view_selection_schema()
@@ -744,11 +790,35 @@ class ExcelProcessor:
                 except Exception as e:
                     continue
 
+    def write_results_sap(
+        self, worksheet, results: List[Tuple[InterfaceField, Dict[str, Any]]]
+    ) -> None:
+        output_columns = self.column_mappings_sap["output_columns"]
+
+        processed_count = 0
+        for field, cds in results:
+            row = field.row_index
+            try:
+                    worksheet[f"{output_columns['field_name']}{row}"] = (
+                        cds[0].get("EntityFieldDesc", "")
+                    )  # Field description
+                    worksheet[f"{output_columns['field_id']}{row}"] = cds[0].get(
+                        "EntityFieldName", ""
+                    )  # Technical field name
+                    worksheet[f"{output_columns['table_id']}{row}"] = cds[0].get(
+                        "EntityName", ""
+                    )
+                    processed_count += 1
+
+            except Exception as e:
+                 continue
+                                
     # ========== Field Matching Logic ==========
 
     def _match_fields(
         self,
         input_fields: List,
+        match_fields: List,
         context: Optional[List[Dict[str, Any]]] = None,
         excel_filename: str = None,
     ) -> List[Dict[str, Any]]:
@@ -759,18 +829,19 @@ class ExcelProcessor:
         if context is None:
             return []
 
-        return self._match_fields_with_context(input_fields, context, excel_filename)
+        return self._match_fields_with_context(input_fields, match_fields,context, excel_filename)
 
     def _match_fields_with_context(
         self,
         input_fields: List,
+        match_fields: List,
         context: List[Dict[str, Any]],
         excel_filename: str = None,
     ) -> List[Dict[str, Any]]:
         all_fields_context = self._extract_fields_from_context(context)
 
         resulsts_prompt = self.ai_service.get_rag_matching_prompt(
-            input_fields, all_fields_context
+            input_fields, match_fields, all_fields_context
         )
 
         results_function_schema = self.ai_service.get_field_matching_schema()

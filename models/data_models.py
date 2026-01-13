@@ -15,6 +15,7 @@ class InterfaceField:
     module: str = ""
     if_name: str = ""
     if_desc: str = ""
+    table_name: str = ""
     field_name: str = ""
     is_append: str = ""
     key_flag: str = ""
@@ -36,6 +37,7 @@ class InterfaceField:
             "module": self.module,
             "if_name": self.if_name,
             "if_desc": self.if_desc,
+            "table_name": self.table_name,
             "field_name": self.field_name,
             "is_append": self.is_append,
             "key_flag": self.key_flag,

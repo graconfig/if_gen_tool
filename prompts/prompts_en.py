@@ -14,7 +14,7 @@ class EnPromptTemplates:
 
     @staticmethod
     def get_field_matching_prompt(
-            input_fields: List[Dict[str, Any]], context: List[Dict[str, Any]]
+            input_fields: List[Dict[str, Any]], match_fields: List[Dict[str, Any]], context: List[Dict[str, Any]]
     ) -> str:
         """Generate optimized two-stage field matching prompt"""
         
@@ -75,6 +75,23 @@ class EnPromptTemplates:
                 f"{row_idx};{field_name};{field_text};{is_key};{data_type};{table_id};{field_id};{length_total};{remark}")
 
         prompt_parts.append("")
+        
+        if match_fields:
+            prompt_parts.extend(
+                [
+                    "Previously Matched Fields (table_id;field_id;field_desc):",
+                    "The following fields will be used by SAP in this scenario, please prioritize matching",
+                ]
+            )
+            
+            for field, cds in match_fields:
+                table_id = cds[0].get("EntityName", "")
+                field_id = cds[0].get("EntityFieldName", "")
+                field_desc = cds[0].get("FieldDesc", "")
+                prompt_parts.append(f"{table_id};{field_id};{field_desc}")
+                
+            prompt_parts.append("")
+            
         prompt_parts.extend(
             [
                 f"Available CDS Context ({len(context)} fields):",
@@ -128,7 +145,7 @@ class EnPromptTemplates:
 
     @staticmethod
     def get_view_selection_prompt(
-            candidate_views_df: pd.DataFrame, input_fields: List[Dict[str, Any]]
+            candidate_views_df: pd.DataFrame, input_fields: List[Dict[str, Any]], match_fields: List[Dict[str, Any]] = None
     ) -> str:
         """
         Generates a prompt to instruct the LLM to select the most relevant CDS views.
@@ -137,10 +154,6 @@ class EnPromptTemplates:
             "You are an expert SAP data modeler. Your task is to select the most relevant CDS views from a provided list that are suitable for an interface based on its required fields.",
             "",
             "**Primary Goal:** Identify and select the CDS views that are most likely to contain the data needed for the interface.",
-            "",
-            "【业务术语映射规则】:",
-            "届け先 = Customer",
-            "出荷 = Delivery"
             "",
             "**Critical Instructions:**",
             "1.**Analyze the Interface Context:** Carefully review the module, interface name, and the descriptions of the input fields to understand the business purpose of the interface.",
@@ -178,7 +191,7 @@ class EnPromptTemplates:
                 prompt_parts.append(
                     f"{field_id},{field_name},{field_text}"
                 )
-
+                
         prompt_parts.extend(
             [
                 "",
@@ -192,12 +205,32 @@ class EnPromptTemplates:
             view_name = row["VIEWNAME"]
             view_desc = row["VIEWDESC"]
             prompt_parts.append(f"{view_name},{view_desc}")
-
+        
+        if match_fields:
+            match_views = set()
+            for field, cds in match_fields:
+                for item in cds:
+                    match_views.add(item["EntityName"])
+            
+            for view in match_views:
+                prompt_parts.append(f"{view}")
+                
+            prompt_parts.extend(
+                [
+                    "",
+                    "**Previously Selected Views:**",
+                    "The following Views must be selected.",
+                ]
+            )
+            
+            for view in match_views:
+                prompt_parts.append(f"{view}")
+                
         prompt_parts.extend(
             [
                 "",
                 "**Your Task:**",
-                "Based on the interface context and the list of candidate views, please call the `select_relevant_views` function with a list of the names of the most appropriate CDS views.",
+                "Based on the interface context and the list of candidate views and Previously Selected Views, please call the `select_relevant_views` function with a list of the names of the most appropriate CDS views.",
                 "Consider the overall business purpose of the interface and how well each candidate view's description aligns with it.",
             ]
         )

@@ -15,12 +15,13 @@ class ConfigurationManager:
     def get_excel_config(self) -> Dict[str, Any]:
         return {
             "sheet_name_head": "IF項目定義",
-            "sheet_name": "IF項目定義",  # "IF項目定義",
+            "sheet_name_sap": "IF項目(SAP)",
+            "sheet_name": "IF項目定義",  
             "header_row": 2,
             "start_row": 10,  # 11,
             "batch_size": int(os.getenv("LLM_BATCH_SIZE", 30)),
             "max_concurrent_batches": int(os.getenv("LLM_MAX_WORKERS", 5)),
-            "input_system_col": "D",
+            "input_system_col": "H",
             "input_system_row": 3,
             "custom_field_threshold": float(os.getenv("CUSTOM_FIELD_THRESHOLD", 0.75)),
         }

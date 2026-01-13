@@ -41,20 +41,21 @@ class PromptTemplateManager:
 
     @classmethod
     def get_field_matching_prompt(cls, input_fields: List[Dict[str, Any]],
+                                  match_fields: List[Dict[str, Any]],
                                   context: List[Dict[str, Any]],
                                   language: str = None) -> str:
         """Get field matching prompt in specified language."""
         template_class = cls.get_template_class(language)
-        return template_class.get_field_matching_prompt(input_fields, context)
+        return template_class.get_field_matching_prompt(input_fields, match_fields, context)
 
     @classmethod
     def get_view_selection_prompt(cls, candidate_views_df: pd.DataFrame,
                                   input_fields: List[Dict[str, Any]],
+                                  match_fields: List[Dict[str, Any]] = None,
                                   language: str = None) -> str:
         """Get view selection prompt in specified language."""
         template_class = cls.get_template_class(language)
-        return template_class.get_view_selection_prompt(candidate_views_df, input_fields)
-
+        return template_class.get_view_selection_prompt(candidate_views_df, input_fields, match_fields)
     @classmethod
     def get_supported_languages(cls) -> List[str]:
         """Get list of supported language codes."""
@@ -76,6 +77,7 @@ def get_field_matching_prompt(input_fields: List[Dict[str, Any]],
 
 def get_view_selection_prompt(candidate_views_df: pd.DataFrame,
                               input_fields: List[Dict[str, Any]],
+                              mathch_fields: List[Dict[str, Any]] = None,
                               language: str = None) -> str:
     """Get view selection prompt using current or specified language."""
-    return PromptTemplateManager.get_view_selection_prompt(candidate_views_df, input_fields, language)
+    return PromptTemplateManager.get_view_selection_prompt(candidate_views_df, input_fields, mathch_fields, language)
