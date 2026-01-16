@@ -756,6 +756,8 @@ class ExcelProcessor:
                     if cds[0].get("EntityName") == match_result.get("table_id") and cds[0].get("EntityFieldName") == match_result.get("field_id"):
                         is_key = sap_field.key_flag
                         obligatory = sap_field.obligatory
+                        break
+                            
                 
                 try:
                     worksheet[f"{output_columns['field_name']}{row}"] = (
