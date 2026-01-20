@@ -117,6 +117,12 @@ def cmd_find_by_ddic_table(args):
     result = skill.find_by_ddic_table(args.table_name)
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
+
+def cmd_return_by_ddic_field(args):
+    skill = CDSDataSkill()
+    result = skill.find_by_ddic_field(args.table_name, args.field_name)
+    return result
+    
 def build_parser():
     parser = argparse.ArgumentParser(description="SAP CDS Mapping Skill Tools")
     subparsers = parser.add_subparsers(dest="command", required=True, help="Action to perform")
