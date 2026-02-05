@@ -14,15 +14,15 @@ class ConfigurationManager:
 
     def get_excel_config(self) -> Dict[str, Any]:
         return {
-            "sheet_name_head": "IF項目定義",
-            "sheet_name_sap": "IF項目(SAP)",
-            "sheet_name": "IF項目定義",  
-            "header_row": 2,
-            "start_row": 10,  # 11,
+            "sheet_name_head": "連携内容",
+            "sheet_name_sap": "マッピング表",
+            "sheet_name": "連携ファイル",  
+            "header_col": "C",
+            "start_row": 3,  
             "batch_size": int(os.getenv("LLM_BATCH_SIZE", 30)),
             "max_concurrent_batches": int(os.getenv("LLM_MAX_WORKERS", 5)),
-            "input_system_col": "H",
-            "input_system_row": 3,
+            "input_system_col": "C",
+            "input_system_row": 7,
             "custom_field_threshold": float(os.getenv("CUSTOM_FIELD_THRESHOLD", 0.75)),
         }
 
@@ -34,7 +34,7 @@ class ConfigurationManager:
     def get_column_mappings(self) -> Dict[str, Dict[str, str]]:
         # excel输入输出列映射
         return {
-            "input_header_cols": {"module": "P", "if_name": "D", "if_desc": "H"},
+            "input_header_rows": {"module": "4", "if_name": "2", "if_desc": "3",},
             "input_row_cols": {
                 "field_name": "C",
                 "key_flag": "D",
@@ -47,21 +47,21 @@ class ConfigurationManager:
                 "field_text": "K",
                 "sample_value": "M",
                 "remark": "L",
-                "verify": "AB",
+                "verify": "Q",
             },
             "output_columns": {
-                "field_name": "R",
-                "key_flag": "S",
-                "obligatory": "T",
-                "table_id": "U",
-                "field_id": "V",
-                "data_type": "W",
-                "length_total": "X",
-                "length_dec": "Y",
-                "notes": "Z",
-                "sample_value": "AA",
-                "match": "AB",
-                "verify": "AC",
+                # "field_name": "R",
+                # "key_flag": "S",
+                # "obligatory": "T",
+                "table_id": "O",
+                "field_id": "P",
+                # "data_type": "W",
+                # "length_total": "X",
+                # "length_dec": "Y",
+                "notes": "Q",
+                # "sample_value": "AA",
+                # "match": "AB",
+                # "verify": "AC",
             },
         }
 

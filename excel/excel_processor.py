@@ -96,12 +96,13 @@ class ExcelProcessor:
         sheet_name: str,
         excel_filename: str,
     ) -> None:
+        head_sheet_name = self.excel_config["sheet_name_head"]
+        head_sheet = workbook[head_sheet_name]
         worksheet = workbook[sheet_name]
-        
         sap_sheet_name = self.excel_config["sheet_name_sap"]
         sap_sheet = workbook[sap_sheet_name]
         # 提前输入列的字段
-        input_fields, sap_fields = self.extract_fields(worksheet, sap_sheet)
+        input_fields, sap_fields = self.extract_fields(worksheet, head_sheet, sap_sheet)
 
         # If we have a small number of fields, process normally
         if len(input_fields) <= self.batch_size:
@@ -596,7 +597,7 @@ class ExcelProcessor:
 
         return matched_rows, unmatched_rows
 
-    def extract_fields(self, worksheet, sap_sheet) -> Tuple[List[InterfaceField], List[InterfaceField]]:
+    def extract_fields(self, worksheet, head_sheet, sap_sheet) -> Tuple[List[InterfaceField], List[InterfaceField]]:
         input_fields = []
 
         # Detect SAP format by checking the detection cell
@@ -610,15 +611,15 @@ class ExcelProcessor:
         else:
             self.column_mappings = self.config_manager.get_column_mappings()
 
-        self.column_mappings_sap = self.config_manager.get_column_mappings_sap()
+        # self.column_mappings_sap = self.config_manager.get_column_mappings_sap()
         
-        header_row = self.excel_config["header_row"]
-        input_header_cols = self.column_mappings["input_header_cols"]
+        header_col = self.excel_config["header_col"]
+        input_header_rows = self.column_mappings["input_header_rows"]
 
-        # 抬头module、接口信息
-        module = worksheet[f"{input_header_cols['module']}{header_row}"].value or ""
-        if_name = worksheet[f"{input_header_cols['if_name']}{header_row}"].value or ""
-        if_desc = worksheet[f"{input_header_cols['if_desc']}{header_row}"].value or ""
+        # 抬头module、接口信息 
+        module = head_sheet[f"{header_col}{input_header_rows['module']}"].value or ""
+        if_name = head_sheet[f"{header_col}{input_header_rows['if_name']}"].value or ""
+        if_desc = head_sheet[f"{header_col}{input_header_rows['if_desc']}"].value or ""
 
         start_row = self.excel_config["start_row"]
         input_row_cols = self.column_mappings["input_row_cols"]
@@ -656,11 +657,11 @@ class ExcelProcessor:
             
         #
         sap_fields = []
-        input_row_cols_sap = self.column_mappings_sap["input_row_cols"]
+        input_row_cols_sap = self.column_mappings["input_row_cols"]
         
-        for row in range(start_row, (sap_sheet.max_row or 1000) + 1):
-            field_name = sap_sheet[f"{input_row_cols_sap['field_name']}{row}"].value
-            if field_name is None or field_name == "" or field_name == "e":
+        for row in range(start_row + 1, (sap_sheet.max_row or 1000) + 1):
+            field_id = sap_sheet[f"{input_row_cols_sap['field_id']}{row}"].value
+            if field_id is None or field_id == "" or field_id == "e":
                 continue
 
             sap_field = InterfaceField(
@@ -760,38 +761,39 @@ class ExcelProcessor:
                             
                 
                 try:
-                    worksheet[f"{output_columns['field_name']}{row}"] = (
-                        match_result.get("field_name", "")
-                    )  # Field description
-                    worksheet[f"{output_columns['field_id']}{row}"] = match_result.get(
-                        "field_id", ""
-                    )  # Technical field name
-                    worksheet[f"{output_columns['key_flag']}{row}"] = is_key
-                    worksheet[f"{output_columns['obligatory']}{row}"] = obligatory
+                    # worksheet[f"{output_columns['field_name']}{row}"] = (
+                    #     match_result.get("field_name", "")
+                    # )  # Field description
+
+                    # worksheet[f"{output_columns['key_flag']}{row}"] = is_key
+                    # worksheet[f"{output_columns['obligatory']}{row}"] = obligatory
                     worksheet[f"{output_columns['table_id']}{row}"] = match_result.get(
                         "table_id", ""
                     )
-                    worksheet[f"{output_columns['data_type']}{row}"] = match_result.get(
-                        "data_type", ""
-                    )
-                    worksheet[f"{output_columns['length_total']}{row}"] = (
-                        match_result.get("length_total", "")
-                    )
-                    worksheet[f"{output_columns['length_dec']}{row}"] = (
-                        match_result.get("length_dec", "")
-                    )
-                    worksheet[f"{output_columns['match']}{row}"] = match_result.get(
-                        "match", ""
-                    )
+                    worksheet[f"{output_columns['field_id']}{row}"] = match_result.get(
+                        "field_id", ""
+                    )  # Technical field name
+                    # worksheet[f"{output_columns['data_type']}{row}"] = match_result.get(
+                    #     "data_type", ""
+                    # )
+                    # worksheet[f"{output_columns['length_total']}{row}"] = (
+                    #     match_result.get("length_total", "")
+                    # )
+                    # worksheet[f"{output_columns['length_dec']}{row}"] = (
+                    #     match_result.get("length_dec", "")
+                    # )
+                    # worksheet[f"{output_columns['match']}{row}"] = match_result.get(
+                    #     "match", ""
+                    # )
                     worksheet[f"{output_columns['notes']}{row}"] = match_result.get(
                         "notes", ""
                     )
-                    worksheet[f"{output_columns['sample_value']}{row}"] = (
-                        match_result.get("sample_value", "")
-                    )
-                    worksheet[f"{output_columns['verify']}{row}"] = match_result.get(
-                        "verify", ""
-                    )
+                    # worksheet[f"{output_columns['sample_value']}{row}"] = (
+                    #     match_result.get("sample_value", "")
+                    # )
+                    # worksheet[f"{output_columns['verify']}{row}"] = match_result.get(
+                    #     "verify", ""
+                    # )
 
                     processed_count += 1
 
@@ -801,7 +803,7 @@ class ExcelProcessor:
     def write_results_sap(
         self, worksheet, results: List[Tuple[InterfaceField, Dict[str, Any]]]
     ) -> None:
-        output_columns = self.column_mappings_sap["output_columns"]
+        output_columns = self.column_mappings["output_columns"]
 
         processed_count = 0
         for field, cds in results:
