@@ -538,62 +538,79 @@ class ExcelProcessor:
             # Return empty results for failed batch
             return [{} for _ in batch_fields]
 
+    def _build_custom_match_result(self, raw: Dict[str, Any]) -> Dict[str, Any]:
+        """将 HANA 客户化字段原始结果转换为统一的 match_result 格式"""
+        return {
+            "table_id":     raw.get("table_id", ""),
+            "field_id":     raw.get("field_id", ""),
+            "field_name":   raw.get("field_name", ""),
+            "key_flag":     raw.get("key_flag", ""),
+            "obligatory":   raw.get("obligatory", ""),
+            "data_type":    raw.get("data_type", ""),
+            "length_total": raw.get("length_total", ""),
+            "length_dec":   raw.get("length_dec", ""),
+            "sample_value": raw.get("sample_value", ""),
+            "match":        "100",
+            "notes":        raw.get("notes", ""),
+            "color":        raw.get("color", ""),
+            "source":       "custom",
+        }
+
     def _match_custom_fields(
         self, input_fields: List[InterfaceField], excel_filename: str
     ) -> Tuple[List[Tuple[InterfaceField, Dict]], List[InterfaceField]]:
         """
-        优先匹配客户化字段表（基于 SOURCEDESC 向量检索）
-
-        Args:
-            input_fields: 输入字段列表
-            excel_filename: Excel 文件名
+        客户化字段三步匹配：
+          Step 1 - 精确匹配：input.table_id + field_id → CUSTFIELDS.SourceTable + SourceField
+          Step 2 - 向量匹配：IFName + SourceTable + SourceField + SourceDesc 拼接向量检索
+          Step 3 - 未匹配字段交给后续大模型流程
 
         Returns:
             (已匹配的字段结果列表, 未匹配的字段列表)
         """
         matched_rows = []
         unmatched_rows = []
-
         log_filename = logger.get_excel_log_filename(excel_filename)
 
         for field in input_fields:
-            # 构建查询文本：字段名 + 字段描述 + 示例值
-            query_parts = [field.field_name, field.field_text, field.sample_value]
-
-            query_text = " ".join([str(p).strip() for p in query_parts if p])
-
-            # 向量检索客户化字段表
-            custom_match = self.hana_client.get_custom_fields(
-                field_query=query_text, log_filename=log_filename
+            # ── Step 1: 精确匹配 ──────────────────────────────────────────
+            exact_match = self.hana_client.get_custom_fields_exact(
+                source_table=field.table_id,
+                source_field=field.field_id,
+                log_filename=log_filename,
             )
-
-            if custom_match:
-                # 匹配成功，构建结果
-                match_result = {
-                    "table_id": custom_match.get("table_name", ""),
-                    "field_id": custom_match.get("field_id", ""),
-                    "field_name": custom_match.get("field_name", ""),
-                    "key_flag": "○" if custom_match.get("is_key") else "",
-                    "obligatory": "○" if custom_match.get("obligatory") else "",
-                    "data_type": custom_match.get("data_type", ""),
-                    "length_total": custom_match.get("length_total", ""),
-                    "length_dec": custom_match.get("length_dec", ""),
-                    "field_desc": custom_match.get("field_desc", ""),
-                    "sample_value": custom_match.get("sample_value", ""),
-                    "match": "100",
-                    "notes": custom_match.get("notes", ""),
-                    "source": "custom"
-                }
-
-                matched_rows.append((field, match_result))
-
+            if exact_match:
+                result = self._build_custom_match_result(exact_match)
+                result["match_source"] = "精確匹配"
+                matched_rows.append((field, result))
                 logger.debug(
-                    f"Row {field.row_index}: Custom match (similarity: {custom_match.get('similarity', 0):.2%})",
+                    f"Row {field.row_index}: Exact custom match "
+                    f"({field.table_id}.{field.field_id})",
                     log_filename,
                 )
-            else:
-                # 未匹配，加入未匹配列表
-                unmatched_rows.append(field)
+                continue
+
+            # ── Step 2: 向量匹配 ──────────────────────────────────────────
+            # embeddings 由 IFName + SourceTable + SourceField + SourceDesc 向量化
+            query_parts = [field.if_name, field.table_id, field.field_id, field.field_text]
+            query_text = " ".join([str(p).strip() for p in query_parts if p])
+
+            vector_match = self.hana_client.get_custom_fields(
+                field_query=query_text,
+                log_filename=log_filename,
+            )
+            if vector_match:
+                result = self._build_custom_match_result(vector_match)
+                result["match_source"] = "ベクトル匹配"
+                matched_rows.append((field, result))
+                logger.debug(
+                    f"Row {field.row_index}: Vector custom match",
+                    log_filename,
+                )
+                continue
+
+            # ── Step 3: 未匹配，交给大模型 ───────────────────────────────
+            unmatched_rows.append(field)
 
         return matched_rows, unmatched_rows
 
@@ -736,9 +753,13 @@ class ExcelProcessor:
         return context_list
 
     def write_results(
-        self, worksheet, results: List[Tuple[InterfaceField, Dict[str, Any]]], matched_cds:  Optional[List[Dict[str, Any]]] = None
+        self, worksheet, results: List[Tuple[InterfaceField, Dict[str, Any]]], matched_cds: Optional[List[Dict[str, Any]]] = None
     ) -> None:
+        from openpyxl.styles import PatternFill
+
         output_columns = self.column_mappings["output_columns"]
+        if matched_cds is None:
+            matched_cds = []
 
         processed_count = 0
         for interface_field, match_result in results:
@@ -750,50 +771,33 @@ class ExcelProcessor:
                 continue
 
             if isverify != "○":
-                is_key = match_result.get("key_flag", "")  
+                is_key = match_result.get("key_flag", "")
                 obligatory = match_result.get("obligatory", "")
-                
+
                 for sap_field, cds in matched_cds:
-                    if cds[0].get("EntityName") == match_result.get("table_id") and cds[0].get("EntityFieldName") == match_result.get("field_id"):
+                    if (
+                        cds[0].get("EntityName") == match_result.get("table_id")
+                        and cds[0].get("EntityFieldName") == match_result.get("field_id")
+                    ):
                         is_key = sap_field.key_flag
                         obligatory = sap_field.obligatory
                         break
-                            
-                
-                try:
-                    # worksheet[f"{output_columns['field_name']}{row}"] = (
-                    #     match_result.get("field_name", "")
-                    # )  # Field description
 
-                    # worksheet[f"{output_columns['key_flag']}{row}"] = is_key
-                    # worksheet[f"{output_columns['obligatory']}{row}"] = obligatory
-                    worksheet[f"{output_columns['table_id']}{row}"] = match_result.get(
-                        "table_id", ""
-                    )
-                    worksheet[f"{output_columns['field_id']}{row}"] = match_result.get(
-                        "field_id", ""
-                    )  # Technical field name
-                    # worksheet[f"{output_columns['data_type']}{row}"] = match_result.get(
-                    #     "data_type", ""
-                    # )
-                    # worksheet[f"{output_columns['length_total']}{row}"] = (
-                    #     match_result.get("length_total", "")
-                    # )
-                    # worksheet[f"{output_columns['length_dec']}{row}"] = (
-                    #     match_result.get("length_dec", "")
-                    # )
-                    # worksheet[f"{output_columns['match']}{row}"] = match_result.get(
-                    #     "match", ""
-                    # )
-                    worksheet[f"{output_columns['notes']}{row}"] = match_result.get(
-                        "notes", ""
-                    )
-                    # worksheet[f"{output_columns['sample_value']}{row}"] = (
-                    #     match_result.get("sample_value", "")
-                    # )
-                    # worksheet[f"{output_columns['verify']}{row}"] = match_result.get(
-                    #     "verify", ""
-                    # )
+                try:
+                    worksheet[f"{output_columns['table_id']}{row}"] = match_result.get("table_id", "")
+                    worksheet[f"{output_columns['field_id']}{row}"] = match_result.get("field_id", "")
+                    worksheet[f"{output_columns['notes']}{row}"] = match_result.get("notes", "")
+                    worksheet[f"{output_columns['match_source']}{row}"] = match_result.get("match_source", "")
+
+                    # 按 Color 字段设置单元格背景色（仅 custom 来源且有颜色编码时）
+                    color_code = match_result.get("color", "")
+                    if color_code:
+                        # 去掉可能的 # 前缀，确保是6位十六进制
+                        hex_color = color_code.lstrip("#").upper()
+                        if len(hex_color) == 6:
+                            fill = PatternFill(fill_type="solid", fgColor=hex_color)
+                            for col in [output_columns["table_id"], output_columns["field_id"], output_columns["notes"]]:
+                                worksheet[f"{col}{row}"].fill = fill
 
                     processed_count += 1
 
@@ -983,6 +987,7 @@ class ExcelProcessor:
                     "match": match_result.get("match"),
                     "notes": match_result.get("notes", ""),
                     "source": match_result.get("source", ""),
+                    "match_source": "AI匹配",
                 }
             )
 
