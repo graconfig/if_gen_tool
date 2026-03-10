@@ -40,6 +40,7 @@ class ConfigurationManager:
                 "key_flag": "E",
                 "obligatory": "F",
                 "data_type": "I",
+                "table_id": "G",
                 "field_id": "H",
                 "length_total": "J",
                 "length_dec": "K",
