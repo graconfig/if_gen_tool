@@ -729,7 +729,11 @@ class ExcelProcessor:
     def write_results(
         self, worksheet, results: List[Tuple[InterfaceField, Dict[str, Any]]], rag_view_fields: Optional[List[Dict[str, Any]]]=None
     ) -> None:
+        from openpyxl.styles import PatternFill
+
         output_columns = self.column_mappings["output_columns"]
+        if rag_view_fields is None:
+            rag_view_fields = []
         
         processed_count = 0
         for interface_field, match_result in results:
@@ -801,6 +805,15 @@ class ExcelProcessor:
                     worksheet[f"{output_columns['verify']}{row}"] = match_result.get(
                         "verify", ""
                     )
+
+                    # 按 Color 字段设置单元格背景色（仅 custom 来源且有颜色编码时）
+                    color_code = match_result.get("color", "")
+                    if color_code:
+                        hex_color = color_code.lstrip("#").upper()
+                        if len(hex_color) == 6:
+                            fill = PatternFill(fill_type="solid", fgColor=hex_color)
+                            for col in [output_columns["table_id"], output_columns["field_id"], output_columns["notes"]]:
+                                worksheet[f"{col}{row}"].fill = fill
 
                     processed_count += 1
 
