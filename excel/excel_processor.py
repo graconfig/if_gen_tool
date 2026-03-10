@@ -575,7 +575,7 @@ class ExcelProcessor:
             )
             if exact_match:
                 result = self._build_custom_match_result(exact_match)
-                result["match_source"] = "精確匹配"
+                result["match_source"] = "対応表マッピング"
                 matched_rows.append((field, result))
                 unmatched_rows.append((field, result))
                 logger.debug(
@@ -595,7 +595,7 @@ class ExcelProcessor:
             )
             if vector_match:
                 result = self._build_custom_match_result(vector_match)
-                result["match_source"] = "ベクトル匹配"
+                result["match_source"] = "対応表マッピング"
                 matched_rows.append((field, result))
                 unmatched_rows.append((field, result))
                 logger.debug(
@@ -976,7 +976,7 @@ class ExcelProcessor:
                     "match": match_result.get("match"),
                     "notes": match_result.get("notes", ""),
                     "source": match_result.get("source", ""),
-                    "match_source": "AI匹配",
+                    "match_source": "AIマッピング",
                 }
             )
 

@@ -60,10 +60,10 @@ class ConfigurationManager:
                 "length_total": "Z",
                 "length_dec": "AA",
                 "notes": "AB",
-                "match_source": "AD",
                 "sample_value": "AC",
                 "match": "AE",
-                "verify": "AF",
+                "match_source": "AF",
+                "verify": "AG",
             },
         }
 
@@ -97,10 +97,10 @@ class ConfigurationManager:
                 "length_total": "J",
                 "length_dec": "K",
                 "notes": "M",
-                "match_source": "O",
                 "sample_value": "N",
                 "match": "AE",
-                "verify": "AF",
+                "match_source": "AF",
+                "verify": "AG",
             },
         }
 
@@ -120,7 +120,7 @@ class ConfigurationManager:
             "claude": {
                 "provider_name": "SAP AICore Claude",
                 "llm_model": os.getenv(
-                    "CLAUDE_LLM_MODEL", "anthropic--claude-3-5-sonnet"
+                    "CLAUDE_LLM_MODEL", "anthropic--claude-4.5-sonnet"
                 ),
                 "embedding_model": os.getenv(
                     "TEXT_EMBEDDING_MODEL", "text-embedding-ada-002"
