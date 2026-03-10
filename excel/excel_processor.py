@@ -151,9 +151,10 @@ class ExcelProcessor:
         
         # 1、根据输入内容查找视图（只处理未匹配字段）
         final_context_for_llm = []
-        module = unmatched_rows[0][0].module
-        if_name = unmatched_rows[0][0].if_name
-        if_desc = unmatched_rows[0][0].if_desc
+        first_unmatched = unmatched_rows[0][0] if isinstance(unmatched_rows[0], tuple) else unmatched_rows[0]
+        module = first_unmatched.module
+        if_name = first_unmatched.if_name
+        if_desc = first_unmatched.if_desc
         module_query = ",".join([module, if_name, if_desc])
 
         log_filename = logger.get_excel_log_filename(excel_filename)
@@ -262,10 +263,10 @@ class ExcelProcessor:
 
             # ========== 合并结果：已匹配 + 新匹配 ==========
             unmatched_results = list(zip(unmatched_rows, unmatched_batch_results))
-            final_results = unmatched_results
-            
+            final_results = matched_rows + unmatched_results
+
             # 按行号排序，保持原始顺序
-            final_results.sort(key=lambda x: x[0][0].row_index)
+            final_results.sort(key=lambda x: x[0][0].row_index if isinstance(x[0], tuple) else x[0].row_index)
 
             # Write results
             logger.info(
@@ -329,9 +330,10 @@ class ExcelProcessor:
         )
 
         # 1. Get common context for all batches (same module/interface)
-        module = unmatched_rows[0][0].module
-        if_name = unmatched_rows[0][0].if_name
-        if_desc = unmatched_rows[0][0].if_desc
+        first_unmatched = unmatched_rows[0][0] if isinstance(unmatched_rows[0], tuple) else unmatched_rows[0]
+        module = first_unmatched.module
+        if_name = first_unmatched.if_name
+        if_desc = first_unmatched.if_desc
         module_query = ",".join([module, if_name, if_desc])
 
         log_filename = logger.get_excel_log_filename(excel_filename)
@@ -487,8 +489,8 @@ class ExcelProcessor:
                         print()  # Add newline after progress update
 
             # ========== 合并结果：已匹配 + 新匹配 ==========
-            all_results = unmatched_results
-            all_results.sort(key=lambda x: x[0][0].row_index)
+            all_results = matched_results + unmatched_results
+            all_results.sort(key=lambda x: x[0][0].row_index if isinstance(x[0], tuple) else x[0].row_index)
 
             # 3. Write all results
             logger.info(
@@ -577,7 +579,6 @@ class ExcelProcessor:
                 result = self._build_custom_match_result(exact_match)
                 result["match_source"] = "対応表マッピング"
                 matched_rows.append((field, result))
-                unmatched_rows.append((field, result))
                 logger.debug(
                     f"Row {field.row_index}: Exact custom match "
                     f"({field.table_id}.{field.field_id})",
@@ -586,7 +587,7 @@ class ExcelProcessor:
                 continue
 
             # ── Step 2: 向量匹配 ──────────────────────────────────────────
-            query_parts = [field.if_name, field.table_id, field.field_id, field.field_text]
+            query_parts = [field.if_name, field.table_id, field.field_id, field.field_name]
             query_text = " ".join([str(p).strip() for p in query_parts if p])
 
             vector_match = self.hana_client.get_custom_fields(
@@ -597,7 +598,6 @@ class ExcelProcessor:
                 result = self._build_custom_match_result(vector_match)
                 result["match_source"] = "対応表マッピング"
                 matched_rows.append((field, result))
-                unmatched_rows.append((field, result))
                 logger.debug(
                     f"Row {field.row_index}: Vector custom match",
                     log_filename,
@@ -737,35 +737,40 @@ class ExcelProcessor:
         
         processed_count = 0
         for interface_field, match_result in results:
-            row = interface_field[0].row_index
-            isverify = interface_field[0].verify
-            field_name = interface_field[0].field_name
+            if isinstance(interface_field, tuple):
+                interface_field = interface_field[0]
+            row = interface_field.row_index
+            isverify = interface_field.verify
+            field_name = interface_field.field_name
 
             if match_result.get("field_id") is not None and match_result.get("field_id") != '':
-                is_append = interface_field[0].is_append
+                is_append = interface_field.is_append
                 
             if field_name is None or field_name == '' or field_name == 'e':
                 continue
 
             if isverify != "○":
-                table_lines = match_result.get("table_id", "").splitlines()
-                field_lines = match_result.get("field_id", "").splitlines()
-                is_key = ""
-                obligatory = ""
-                
-                # 使用zip同时遍历两个列表
-                for table_line, field_line in zip(table_lines, field_lines):
-                    # 查找 RAG 视图字段以确定是否为关键字段
-                    rag_field = next(
-                    (entry for entry in rag_view_fields  
-                    if entry.get("view_name") == table_line
-                    and entry.get("field_name") == field_line),
-                    None
-                    )
-                    is_key_line = "○" if rag_field and rag_field.get("is_key") else ""
-                    obligatory_line = "必須" if rag_field and rag_field.get("is_key") else "任意"
-                    is_key = is_key + is_key_line + "\n"
-                    obligatory = obligatory + obligatory_line + "\n"
+                is_key = match_result.get("key_flag", "")
+                obligatory = match_result.get("obligatory", "")
+
+                # 仅对 AI 匹配结果从 rag_view_fields 中查找 is_key / obligatory
+                if match_result.get("source") != "custom" and rag_view_fields:
+                    table_lines = match_result.get("table_id", "").splitlines()
+                    field_lines = match_result.get("field_id", "").splitlines()
+                    is_key = ""
+                    obligatory = ""
+
+                    for table_line, field_line in zip(table_lines, field_lines):
+                        rag_field = next(
+                            (entry for entry in rag_view_fields
+                             if entry.get("view_name") == table_line
+                             and entry.get("field_name") == field_line),
+                            None
+                        )
+                        is_key_line = "○" if rag_field and rag_field.get("is_key") else ""
+                        obligatory_line = "必須" if rag_field and rag_field.get("is_key") else "任意"
+                        is_key = is_key + is_key_line + "\n"
+                        obligatory = obligatory + obligatory_line + "\n"
 
                 try:
                     worksheet[f"{output_columns['field_name']}{row}"] = match_result.get(
@@ -915,12 +920,17 @@ class ExcelProcessor:
 
         for input_field in input_fields:
             # Handle both InterfaceField objects and dictionaries
-            if hasattr(input_field[0], "row_index"):
-                # InterfaceField object
-                row_index = input_field[0].row_index
+            if isinstance(input_field, tuple):
+                field_obj = input_field[0]
+                if isinstance(field_obj, tuple):
+                    field_obj = field_obj[0]
             else:
-                # Dictionary
-                row_index = input_field[0][0].get("row_index")
+                field_obj = input_field
+
+            if hasattr(field_obj, "row_index"):
+                row_index = field_obj.row_index
+            else:
+                row_index = field_obj.get("row_index")
 
             match_result = match_map.get(row_index, {})
 
