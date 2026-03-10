@@ -191,92 +191,133 @@ class HANADBClient:
             logger.error(_("Error: {}").format(e), log_filename)
             return {}
 
-    def get_custom_fields(
-        self, 
-        field_query: str,
-        metric="COSINE_SIMILARITY",
-        log_filename: str = None
+    def _build_custom_field_result(self, row) -> Dict[str, Any]:
+        """将 CUSTFIELDS 表的一行转换为统一的结果字典"""
+        return {
+            "table_id":     row["TARGETTABLE"],
+            "field_id":     row["TARGETFIELD"],
+            "field_name":   row["TARGETDESC"],
+            "data_type":    row["TARGETTYPE"],
+            "length_total": str(row["TARGETLENGTH"]) if row["TARGETLENGTH"] is not None else "",
+            "length_dec":   str(row["TARGETDECIMALS"]) if row["TARGETDECIMALS"] is not None else "",
+            "key_flag":     row["KEYFLAG"],
+            "obligatory":   row["OBLIGATORY"],
+            "sample_value": row["ALLOWEDVALUES"],
+            "notes":        row["NOTES"],
+            "color":        row["COLOR"] if row["COLOR"] else "",
+        }
+
+    def get_custom_fields_exact(
+        self,
+        source_table: str,
+        source_field: str,
+        log_filename: str = None,
     ) -> Dict[str, Any]:
         """
-        对单个字段进行客户化字段表的向量检索（基于 SOURCEDESC 字段）
-        
+        第一步：精确匹配，根据 SourceTable + SourceField 查询 CUSTFIELDS 表。
+
         Args:
-            field_query: 字段查询文本（字段名+描述+示例值）
+            source_table: 输入字段的 table_id
+            source_field: 输入字段的 field_id
+            log_filename: 日志文件名
+
+        Returns:
+            匹配结果字典，未匹配返回空字典
+        """
+        if not source_table or not source_field:
+            return {}
+
+        clean_table = source_table.replace("'", "''")
+        clean_field = source_field.replace("'", "''")
+
+        sql = """
+            SELECT TOP 1
+                "TARGETTABLE", "TARGETFIELD", "TARGETDESC",
+                "TARGETTYPE", "TARGETLENGTH", "TARGETDECIMALS",
+                "KEYFLAG", "OBLIGATORY", "ALLOWEDVALUES", "NOTES", "COLOR"
+            FROM "{schema}"."{table}"
+            WHERE "SOURCETABLE" = '{source_table}'
+              AND "SOURCEFIELD" = '{source_field}'
+              AND "ISACTIVE" = 0
+        """.format(
+            schema=self._db_schema_cust,
+            table=self.cust_fields_table,
+            source_table=clean_table,
+            source_field=clean_field,
+        )
+
+        try:
+            result_df = self.hana_client.sql(sql).collect()
+            if result_df.empty:
+                return {}
+            return self._build_custom_field_result(result_df.iloc[0])
+        except HanaDbError as e:
+            logger.error(
+                _("Custom field exact match failed: {}").format(e),
+                log_filename,
+            )
+            return {}
+
+    def get_custom_fields(
+        self,
+        field_query: str,
+        metric="COSINE_SIMILARITY",
+        log_filename: str = None,
+    ) -> Dict[str, Any]:
+        """
+        第二步：向量匹配，将拼接后的查询文本与 CUSTFIELDS 表的 embeddings 进行相似度检索。
+        embeddings 由 IFName + SourceTable + SourceField + SourceDesc 拼接向量化得到。
+
+        Args:
+            field_query: 查询文本（IFName + SourceTable + SourceField + SourceDesc 拼接）
             metric: 相似度算法
             log_filename: 日志文件名
-            
+
         Returns:
-            匹配结果字典，如果未匹配返回空字典
+            匹配结果字典，未匹配返回空字典
         """
         sort = "ASC" if metric == "L2DISTANCE" else "DESC"
+        comparison_op = ">" if sort.upper() == "DESC" else "<"
+        threshold = float(os.getenv("CUSTOM_FIELD_THRESHOLD", 0.75))
 
-        # 清理查询文本
         clean_query = field_query.replace("'", "''").replace('"', '""')
 
         sql = """
             SELECT TOP 1
-                "TARGETTABLE",
-                "TARGETFIELD",
-                "TARGETDESC",
-                "TARGETTYPE",
-                "TARGETLENGTH",
-                "TARGETDECIMALS",
-                "KEYFLAG",
-                "OBLIGATORY",
-                "ALLOWEDVALUES",
-                "NOTES",
+                "TARGETTABLE", "TARGETFIELD", "TARGETDESC",
+                "TARGETTYPE", "TARGETLENGTH", "TARGETDECIMALS",
+                "KEYFLAG", "OBLIGATORY", "ALLOWEDVALUES", "NOTES", "COLOR",
                 SIMILARITY_SCORE
             FROM (
                 SELECT
-                    "TARGETTABLE",
-                    "TARGETFIELD",
-                    "TARGETDESC",
-                    "TARGETTYPE",
-                    "TARGETLENGTH",
-                    "TARGETDECIMALS",
-                    "KEYFLAG",
-                    "OBLIGATORY",
-                    "ALLOWEDVALUES",
-                    "NOTES",
-                    {metric}(VECTOR_EMBEDDING('{query}', 'QUERY', 'SAP_NEB.20240715'),"EMBEDDINGS") AS SIMILARITY_SCORE
+                    "TARGETTABLE", "TARGETFIELD", "TARGETDESC",
+                    "TARGETTYPE", "TARGETLENGTH", "TARGETDECIMALS",
+                    "KEYFLAG", "OBLIGATORY", "ALLOWEDVALUES", "NOTES", "COLOR",
+                    {metric}(VECTOR_EMBEDDING('{query}', 'QUERY', 'SAP_NEB.20240715'), "EMBEDDINGS") AS SIMILARITY_SCORE
                 FROM "{schema}"."{table}"
-            ) AS SubqueryAlias
-            WHERE SIMILARITY_SCORE {comparison_operator} {threshold}
+                WHERE "ISACTIVE" = 0
+            ) AS T
+            WHERE SIMILARITY_SCORE {op} {threshold}
             ORDER BY SIMILARITY_SCORE {sort}
         """.format(
             metric=metric,
             query=clean_query,
             sort=sort,
+            op=comparison_op,
+            threshold=threshold,
             schema=self._db_schema_cust,
             table=self.cust_fields_table,
-            comparison_operator='>' if sort.strip().upper() == 'DESC' else '<',
-            threshold=0.7  # 示例阈值，您需要根据实际情况调整
         )
-                # WHERE "ISACTIVE"=0
+
         try:
             result_df = self.hana_client.sql(sql).collect()
-            
             if result_df.empty:
                 return {}
-            
-            row = result_df.iloc[0]
-            return {
-                "table_name":   row["TARGETTABLE"],
-                "field_id":     row["TARGETFIELD"],
-                "field_name":   row["TARGETDESC"],
-                "data_type":    row["TARGETTYPE"],
-                "length_total": row["TARGETLENGTH"],
-                "length_dec":   row["TARGETDECIMALS"],
-                "is_key":       row["KEYFLAG"],
-                "obligatory":   row["OBLIGATORY"],
-                "sample_value": row["ALLOWEDVALUES"],
-                "notes":        row["NOTES"]
-            }
-            
+            return self._build_custom_field_result(result_df.iloc[0])
         except HanaDbError as e:
             logger.error(
-                _("Custom field vector search failed: {}").format(e), 
-                log_filename
+                _("Custom field vector search failed: {}").format(e),
+                log_filename,
             )
             return {}
 
