@@ -569,26 +569,31 @@ class ExcelProcessor:
         log_filename = logger.get_excel_log_filename(excel_filename)
 
         for field in input_fields:
+            # 源系统表和字段都为空或"-"时，跳过精确匹配直接走向量匹配
+            def _is_empty(v):
+                return not v or str(v).strip() in ("", "-")
+
             # ── Step 1: 精确匹配 ──────────────────────────────────────────
-            exact_match = self.hana_client.get_custom_fields_exact(
-                source_table=field.table_id,
-                source_field=field.field_id,
-                log_filename=log_filename,
-            )
-            if exact_match:
-                result = self._build_custom_match_result(exact_match)
-                result["match_source"] = "対応表マッピング"
-                matched_rows.append((field, result))
-                logger.debug(
-                    f"Row {field.row_index}: Exact custom match "
-                    f"({field.table_id}.{field.field_id})",
-                    log_filename,
+            if not (_is_empty(field.table_id) or _is_empty(field.field_id)):
+                exact_match = self.hana_client.get_custom_fields_exact(
+                    source_table=field.table_id,
+                    source_field=field.field_id,
+                    log_filename=log_filename,
                 )
-                continue
+                if exact_match:
+                    result = self._build_custom_match_result(exact_match)
+                    result["match_source"] = "対応表マッピング"
+                    result["notes"] = ""
+                    matched_rows.append((field, result))
+                    logger.debug(
+                        f"Row {field.row_index}: Exact custom match "
+                        f"({field.table_id}.{field.field_id})",
+                        log_filename,
+                    )
+                    continue
 
             # ── Step 2: 向量匹配 ──────────────────────────────────────────
             query_parts = [field.if_name, field.table_id, field.field_id, field.field_name]
-            query_text = " ".join([str(p).strip() for p in query_parts if p])
 
             vector_match = self.hana_client.get_custom_fields(
                 field_query=query_text,
@@ -597,6 +602,7 @@ class ExcelProcessor:
             if vector_match:
                 result = self._build_custom_match_result(vector_match)
                 result["match_source"] = "対応表マッピング"
+                result["notes"] = ""
                 matched_rows.append((field, result))
                 logger.debug(
                     f"Row {field.row_index}: Vector custom match",
