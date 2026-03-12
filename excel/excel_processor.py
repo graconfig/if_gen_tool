@@ -824,7 +824,7 @@ class ExcelProcessor:
                         hex_color = color_code.lstrip("#").upper()
                         if len(hex_color) == 6:
                             fill = PatternFill(fill_type="solid", fgColor=hex_color)
-                            for col in [output_columns["table_id"], output_columns["field_id"], output_columns["notes"]]:
+                            for col in [output_columns["table_id"], output_columns["field_id"]]:
                                 worksheet[f"{col}{row}"].fill = fill
 
                     processed_count += 1
