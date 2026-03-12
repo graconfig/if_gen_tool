@@ -594,7 +594,8 @@ class ExcelProcessor:
 
             # ── Step 2: 向量匹配 ──────────────────────────────────────────
             query_parts = [field.if_name, field.table_id, field.field_id, field.field_name]
-
+            query_text = " ".join([str(p).strip() for p in query_parts if p])
+            
             vector_match = self.hana_client.get_custom_fields(
                 field_query=query_text,
                 log_filename=log_filename,
