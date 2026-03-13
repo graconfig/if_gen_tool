@@ -1,6 +1,6 @@
 import json
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -212,7 +212,7 @@ class HANADBClient:
         source_table: str,
         source_field: str,
         log_filename: str = None,
-    ) -> Dict[str, Any]:
+    ) -> Tuple[Dict[str, Any], bool]:
         """
         第一步：精确匹配，根据 SourceTable + SourceField 查询 CUSTFIELDS 表。
 
@@ -222,47 +222,61 @@ class HANADBClient:
             log_filename: 日志文件名
 
         Returns:
-            匹配结果字典，未匹配返回空字典
+            (匹配结果字典, is_multiple: bool)
+            - 唯一匹配时：(result_dict, False)
+            - 无匹配时：  ({}, False)
+            - 多条匹配时：({}, True)  ← 调用方应据此缩小向量检索范围
         """
-        if not source_table or not source_field:
-            return {}
 
-        clean_table = source_table.replace("'", "''")
-        clean_field = source_field.replace("'", "''")
+        clean_table = source_table.replace("'", "''") if source_table else ""
+        clean_field = source_field.replace("'", "''") if source_field else ""
+
+        # 空值用 IS NULL 匹配，非空值用 = 匹配
+        def _null_or_eq(col: str, val: str) -> str:
+            if not val or val.strip() in ("", "-"):
+                return f'("{col}" IS NULL OR "{col}" = \'\')'
+            return f'"{col}" = \'{val}\''
+
+        table_cond = _null_or_eq("SOURCETABLE", clean_table)
+        field_cond  = _null_or_eq("SOURCEFIELD",  clean_field)
 
         sql = """
-            SELECT TOP 1
+            SELECT TOP 2
                 "TARGETTABLE", "TARGETFIELD", "TARGETDESC",
                 "TARGETTYPE", "TARGETLENGTH", "TARGETDECIMALS",
                 "KEYFLAG", "OBLIGATORY", "ALLOWEDVALUES", "NOTES", "COLOR"
             FROM "{schema}"."{table}"
-            WHERE "SOURCETABLE" = '{source_table}'
-              AND "SOURCEFIELD" = '{source_field}'
+            WHERE {table_cond}
+              AND {field_cond}
               AND "ISACTIVE" = 0
         """.format(
             schema=self._db_schema_cust,
             table=self.cust_fields_table,
-            source_table=clean_table,
-            source_field=clean_field,
+            table_cond=table_cond,
+            field_cond=field_cond,
         )
 
         try:
             result_df = self.hana_client.sql(sql).collect()
             if result_df.empty:
-                return {}
-            return self._build_custom_field_result(result_df.iloc[0])
+                return {}, False
+            if len(result_df) > 1:
+                return {}, True   # multiple rows found → caller should scope vector search
+            return self._build_custom_field_result(result_df.iloc[0]), False
         except HanaDbError as e:
             logger.error(
                 _("Custom field exact match failed: {}").format(e),
                 log_filename,
             )
-            return {}
+            return {}, False
 
     def get_custom_fields(
         self,
         field_query: str,
         metric="COSINE_SIMILARITY",
         log_filename: str = None,
+        source_table: str = None,
+        source_field: str = None,
     ) -> Dict[str, Any]:
         """
         第二步：向量匹配，将拼接后的查询文本与 CUSTFIELDS 表的 embeddings 进行相似度检索。
@@ -272,6 +286,8 @@ class HANADBClient:
             field_query: 查询文本（IFName + SourceTable + SourceField + SourceDesc 拼接）
             metric: 相似度算法
             log_filename: 日志文件名
+            source_table: 若精确匹配返回多条，传入以缩小检索范围
+            source_field: 若精确匹配返回多条，传入以缩小检索范围
 
         Returns:
             匹配结果字典，未匹配返回空字典
@@ -281,6 +297,18 @@ class HANADBClient:
         threshold = float(os.getenv("CUSTOM_FIELD_THRESHOLD", 0.75))
 
         clean_query = field_query.replace("'", "''").replace('"', '""')
+
+        # 当精确匹配命中多条时，追加 SOURCETABLE / SOURCEFIELD 过滤条件（兼容 NULL）
+        def _scope_cond(col: str, val: str) -> str:
+            if not val or val.strip() in ("", "-"):
+                return f'("{col}" IS NULL OR "{col}" = \'\')'
+            return f'"{col}" = \'{val.replace(chr(39), chr(39)*2)}\''
+
+        scope_filter = ""
+        if source_table is not None:
+            scope_filter += f' AND {_scope_cond("SOURCETABLE", source_table)}'
+        if source_field is not None:
+            scope_filter += f' AND {_scope_cond("SOURCEFIELD", source_field)}'
 
         sql = """
             SELECT TOP 1
@@ -295,7 +323,7 @@ class HANADBClient:
                     "KEYFLAG", "OBLIGATORY", "ALLOWEDVALUES", "NOTES", "COLOR",
                     {metric}(VECTOR_EMBEDDING('{query}', 'QUERY', 'SAP_NEB.20240715'), "EMBEDDINGS") AS SIMILARITY_SCORE
                 FROM "{schema}"."{table}"
-                WHERE "ISACTIVE" = 0
+                WHERE "ISACTIVE" = 0{scope_filter}
             ) AS T
             WHERE SIMILARITY_SCORE {op} {threshold}
             ORDER BY SIMILARITY_SCORE {sort}
@@ -307,6 +335,7 @@ class HANADBClient:
             threshold=threshold,
             schema=self._db_schema_cust,
             table=self.cust_fields_table,
+            scope_filter=scope_filter,
         )
 
         try:

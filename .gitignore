@@ -9,3 +9,5 @@ tokens
 main.spec
 build
 dist
+.kiro
+docs
