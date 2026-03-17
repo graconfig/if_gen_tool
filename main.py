@@ -279,6 +279,17 @@ def main():
     # Initialize service_name to prevent "possibly unbound" error
     service_name = "unknown"
 
+    # Initialize i18n before argparse so _() is available
+    config_manager = ConfigurationManager()
+    language_config = config_manager.get_language_config()
+
+    # Pre-parse --langu only to initialize i18n early
+    _pre = argparse.ArgumentParser(add_help=False)
+    _pre.add_argument("--langu", type=str, default=None)
+    _pre_args, _pre_remaining = _pre.parse_known_args()
+    target_language = _pre_args.langu or language_config.get("language", "en")
+    initialize_i18n(target_language)
+
     parser = argparse.ArgumentParser(description=_("SAP IF Design Generation Tool"))
     parser.add_argument(
         "--file",
@@ -300,15 +311,71 @@ def main():
         help=_("Choose AI provider (claude, gemini, openai) - all via AI Core"),
     )
 
+    parser.add_argument(
+        "--upload",
+        type=str,
+        nargs="?",
+        const="",
+        metavar="FILE",
+        help=_("Upload knowledge base Excel to CUSTFIELDS table (default: data/upload/*.xlsx)"),
+    )
+
+    parser.add_argument(
+        "--upload-sheet",
+        type=str,
+        default=None,
+        help=_("Sheet name to use when uploading (default: auto-select '正本' sheet)"),
+    )
+
     args = parser.parse_args()
 
-    # Initialize internationalization first
-    config_manager = ConfigurationManager()
-    language_config = config_manager.get_language_config()
+    # Re-apply language in case --langu was passed explicitly
+    if args.langu:
+        initialize_i18n(args.langu)
+        target_language = args.langu
 
-    # Determine language to use
-    target_language = args.langu or language_config.get("language", "en")
-    initialize_i18n(target_language)
+    # ── Upload mode ──────────────────────────────────────────────────────────
+    if args.upload is not None:
+        from hana.hana_conn import HANADBClient
+        from core.consts import Directories
+
+        data_dir = setup_directories()
+
+        # ファイル解決
+        if args.upload:
+            upload_path = Path(args.upload)
+            if not upload_path.is_absolute():
+                upload_path = data_dir / "upload" / args.upload
+        else:
+            candidates = list((data_dir / "upload").glob("*.xlsx"))
+            if not candidates:
+                print(_("No Excel files found in data/upload/"))
+                sys.exit(1)
+            upload_path = candidates[0]
+
+        if not upload_path.exists():
+            print(_("File not found: {}").format(upload_path))
+            sys.exit(1)
+
+        print(_("Uploading: {}").format(upload_path.name))
+
+        hana_client = HANADBClient()
+        hana_client.connect()
+
+        log_name = f"upload_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        try:
+            stats = hana_client.upload_custfields_from_excel(
+                excel_path=str(upload_path),
+                sheet_name=args.upload_sheet,
+                log_filename=logger.get_excel_log_filename(log_name),
+            )
+            print(
+                _("Done: inserted={inserted}, updated={updated}, "
+                  "skipped={skipped}, errors={errors}").format(**stats)
+            )
+        finally:
+            hana_client.close()
+        return
 
     try:
         # Setup directories

@@ -351,6 +351,256 @@ class HANADBClient:
             return {}
 
 
+    def upload_custfields_from_excel(
+        self,
+        excel_path: str,
+        sheet_name: str = None,
+        log_filename: str = None,
+    ) -> Dict[str, int]:
+        """
+        Excel の対応表を読み込み、CUSTFIELDS テーブルへ upsert する。
+        content = IFNAME + SOURCETABLE + SOURCEFIELD + SOURCEDESC を結合してセット。
+        embeddings は DB の trigger が content を元に自動生成する。
+        """
+        import openpyxl
+
+        if not self.hana_client:
+            raise ConnectionError(_("Database not connected."))
+
+        wb = openpyxl.load_workbook(excel_path)
+
+        if sheet_name:
+            ws = wb[sheet_name]
+        else:
+            preferred = [s for s in wb.sheetnames if "正本" in s]
+            ws = wb[preferred[0]] if preferred else wb.active
+
+        logger.info(
+            _("Uploading from sheet '{}' in '{}'").format(ws.title, excel_path),
+            log_filename,
+        )
+
+        def _cell_hex_color(cell) -> str:
+            try:
+                fill = cell.fill
+                if fill and fill.fill_type not in (None, "none"):
+                    fg = fill.fgColor
+                    if fg.type == "rgb":
+                        argb = fg.rgb
+                        if argb and argb != "00000000":
+                            return "#" + argb[-6:]
+            except Exception:
+                pass
+            return ""
+
+        def _val(v):
+            if v is None:
+                return "NULL"
+            return "'" + str(v).replace("'", "''") + "'"
+
+        def _eq_or_null(col, val):
+            if not val:
+                return f'("{col}" IS NULL OR "{col}" = \'\')'
+            return f'"{col}" = \'{val.replace(chr(39), chr(39)*2)}\''
+
+        rows_data = []
+        for row in ws.iter_rows(min_row=2):
+            if_name      = row[1].value
+            source_desc  = row[2].value
+            source_table = row[3].value
+            source_field = row[4].value
+            target_desc  = row[5].value
+            target_table = row[6].value
+            target_field = row[7].value
+            notes        = row[8].value if len(row) > 8 else None
+            color        = _cell_hex_color(row[5])
+
+            if not source_field or str(source_field).strip() in ("", "e"):
+                continue
+
+            st = str(source_table or "").strip() if source_table else None
+            sf = str(source_field or "").strip() if source_field else None
+
+            content = " ".join(filter(None, [
+                str(if_name or "").strip(),
+                st or "",
+                sf or "",
+                str(source_desc or "").strip(),
+            ]))
+
+            rows_data.append({
+                "IFNAME":      str(if_name or "").strip(),
+                "SOURCEDESC":  str(source_desc or "").strip(),
+                "SOURCETABLE": st,
+                "SOURCEFIELD": sf,
+                "TARGETDESC":  str(target_desc or "").strip(),
+                "TARGETTABLE": str(target_table or "").strip(),
+                "TARGETFIELD": str(target_field or "").strip(),
+                "NOTES":       str(notes or "").strip(),
+                "COLOR":       color,
+                "CONTENT":     content,
+            })
+
+        logger.info(_("Found {} rows to process").format(len(rows_data)), log_filename)
+
+        upload_mode = os.getenv("UPLOAD_MODE", "upsert").strip().lower()
+        logger.info(_("Upload mode: {}").format(upload_mode), log_filename)
+
+        stats = {"inserted": 0, "updated": 0, "skipped": 0, "errors": 0}
+
+        # ── overwrite モード：既存レコードを全削除してから INSERT ────────────
+        if upload_mode == "overwrite":
+            try:
+                delete_sql = """
+                    DELETE FROM "{schema}"."{table}" WHERE "ISACTIVE" = 0
+                """.format(
+                    schema=self._db_schema_cust,
+                    table=self.cust_fields_table,
+                )
+                cursor = self.hana_client.connection.cursor()
+                cursor.execute(delete_sql)
+                cursor.close()
+                logger.info(_("Overwrite mode: existing records deleted."), log_filename)
+            except HanaDbError as e:
+                logger.error(_("Failed to delete existing records: {}").format(e), log_filename)
+                raise
+
+        for idx, row in enumerate(rows_data):
+            try:
+                if upload_mode == "overwrite":
+                    # overwrite モードは常に INSERT
+                    insert_sql = """
+                        INSERT INTO "{schema}"."{table}"
+                            ("ID", "IFNAME", "SOURCEDESC", "SOURCETABLE", "SOURCEFIELD",
+                             "TARGETDESC", "TARGETTABLE", "TARGETFIELD",
+                             "NOTES", "COLOR", "ISACTIVE", "CONTENT")
+                        VALUES (
+                            SYSUUID,
+                            {ifname}, {sdesc}, {stable}, {sfield},
+                            {tdesc}, {ttable}, {tfield},
+                            {notes}, {color}, 0, {content}
+                        )
+                    """.format(
+                        schema=self._db_schema_cust,
+                        table=self.cust_fields_table,
+                        ifname=_val(row["IFNAME"]),
+                        sdesc=_val(row["SOURCEDESC"]),
+                        stable=_val(row["SOURCETABLE"]),
+                        sfield=_val(row["SOURCEFIELD"]),
+                        tdesc=_val(row["TARGETDESC"]),
+                        ttable=_val(row["TARGETTABLE"]),
+                        tfield=_val(row["TARGETFIELD"]),
+                        notes=_val(row["NOTES"]),
+                        color=_val(row["COLOR"]),
+                        content=_val(row["CONTENT"]),
+                    )
+                    cursor = self.hana_client.connection.cursor()
+                    cursor.execute(insert_sql)
+                    cursor.close()
+                    stats["inserted"] += 1
+
+                else:
+                    # upsert モード：既存確認 → UPDATE or INSERT
+                    check_sql = """
+                        SELECT "ID" FROM "{schema}"."{table}"
+                        WHERE {st} AND {sf} AND "TARGETFIELD" = '{tf}'
+                        AND "ISACTIVE" = 0
+                    """.format(
+                        schema=self._db_schema_cust,
+                        table=self.cust_fields_table,
+                        st=_eq_or_null("SOURCETABLE", row["SOURCETABLE"]),
+                        sf=_eq_or_null("SOURCEFIELD", row["SOURCEFIELD"]),
+                        tf=(row["TARGETFIELD"] or "").replace("'", "''"),
+                    )
+                    existing = self.hana_client.sql(check_sql).collect()
+
+                    if not existing.empty:
+                        record_id = existing.iloc[0]["ID"]
+                        # CAP managed entity 的 UPDATE 会触发钩子导致新增记录
+                        # 改为先 DELETE 再 INSERT 以避免此问题
+                        delete_sql = """
+                            DELETE FROM "{schema}"."{table}" WHERE "ID" = '{rid}'
+                        """.format(
+                            schema=self._db_schema_cust,
+                            table=self.cust_fields_table,
+                            rid=record_id,
+                        )
+                        insert_sql = """
+                            INSERT INTO "{schema}"."{table}"
+                                ("ID", "IFNAME", "SOURCEDESC", "SOURCETABLE", "SOURCEFIELD",
+                                 "TARGETDESC", "TARGETTABLE", "TARGETFIELD",
+                                 "NOTES", "COLOR", "ISACTIVE", "CONTENT")
+                            VALUES (
+                                '{rid}',
+                                {ifname}, {sdesc}, {stable}, {sfield},
+                                {tdesc}, {ttable}, {tfield},
+                                {notes}, {color}, 0, {content}
+                            )
+                        """.format(
+                            schema=self._db_schema_cust,
+                            table=self.cust_fields_table,
+                            rid=record_id,
+                            ifname=_val(row["IFNAME"]),
+                            sdesc=_val(row["SOURCEDESC"]),
+                            stable=_val(row["SOURCETABLE"]),
+                            sfield=_val(row["SOURCEFIELD"]),
+                            tdesc=_val(row["TARGETDESC"]),
+                            ttable=_val(row["TARGETTABLE"]),
+                            tfield=_val(row["TARGETFIELD"]),
+                            notes=_val(row["NOTES"]),
+                            color=_val(row["COLOR"]),
+                            content=_val(row["CONTENT"]),
+                        )
+                        cursor = self.hana_client.connection.cursor()
+                        cursor.execute(delete_sql)
+                        cursor.execute(insert_sql)
+                        cursor.close()
+                        stats["updated"] += 1
+                    else:
+                        insert_sql = """
+                            INSERT INTO "{schema}"."{table}"
+                                ("ID", "IFNAME", "SOURCEDESC", "SOURCETABLE", "SOURCEFIELD",
+                                 "TARGETDESC", "TARGETTABLE", "TARGETFIELD",
+                                 "NOTES", "COLOR", "ISACTIVE", "CONTENT")
+                            VALUES (
+                                SYSUUID,
+                                {ifname}, {sdesc}, {stable}, {sfield},
+                                {tdesc}, {ttable}, {tfield},
+                                {notes}, {color}, 0, {content}
+                            )
+                        """.format(
+                            schema=self._db_schema_cust,
+                            table=self.cust_fields_table,
+                            ifname=_val(row["IFNAME"]),
+                            sdesc=_val(row["SOURCEDESC"]),
+                            stable=_val(row["SOURCETABLE"]),
+                            sfield=_val(row["SOURCEFIELD"]),
+                            tdesc=_val(row["TARGETDESC"]),
+                            ttable=_val(row["TARGETTABLE"]),
+                            tfield=_val(row["TARGETFIELD"]),
+                            notes=_val(row["NOTES"]),
+                            color=_val(row["COLOR"]),
+                            content=_val(row["CONTENT"]),
+                        )
+                        cursor = self.hana_client.connection.cursor()
+                        cursor.execute(insert_sql)
+                        cursor.close()
+                        stats["inserted"] += 1
+
+            except HanaDbError as e:
+                logger.error(
+                    _("Row {}: DB error - {}").format(idx + 2, e), log_filename
+                )
+                stats["errors"] += 1
+
+        logger.info(
+            _("Upload complete: inserted={inserted}, updated={updated}, "
+              "skipped={skipped}, errors={errors}").format(**stats),
+            log_filename,
+        )
+        return stats
+
+
     def get_terms(self,log_filename: str = None) -> pd.DataFrame:
         if not self.hana_client:
             error_msg = _("Database not connected.")
