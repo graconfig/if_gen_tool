@@ -415,7 +415,7 @@ class HANADBClient:
             notes        = row[8].value if len(row) > 8 else None
             color        = _cell_hex_color(row[5])
 
-            if not source_field or str(source_field).strip() in ("", "e"):
+            if not source_desc or str(source_desc).strip() in ("", "e"):
                 continue
 
             st = str(source_table or "").strip() if source_table else None
