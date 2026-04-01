@@ -11,3 +11,5 @@ build
 dist
 .kiro
 docs
+design_ja.md
+design.md
