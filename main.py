@@ -267,7 +267,12 @@ def process_single_excel_file(
             token_file = save_file_token_usage(file_path.name, additional_info)
         except Exception:
             # If even error logging fails, just print to console
-            print(f"❌ Critical error processing {file_path.name}: {e}")
+            import sys
+            msg = f"Critical error processing {file_path.name}: {e}\n"
+            try:
+                print(msg, end="")
+            except UnicodeEncodeError:
+                sys.stdout.buffer.write(msg.encode("utf-8", errors="replace"))
 
         return False, str(e)
 

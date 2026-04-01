@@ -23,6 +23,12 @@ class HANADBClient:
         self.cust_fields_table = "PWC_HAND_AI2REPORT_DEV_CUSTFIELDS"
         self.TerminologyMapping = "PWC_HAND_AI2REPORT_DEV_TERMINOLOGYMAPPING"
         
+        # self.scenario_table = "PWC_HAND_IFGENRAG_BUSINESSSCENARIOS"
+        # self.cds_view_table = "PWC_HAND_IFGENRAG_CDSVIEWS"
+        # self.view_fields_table = "PWC_HAND_IFGENRAG_VIEWFIELDS"
+        # self.cust_fields_table = "PWC_HAND_IFGENRAG_CUSTFIELDS"
+        # self.TerminologyMapping = "PWC_HAND_IFGENRAG_TERMINOLOGYMAPPING"
+        
         self.db_addr = os.getenv("HANA_ADDRESS")
         self.db_user = os.getenv("HANA_USER")
         self.db_pwd = os.getenv("HANA_PASSWORD")
@@ -43,6 +49,16 @@ class HANADBClient:
                 password=self.db_pwd,
                 encrypt=True,
             )
+            # Warm up CUSTFIELDS vector data in memory to avoid cold-start slowness
+            try:
+                self.hana_client.sql(
+                    f'SELECT TOP 1 COSINE_SIMILARITY('
+                    f'VECTOR_EMBEDDING(\'warmup\', \'QUERY\', \'SAP_NEB.20240715\'), "EMBEDDINGS")'
+                    f' FROM "{self._db_schema_cust}"."{self.cust_fields_table}"'
+                    f' WHERE "ISACTIVE" = 0'
+                ).collect()
+            except Exception:
+                pass
         except HanaDbError as e:
             logger.error(_("HANA Cloud connection failed: {}").format(e))
             raise

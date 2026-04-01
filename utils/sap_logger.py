@@ -123,7 +123,11 @@ class ExcelFileLogger(Logger):
                 **kwargs,
             )
             console_msg = self.console_formatter.format(record)
-            print(console_msg)
+            try:
+                print(console_msg)
+            except UnicodeEncodeError:
+                import sys
+                sys.stdout.buffer.write((console_msg + "\n").encode("utf-8", errors="replace"))
             return
 
         elif file_name and not file_name.endswith(".log"):
@@ -153,8 +157,8 @@ class ExcelFileLogger(Logger):
             try:
                 print(console_msg)
             except UnicodeEncodeError:
-                # Fallback to UTF-8 encoding if console doesn't support Unicode
-                print(console_msg.encode("utf-8", errors="replace").decode("utf-8"))
+                import sys
+                sys.stdout.buffer.write((console_msg + "\n").encode("utf-8", errors="replace"))
 
     def debug(self, msg: str, file_name: Optional[str] = None, *args, **kwargs) -> None:
         self._log_to_file(logging.DEBUG, msg, file_name, *args, **kwargs)
