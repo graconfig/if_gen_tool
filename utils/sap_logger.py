@@ -93,6 +93,15 @@ class ExcelFileLogger(Logger):
 
         # Do not initialize default log file anymore
 
+    def _emit_extra_handlers(self, record) -> None:
+        """Forward record to handlers that are NOT RotatingFileHandlers (e.g. GuiLogHandler)."""
+        for h in self.handlers:
+            if not isinstance(h, RotatingFileHandler) and record.levelno >= h.level:
+                try:
+                    h.emit(record)
+                except Exception:
+                    pass
+
     def _setup_handler(self, file_name: str, level: int) -> None:
         log_file = os.path.join(self.log_dir, file_name)
         handler = RotatingFileHandler(
@@ -128,6 +137,8 @@ class ExcelFileLogger(Logger):
             except UnicodeEncodeError:
                 import sys
                 sys.stdout.buffer.write((console_msg + "\n").encode("utf-8", errors="replace"))
+            # Forward to extra handlers (e.g. GuiLogHandler), skip file handlers
+            self._emit_extra_handlers(record)
             return
 
         elif file_name and not file_name.endswith(".log"):
@@ -159,6 +170,8 @@ class ExcelFileLogger(Logger):
             except UnicodeEncodeError:
                 import sys
                 sys.stdout.buffer.write((console_msg + "\n").encode("utf-8", errors="replace"))
+            # Forward to extra handlers (e.g. GuiLogHandler), skip file handlers
+            self._emit_extra_handlers(record)
 
     def debug(self, msg: str, file_name: Optional[str] = None, *args, **kwargs) -> None:
         self._log_to_file(logging.DEBUG, msg, file_name, *args, **kwargs)
