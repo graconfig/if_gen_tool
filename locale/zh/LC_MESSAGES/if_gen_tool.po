@@ -604,3 +604,372 @@ msgid "Start Time: {}"
 msgstr "[项目开始执行时间]: {}"
 
 
+
+# ── GUI strings ──────────────────────────────────────────────────────────────
+
+#: gui/app.py
+msgid "SAP IF Design Generation Tool"
+msgstr "SAP 接口设计生成工具"
+
+#: gui/app.py
+msgid "Process"
+msgstr "处理"
+
+#: gui/app.py
+msgid "KB Upload"
+msgstr "知识库上传"
+
+#: gui/app.py
+msgid "Config"
+msgstr "配置"
+
+#: gui/frames/process_frame.py
+msgid "IF File Processing"
+msgstr "接口文件处理"
+
+#: gui/frames/process_frame.py
+msgid "Pending Files"
+msgstr "待处理文件"
+
+#: gui/frames/process_frame.py
+msgid "+ Add Files"
+msgstr "+ 添加文件"
+
+#: gui/frames/process_frame.py
+msgid "Open Dir"
+msgstr "打开目录"
+
+#: gui/frames/process_frame.py
+msgid "Refresh"
+msgstr "刷新"
+
+#: gui/frames/process_frame.py
+msgid "Options"
+msgstr "处理选项"
+
+#: gui/frames/process_frame.py
+msgid "Language"
+msgstr "语言"
+
+#: gui/frames/process_frame.py
+msgid "AI Provider"
+msgstr "AI 提供商"
+
+#: gui/frames/process_frame.py
+msgid "▶  Start"
+msgstr "▶  开始处理"
+
+#: gui/frames/process_frame.py
+msgid "■  Stop"
+msgstr "■  停止"
+
+#: gui/frames/process_frame.py
+msgid "Ready"
+msgstr "就绪"
+
+#: gui/frames/process_frame.py
+msgid "Live Log"
+msgstr "实时日志"
+
+#: gui/frames/process_frame.py
+msgid "Clear"
+msgstr "清空"
+
+#: gui/frames/process_frame.py
+msgid "Token: —"
+msgstr "Token: —"
+
+#: gui/frames/process_frame.py
+msgid "No files"
+msgstr "暂无文件"
+
+#: gui/frames/process_frame.py
+msgid "Delete"
+msgstr "删除"
+
+#: gui/frames/process_frame.py
+msgid "Select Excel Files"
+msgstr "选择 Excel 文件"
+
+#: gui/frames/process_frame.py
+msgid "Excel Files"
+msgstr "Excel 文件"
+
+#: gui/frames/process_frame.py
+msgid "All Files"
+msgstr "所有文件"
+
+#: gui/frames/process_frame.py
+msgid "Confirm Delete"
+msgstr "确认删除"
+
+#: gui/frames/process_frame.py
+#, python-brace-format
+msgid "Delete file {}?"
+msgstr "删除文件 {}？"
+
+#: gui/frames/process_frame.py
+msgid "No Files"
+msgstr "无文件"
+
+#: gui/frames/process_frame.py
+msgid "Please add Excel files first."
+msgstr "请先添加待处理的 Excel 文件。"
+
+#: gui/frames/process_frame.py
+msgid "Processing..."
+msgstr "处理中..."
+
+#: gui/frames/process_frame.py
+msgid "Stopping..."
+msgstr "正在停止..."
+
+#: gui/frames/process_frame.py
+msgid "Stopped"
+msgstr "已停止"
+
+#: gui/frames/process_frame.py
+#, python-brace-format
+msgid "Processing: {}"
+msgstr "处理: {}"
+
+#: gui/frames/process_frame.py
+msgid "Done ✓"
+msgstr "处理完成 ✓"
+
+#: gui/frames/process_frame.py
+msgid "Done"
+msgstr "完成"
+
+#: gui/frames/process_frame.py
+msgid "All files processed. Output saved to data/excel_output/"
+msgstr "所有文件处理完毕，输出已保存到 data/excel_output/"
+
+#: gui/frames/process_frame.py
+#, python-brace-format
+msgid "Error: {}"
+msgstr "错误: {}"
+
+#: gui/frames/process_frame.py
+msgid "Processing Failed"
+msgstr "处理失败"
+
+#: gui/frames/process_frame.py
+#, python-brace-format
+msgid "Token:  Embed {embed} | LLM In {in_} | LLM Out {out} | Total {total}"
+msgstr "Token:  嵌入 {embed} | LLM 输入 {in_} | LLM 输出 {out} | 合计 {total}"
+
+#: gui/frames/upload_frame.py
+msgid "KB Upload"
+msgstr "知识库上传"
+
+#: gui/frames/upload_frame.py
+msgid "Upload File"
+msgstr "上传文件"
+
+#: gui/frames/upload_frame.py
+msgid "Not selected"
+msgstr "未选择"
+
+#: gui/frames/upload_frame.py
+msgid "Browse"
+msgstr "选择文件"
+
+#: gui/frames/upload_frame.py
+msgid "Sheet Name\n(auto if blank)"
+msgstr "Sheet 名称\n(留空自动检测)"
+
+#: gui/frames/upload_frame.py
+msgid "正本 (auto-detect)"
+msgstr "正本（留空自动检测）"
+
+#: gui/frames/upload_frame.py
+msgid "Upload Mode"
+msgstr "上传模式"
+
+#: gui/frames/upload_frame.py
+msgid "Overwrite (delete old data)"
+msgstr "覆盖（删除旧数据）"
+
+#: gui/frames/upload_frame.py
+msgid "Upsert (keep old data)"
+msgstr "更新插入（保留旧数据）"
+
+#: gui/frames/upload_frame.py
+msgid "▶  Start Upload"
+msgstr "▶  开始上传"
+
+#: gui/frames/upload_frame.py
+msgid "Upload Log"
+msgstr "上传日志"
+
+#: gui/frames/upload_frame.py
+msgid "Select Upload Excel"
+msgstr "选择上传 Excel"
+
+#: gui/frames/upload_frame.py
+msgid "No File"
+msgstr "未选择文件"
+
+#: gui/frames/upload_frame.py
+msgid "Please select an Excel file to upload."
+msgstr "请先选择要上传的 Excel 文件。"
+
+#: gui/frames/upload_frame.py
+msgid "Connecting to HANA..."
+msgstr "连接 HANA 中..."
+
+#: gui/frames/upload_frame.py
+msgid "Uploading..."
+msgstr "上传中..."
+
+#: gui/frames/upload_frame.py
+#, python-brace-format
+msgid "Inserted {inserted} | Updated {updated} | Skipped {skipped} | Errors {errors}"
+msgstr "插入 {inserted} | 更新 {updated} | 跳过 {skipped} | 错误 {errors}"
+
+#: gui/frames/upload_frame.py
+msgid "Upload done ✓"
+msgstr "上传完成 ✓"
+
+#: gui/frames/upload_frame.py
+msgid "Upload Done"
+msgstr "上传完成"
+
+#: gui/frames/upload_frame.py
+msgid "Upload Failed"
+msgstr "上传失败"
+
+#: gui/frames/config_frame.py
+msgid "Config"
+msgstr "配置"
+
+#: gui/frames/config_frame.py
+msgid "Save Config"
+msgstr "保存配置"
+
+#: gui/frames/config_frame.py
+msgid "Proc Params"
+msgstr "处理参数"
+
+#: gui/frames/config_frame.py
+msgid "AI Models"
+msgstr "AI 模型"
+
+#: gui/frames/config_frame.py
+msgid "OData Verify"
+msgstr "OData 验证"
+
+#: gui/frames/config_frame.py
+msgid "Auth URL"
+msgstr "认证 URL"
+
+#: gui/frames/config_frame.py
+msgid "Client ID"
+msgstr "客户端 ID"
+
+#: gui/frames/config_frame.py
+msgid "Client Secret"
+msgstr "客户端密钥"
+
+#: gui/frames/config_frame.py
+msgid "Base URL"
+msgstr "基础 URL"
+
+#: gui/frames/config_frame.py
+msgid "Resource Group"
+msgstr "资源组"
+
+#: gui/frames/config_frame.py
+msgid "Address"
+msgstr "地址"
+
+#: gui/frames/config_frame.py
+msgid "Port"
+msgstr "端口"
+
+#: gui/frames/config_frame.py
+msgid "User"
+msgstr "用户"
+
+#: gui/frames/config_frame.py
+msgid "Password"
+msgstr "密码"
+
+#: gui/frames/config_frame.py
+msgid "Schema"
+msgstr "Schema"
+
+#: gui/frames/config_frame.py
+msgid "Schema (Cust)"
+msgstr "Schema（自定义）"
+
+#: gui/frames/config_frame.py
+msgid "LLM Batch Size"
+msgstr "LLM 批次大小"
+
+#: gui/frames/config_frame.py
+msgid "LLM Max Workers"
+msgstr "LLM 最大线程数"
+
+#: gui/frames/config_frame.py
+msgid "File Max Workers"
+msgstr "文件最大线程数"
+
+#: gui/frames/config_frame.py
+msgid "CF Threshold"
+msgstr "自定义字段阈值"
+
+#: gui/frames/config_frame.py
+msgid "Upload Mode"
+msgstr "上传模式"
+
+#: gui/frames/config_frame.py
+msgid "Match Number"
+msgstr "匹配数量"
+
+#: gui/frames/config_frame.py
+msgid "Verify Flag"
+msgstr "验证标志"
+
+#: gui/frames/config_frame.py
+msgid "OData URL"
+msgstr "OData URL"
+
+#: gui/frames/config_frame.py
+msgid "OData User"
+msgstr "OData 用户"
+
+#: gui/frames/config_frame.py
+msgid "OData Password"
+msgstr "OData 密码"
+
+#: gui/frames/config_frame.py
+msgid "Claude LLM Model"
+msgstr "Claude LLM 模型"
+
+#: gui/frames/config_frame.py
+msgid "Gemini LLM Model"
+msgstr "Gemini LLM 模型"
+
+#: gui/frames/config_frame.py
+msgid "OpenAI LLM Model"
+msgstr "OpenAI LLM 模型"
+
+#: gui/frames/config_frame.py
+msgid "Embedding Model"
+msgstr "嵌入模型"
+
+#: gui/frames/config_frame.py
+msgid "Error"
+msgstr "错误"
+
+#: gui/frames/config_frame.py
+#, python-brace-format
+msgid ".env file not found: {}"
+msgstr ".env 文件不存在: {}"
+
+#: gui/frames/config_frame.py
+#, python-brace-format
+msgid "Saved {} items ✓"
+msgstr "已保存 {} 项 ✓"

@@ -7,6 +7,7 @@ import queue
 
 import customtkinter as ctk
 
+from utils.i18n import _
 from gui.frames.process_frame import ProcessFrame
 from gui.frames.upload_frame import UploadFrame
 from gui.frames.config_frame import ConfigFrame
@@ -41,7 +42,7 @@ class App(ctk.CTk):
         self.config_manager = config_manager
         self.language = language
 
-        self.title("SAP IF Design Generation Tool")
+        self.title(_("SAP IF Design Generation Tool"))
         self.geometry("1150x720")
         self.minsize(900, 600)
 
@@ -73,9 +74,9 @@ class App(ctk.CTk):
 
         self._nav_buttons: dict[str, ctk.CTkButton] = {}
         nav_items = [
-            ("process", "处理"),
-            ("upload",  "知识库上传"),
-            ("config",  "配置"),
+            ("process", _("Process")),
+            ("upload",  _("KB Upload")),
+            ("config",  _("Config")),
         ]
         for i, (key, label) in enumerate(nav_items, start=1):
             btn = ctk.CTkButton(

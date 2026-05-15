@@ -11,6 +11,7 @@ from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 
+from utils.i18n import _
 from core.config import ConfigurationManager
 from core.consts import AIProvider, Languages, Directories, FileExtensions
 
@@ -51,7 +52,7 @@ class ProcessFrame(ctk.CTkFrame):
         self.grid_rowconfigure(1, weight=1)
 
         # ── Top: title
-        title = ctk.CTkLabel(self, text="接口文件处理",
+        title = ctk.CTkLabel(self, text=_("IF File Processing"),
                              font=ctk.CTkFont(size=18, weight="bold"))
         title.grid(row=0, column=0, columnspan=2, sticky="w", padx=20, pady=(16, 8))
 
@@ -61,7 +62,7 @@ class ProcessFrame(ctk.CTkFrame):
         self._file_panel.grid_columnconfigure(0, weight=1)
         self._file_panel.grid_rowconfigure(1, weight=1)
 
-        ctk.CTkLabel(self._file_panel, text="待处理文件",
+        ctk.CTkLabel(self._file_panel, text=_("Pending Files"),
                      font=ctk.CTkFont(weight="bold")).grid(
             row=0, column=0, columnspan=2, sticky="w", padx=12, pady=(10, 4))
 
@@ -71,11 +72,11 @@ class ProcessFrame(ctk.CTkFrame):
 
         btn_row = ctk.CTkFrame(self._file_panel, fg_color="transparent")
         btn_row.grid(row=2, column=0, columnspan=2, sticky="ew", padx=8, pady=(4, 10))
-        ctk.CTkButton(btn_row, text="+ 添加文件", width=110,
+        ctk.CTkButton(btn_row, text=_("+ Add Files"), width=110,
                       command=self._add_files).pack(side="left", padx=(0, 6))
-        ctk.CTkButton(btn_row, text="打开目录", width=90, fg_color="transparent",
+        ctk.CTkButton(btn_row, text=_("Open Dir"), width=90, fg_color="transparent",
                       border_width=1, command=self._open_input_dir).pack(side="left")
-        ctk.CTkButton(btn_row, text="刷新", width=60, fg_color="transparent",
+        ctk.CTkButton(btn_row, text=_("Refresh"), width=60, fg_color="transparent",
                       border_width=1, command=self._refresh_file_list).pack(side="right")
 
         # ── Right: options panel
@@ -83,18 +84,18 @@ class ProcessFrame(ctk.CTkFrame):
         self._opt_panel.grid(row=1, column=1, sticky="nsew", padx=(8, 16), pady=8)
         self._opt_panel.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(self._opt_panel, text="处理选项",
+        ctk.CTkLabel(self._opt_panel, text=_("Options"),
                      font=ctk.CTkFont(weight="bold")).grid(
             row=0, column=0, sticky="w", padx=12, pady=(10, 6))
 
-        ctk.CTkLabel(self._opt_panel, text="语言").grid(
+        ctk.CTkLabel(self._opt_panel, text=_("Language")).grid(
             row=1, column=0, sticky="w", padx=12, pady=(4, 0))
         self._lang_var = ctk.StringVar(value=self.language)
         self._lang_menu = ctk.CTkOptionMenu(
             self._opt_panel, values=Languages.SUPPORTED, variable=self._lang_var)
         self._lang_menu.grid(row=2, column=0, sticky="ew", padx=12, pady=(0, 8))
 
-        ctk.CTkLabel(self._opt_panel, text="AI 提供商").grid(
+        ctk.CTkLabel(self._opt_panel, text=_("AI Provider")).grid(
             row=3, column=0, sticky="w", padx=12, pady=(4, 0))
         self._provider_var = ctk.StringVar(
             value=self.config_manager.get_model_config()["default_provider"])
@@ -104,20 +105,20 @@ class ProcessFrame(ctk.CTkFrame):
         self._provider_menu.grid(row=4, column=0, sticky="ew", padx=12, pady=(0, 16))
 
         self._start_btn = ctk.CTkButton(
-            self._opt_panel, text="▶  开始处理",
+            self._opt_panel, text=_("▶  Start"),
             font=ctk.CTkFont(size=14, weight="bold"),
             height=40, command=self._start_processing)
         self._start_btn.grid(row=5, column=0, sticky="ew", padx=12, pady=4)
 
         self._stop_btn = ctk.CTkButton(
-            self._opt_panel, text="■  停止",
+            self._opt_panel, text=_("■  Stop"),
             fg_color="#b03030", hover_color="#8b1a1a",
             height=36, command=self._request_stop, state="disabled")
         self._stop_btn.grid(row=6, column=0, sticky="ew", padx=12, pady=4)
 
         # Status label
         self._status_label = ctk.CTkLabel(
-            self._opt_panel, text="就绪", text_color="gray",
+            self._opt_panel, text=_("Ready"), text_color="gray",
             wraplength=150, justify="left")
         self._status_label.grid(row=7, column=0, sticky="w", padx=12, pady=(8, 0))
 
@@ -131,9 +132,9 @@ class ProcessFrame(ctk.CTkFrame):
 
         log_header = ctk.CTkFrame(log_frame, fg_color="transparent")
         log_header.grid(row=0, column=0, sticky="ew", padx=8, pady=(6, 2))
-        ctk.CTkLabel(log_header, text="实时日志",
+        ctk.CTkLabel(log_header, text=_("Live Log"),
                      font=ctk.CTkFont(weight="bold")).pack(side="left")
-        ctk.CTkButton(log_header, text="清空", width=50, height=24,
+        ctk.CTkButton(log_header, text=_("Clear"), width=50, height=24,
                       fg_color="transparent", border_width=1,
                       command=self._clear_log).pack(side="right")
 
@@ -148,7 +149,7 @@ class ProcessFrame(ctk.CTkFrame):
 
         # Token stats bar
         self._token_label = ctk.CTkLabel(
-            log_frame, text="Token: —",
+            log_frame, text=_("Token: —"),
             font=ctk.CTkFont(size=11), text_color="gray")
         self._token_label.grid(row=3, column=0, sticky="w", padx=10, pady=(0, 6))
 
@@ -163,7 +164,7 @@ class ProcessFrame(ctk.CTkFrame):
         files += sorted(self._input_dir.glob("*.xls"))
 
         if not files:
-            ctk.CTkLabel(self._file_scroll, text="暂无文件",
+            ctk.CTkLabel(self._file_scroll, text=_("No files"),
                          text_color="gray").grid(row=0, column=0, pady=8)
             return
 
@@ -174,15 +175,15 @@ class ProcessFrame(ctk.CTkFrame):
 
             ctk.CTkLabel(row_frame, text=fp.name, anchor="w").grid(
                 row=0, column=0, sticky="ew", padx=(4, 8))
-            ctk.CTkButton(row_frame, text="删除", width=48, height=24,
+            ctk.CTkButton(row_frame, text=_("Delete"), width=48, height=24,
                           fg_color="#7a2222", hover_color="#5a1111",
                           command=lambda p=fp: self._delete_file(p)).grid(
                 row=0, column=1)
 
     def _add_files(self):
         paths = filedialog.askopenfilenames(
-            title="选择 Excel 文件",
-            filetypes=[("Excel 文件", "*.xlsx *.xls"), ("所有文件", "*.*")])
+            title=_("Select Excel Files"),
+            filetypes=[(_("Excel Files"), "*.xlsx *.xls"), (_("All Files"), "*.*")])
         if not paths:
             return
         self._input_dir.mkdir(parents=True, exist_ok=True)
@@ -191,7 +192,7 @@ class ProcessFrame(ctk.CTkFrame):
         self._refresh_file_list()
 
     def _delete_file(self, path: Path):
-        if messagebox.askyesno("确认删除", f"删除文件 {path.name}？"):
+        if messagebox.askyesno(_("Confirm Delete"), _("Delete file {}?").format(path.name)):
             path.unlink(missing_ok=True)
             self._refresh_file_list()
 
@@ -220,11 +221,11 @@ class ProcessFrame(ctk.CTkFrame):
         files = list(self._input_dir.glob(f"*{FileExtensions.XLSX}"))
         files += list(self._input_dir.glob("*.xls"))
         if not files:
-            messagebox.showwarning("无文件", "请先添加待处理的 Excel 文件。")
+            messagebox.showwarning(_("No Files"), _("Please add Excel files first."))
             return
 
         self._set_processing(True)
-        self._status_label.configure(text="处理中...", text_color="#4fc3f7")
+        self._status_label.configure(text=_("Processing..."), text_color="#4fc3f7")
         self._progress.set(0)
 
         self._stop_event = threading.Event()
@@ -235,7 +236,7 @@ class ProcessFrame(ctk.CTkFrame):
     def _request_stop(self):
         if hasattr(self, "_stop_event"):
             self._stop_event.set()
-        self._status_label.configure(text="正在停止...", text_color="orange")
+        self._status_label.configure(text=_("Stopping..."), text_color="orange")
 
     def _run_all(self):
         from main import (
@@ -260,9 +261,9 @@ class ProcessFrame(ctk.CTkFrame):
 
             for fp in files:
                 if self._stop_event.is_set():
-                    self.log_queue.put("__STATUS__ 已停止")
+                    self.log_queue.put("__STATUS__ " + _("Stopped"))
                     break
-                self.log_queue.put(f"__STATUS__ 处理: {fp.name}")
+                self.log_queue.put("__STATUS__ " + _("Processing: {}").format(fp.name))
                 process_single_excel_file(
                     fp, data_dir, self.config_manager,
                     self._lang_var.get(), self._provider_var.get(),
@@ -306,11 +307,11 @@ class ProcessFrame(ctk.CTkFrame):
         self._refresh_file_list()
         self._update_token_stats()
         if success:
-            self._status_label.configure(text="处理完成 ✓", text_color="#81c784")
-            messagebox.showinfo("完成", "所有文件处理完毕，输出已保存到 data/excel_output/")
+            self._status_label.configure(text=_("Done ✓"), text_color="#81c784")
+            messagebox.showinfo(_("Done"), _("All files processed. Output saved to data/excel_output/"))
         else:
-            self._status_label.configure(text=f"错误: {error[:40]}", text_color="#ef9a9a")
-            messagebox.showerror("处理失败", str(error))
+            self._status_label.configure(text=_("Error: {}").format(error[:40]), text_color="#ef9a9a")
+            messagebox.showerror(_("Processing Failed"), str(error))
 
     # ── Log helpers ──────────────────────────────────────────────────────────
 
@@ -333,9 +334,11 @@ class ProcessFrame(ctk.CTkFrame):
             data = _tracker.get_usage()["usage"]
             total = data["llm_input_tokens"] + data["llm_output_tokens"] + data["embedding_tokens"]
             self._token_label.configure(
-                text=(f"Token:  Embed {data['embedding_tokens']:,} | "
-                      f"LLM In {data['llm_input_tokens']:,} | "
-                      f"LLM Out {data['llm_output_tokens']:,} | "
-                      f"Total {total:,}"))
+                text=(_("Token:  Embed {embed} | LLM In {in_} | LLM Out {out} | Total {total}").format(
+                    embed=f"{data['embedding_tokens']:,}",
+                    in_=f"{data['llm_input_tokens']:,}",
+                    out=f"{data['llm_output_tokens']:,}",
+                    total=f"{total:,}",
+                )))
         except Exception:
             pass

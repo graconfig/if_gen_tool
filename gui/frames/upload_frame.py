@@ -9,6 +9,7 @@ from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 
+from utils.i18n import _
 from core.config import ConfigurationManager
 
 
@@ -32,7 +33,7 @@ class UploadFrame(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(3, weight=1)
 
-        ctk.CTkLabel(self, text="知识库上传",
+        ctk.CTkLabel(self, text=_("KB Upload"),
                      font=ctk.CTkFont(size=18, weight="bold")).grid(
             row=0, column=0, sticky="w", padx=20, pady=(16, 8))
 
@@ -41,18 +42,18 @@ class UploadFrame(ctk.CTkFrame):
         card.grid(row=1, column=0, sticky="ew", padx=16, pady=4)
         card.grid_columnconfigure(1, weight=1)
 
-        ctk.CTkLabel(card, text="上传文件").grid(
+        ctk.CTkLabel(card, text=_("Upload File")).grid(
             row=0, column=0, padx=(12, 6), pady=10, sticky="w")
-        self._file_label = ctk.CTkLabel(card, text="未选择", text_color="gray",
+        self._file_label = ctk.CTkLabel(card, text=_("Not selected"), text_color="gray",
                                         anchor="w")
         self._file_label.grid(row=0, column=1, sticky="ew", padx=4)
-        ctk.CTkButton(card, text="选择文件", width=90,
+        ctk.CTkButton(card, text=_("Browse"), width=90,
                       command=self._pick_file).grid(
             row=0, column=2, padx=(4, 12), pady=10)
 
-        ctk.CTkLabel(card, text="Sheet 名称\n(留空自动)").grid(
+        ctk.CTkLabel(card, text=_("Sheet Name\n(auto if blank)")).grid(
             row=1, column=0, padx=(12, 6), pady=(4, 10), sticky="w")
-        self._sheet_entry = ctk.CTkEntry(card, placeholder_text="正本（留空自动检测）")
+        self._sheet_entry = ctk.CTkEntry(card, placeholder_text=_("正本 (auto-detect)"))
         self._sheet_entry.grid(row=1, column=1, columnspan=2, sticky="ew",
                                padx=(4, 12), pady=(4, 10))
 
@@ -60,15 +61,17 @@ class UploadFrame(ctk.CTkFrame):
         mode_card = ctk.CTkFrame(self)
         mode_card.grid(row=2, column=0, sticky="ew", padx=16, pady=4)
 
-        ctk.CTkLabel(mode_card, text="上传模式",
+        ctk.CTkLabel(mode_card, text=_("Upload Mode"),
                      font=ctk.CTkFont(weight="bold")).grid(
             row=0, column=0, columnspan=3, sticky="w", padx=12, pady=(10, 4))
 
         import os
         current_mode = os.getenv("UPLOAD_MODE", "overwrite")
         self._mode_var = ctk.StringVar(value=current_mode)
-        for i, (val, label) in enumerate([("overwrite", "覆盖（删除旧数据）"),
-                                          ("upsert", "更新插入（保留旧数据）")]):
+        for i, (val, label) in enumerate([
+            ("overwrite", _("Overwrite (delete old data)")),
+            ("upsert",    _("Upsert (keep old data)")),
+        ]):
             ctk.CTkRadioButton(mode_card, text=label, variable=self._mode_var,
                                value=val).grid(row=1, column=i, padx=12, pady=(0, 10),
                                                sticky="w")
@@ -78,7 +81,7 @@ class UploadFrame(ctk.CTkFrame):
         action_row.grid(row=2, column=0, sticky="e", padx=16, pady=8)
 
         self._upload_btn = ctk.CTkButton(
-            action_row, text="▶  开始上传",
+            action_row, text=_("▶  Start Upload"),
             font=ctk.CTkFont(size=14, weight="bold"),
             height=40, width=140, command=self._start_upload)
         self._upload_btn.pack(side="right")
@@ -95,9 +98,9 @@ class UploadFrame(ctk.CTkFrame):
 
         hdr = ctk.CTkFrame(log_frame, fg_color="transparent")
         hdr.grid(row=0, column=0, sticky="ew", padx=8, pady=(6, 2))
-        ctk.CTkLabel(hdr, text="上传日志",
+        ctk.CTkLabel(hdr, text=_("Upload Log"),
                      font=ctk.CTkFont(weight="bold")).pack(side="left")
-        ctk.CTkButton(hdr, text="清空", width=50, height=24,
+        ctk.CTkButton(hdr, text=_("Clear"), width=50, height=24,
                       fg_color="transparent", border_width=1,
                       command=self._clear_log).pack(side="right")
 
@@ -113,20 +116,19 @@ class UploadFrame(ctk.CTkFrame):
 
     def _pick_file(self):
         path = filedialog.askopenfilename(
-            title="选择上传 Excel",
-            filetypes=[("Excel 文件", "*.xlsx *.xls"), ("所有文件", "*.*")])
+            title=_("Select Upload Excel"),
+            filetypes=[(_("Excel Files"), "*.xlsx *.xls"), (_("All Files"), "*.*")])
         if path:
             self._upload_path = Path(path)
-            name = self._upload_path.name
-            self._file_label.configure(text=name, text_color="white")
+            self._file_label.configure(text=self._upload_path.name, text_color="white")
 
     def _start_upload(self):
         if not self._upload_path or not self._upload_path.exists():
-            messagebox.showwarning("未选择文件", "请先选择要上传的 Excel 文件。")
+            messagebox.showwarning(_("No File"), _("Please select an Excel file to upload."))
             return
 
         self._upload_btn.configure(state="disabled")
-        self._status_label.configure(text="连接 HANA 中...", text_color="#4fc3f7")
+        self._status_label.configure(text=_("Connecting to HANA..."), text_color="#4fc3f7")
         self._stats_label.configure(text="")
 
         import os
@@ -148,7 +150,7 @@ class UploadFrame(ctk.CTkFrame):
         try:
             hana = HANADBClient()
             hana.connect()
-            self.log_queue.put("__STATUS__ 上传中...")
+            self.log_queue.put("__STATUS__ " + _("Uploading..."))
             stats = hana.upload_custfields_from_excel(
                 excel_path=str(self._upload_path),
                 sheet_name=sheet,
@@ -172,8 +174,8 @@ class UploadFrame(ctk.CTkFrame):
                     err = msg[9:]
                     self._upload_btn.configure(state="normal")
                     self._status_label.configure(
-                        text=f"错误: {err[:60]}", text_color="#ef9a9a")
-                    messagebox.showerror("上传失败", str(err))
+                        text=_("Error: {}").format(err[:60]), text_color="#ef9a9a")
+                    messagebox.showerror(_("Upload Failed"), str(err))
                     return
                 elif msg.startswith("__STATUS__"):
                     self._status_label.configure(
@@ -194,11 +196,11 @@ class UploadFrame(ctk.CTkFrame):
         updated = stats.get("updated", 0)
         skipped = stats.get("skipped", 0)
         errors = stats.get("errors", 0)
-        summary = (f"插入 {inserted} | 更新 {updated} | "
-                   f"跳过 {skipped} | 错误 {errors}")
+        summary = _("Inserted {inserted} | Updated {updated} | Skipped {skipped} | Errors {errors}").format(
+            inserted=inserted, updated=updated, skipped=skipped, errors=errors)
         self._stats_label.configure(text=summary, text_color="#81c784")
-        self._status_label.configure(text="上传完成 ✓", text_color="#81c784")
-        messagebox.showinfo("上传完成", summary)
+        self._status_label.configure(text=_("Upload done ✓"), text_color="#81c784")
+        messagebox.showinfo(_("Upload Done"), summary)
 
     def _append_log(self, msg: str):
         self._log_box.configure(state="normal")

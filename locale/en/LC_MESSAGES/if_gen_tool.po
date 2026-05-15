@@ -605,3 +605,372 @@ msgstr "❌ Failed: {}"
 msgid "Start Time: {}"
 msgstr "[Project Start Time]: {}"
 
+
+# ── GUI strings ──────────────────────────────────────────────────────────────
+
+#: gui/app.py
+msgid "SAP IF Design Generation Tool"
+msgstr "SAP IF Design Generation Tool"
+
+#: gui/app.py
+msgid "Process"
+msgstr "Process"
+
+#: gui/app.py
+msgid "KB Upload"
+msgstr "KB Upload"
+
+#: gui/app.py
+msgid "Config"
+msgstr "Config"
+
+#: gui/frames/process_frame.py
+msgid "IF File Processing"
+msgstr "IF File Processing"
+
+#: gui/frames/process_frame.py
+msgid "Pending Files"
+msgstr "Pending Files"
+
+#: gui/frames/process_frame.py
+msgid "+ Add Files"
+msgstr "+ Add Files"
+
+#: gui/frames/process_frame.py
+msgid "Open Dir"
+msgstr "Open Dir"
+
+#: gui/frames/process_frame.py
+msgid "Refresh"
+msgstr "Refresh"
+
+#: gui/frames/process_frame.py
+msgid "Options"
+msgstr "Options"
+
+#: gui/frames/process_frame.py
+msgid "Language"
+msgstr "Language"
+
+#: gui/frames/process_frame.py
+msgid "AI Provider"
+msgstr "AI Provider"
+
+#: gui/frames/process_frame.py
+msgid "▶  Start"
+msgstr "▶  Start"
+
+#: gui/frames/process_frame.py
+msgid "■  Stop"
+msgstr "■  Stop"
+
+#: gui/frames/process_frame.py
+msgid "Ready"
+msgstr "Ready"
+
+#: gui/frames/process_frame.py
+msgid "Live Log"
+msgstr "Live Log"
+
+#: gui/frames/process_frame.py
+msgid "Clear"
+msgstr "Clear"
+
+#: gui/frames/process_frame.py
+msgid "Token: —"
+msgstr "Token: —"
+
+#: gui/frames/process_frame.py
+msgid "No files"
+msgstr "No files"
+
+#: gui/frames/process_frame.py
+msgid "Delete"
+msgstr "Delete"
+
+#: gui/frames/process_frame.py
+msgid "Select Excel Files"
+msgstr "Select Excel Files"
+
+#: gui/frames/process_frame.py
+msgid "Excel Files"
+msgstr "Excel Files"
+
+#: gui/frames/process_frame.py
+msgid "All Files"
+msgstr "All Files"
+
+#: gui/frames/process_frame.py
+msgid "Confirm Delete"
+msgstr "Confirm Delete"
+
+#: gui/frames/process_frame.py
+#, python-brace-format
+msgid "Delete file {}?"
+msgstr "Delete file {}?"
+
+#: gui/frames/process_frame.py
+msgid "No Files"
+msgstr "No Files"
+
+#: gui/frames/process_frame.py
+msgid "Please add Excel files first."
+msgstr "Please add Excel files first."
+
+#: gui/frames/process_frame.py
+msgid "Processing..."
+msgstr "Processing..."
+
+#: gui/frames/process_frame.py
+msgid "Stopping..."
+msgstr "Stopping..."
+
+#: gui/frames/process_frame.py
+msgid "Stopped"
+msgstr "Stopped"
+
+#: gui/frames/process_frame.py
+#, python-brace-format
+msgid "Processing: {}"
+msgstr "Processing: {}"
+
+#: gui/frames/process_frame.py
+msgid "Done ✓"
+msgstr "Done ✓"
+
+#: gui/frames/process_frame.py
+msgid "Done"
+msgstr "Done"
+
+#: gui/frames/process_frame.py
+msgid "All files processed. Output saved to data/excel_output/"
+msgstr "All files processed. Output saved to data/excel_output/"
+
+#: gui/frames/process_frame.py
+#, python-brace-format
+msgid "Error: {}"
+msgstr "Error: {}"
+
+#: gui/frames/process_frame.py
+msgid "Processing Failed"
+msgstr "Processing Failed"
+
+#: gui/frames/process_frame.py
+#, python-brace-format
+msgid "Token:  Embed {embed} | LLM In {in_} | LLM Out {out} | Total {total}"
+msgstr "Token:  Embed {embed} | LLM In {in_} | LLM Out {out} | Total {total}"
+
+#: gui/frames/upload_frame.py
+msgid "KB Upload"
+msgstr "KB Upload"
+
+#: gui/frames/upload_frame.py
+msgid "Upload File"
+msgstr "Upload File"
+
+#: gui/frames/upload_frame.py
+msgid "Not selected"
+msgstr "Not selected"
+
+#: gui/frames/upload_frame.py
+msgid "Browse"
+msgstr "Browse"
+
+#: gui/frames/upload_frame.py
+msgid "Sheet Name\n(auto if blank)"
+msgstr "Sheet Name\n(auto if blank)"
+
+#: gui/frames/upload_frame.py
+msgid "正本 (auto-detect)"
+msgstr "正本 (auto-detect)"
+
+#: gui/frames/upload_frame.py
+msgid "Upload Mode"
+msgstr "Upload Mode"
+
+#: gui/frames/upload_frame.py
+msgid "Overwrite (delete old data)"
+msgstr "Overwrite (delete old data)"
+
+#: gui/frames/upload_frame.py
+msgid "Upsert (keep old data)"
+msgstr "Upsert (keep old data)"
+
+#: gui/frames/upload_frame.py
+msgid "▶  Start Upload"
+msgstr "▶  Start Upload"
+
+#: gui/frames/upload_frame.py
+msgid "Upload Log"
+msgstr "Upload Log"
+
+#: gui/frames/upload_frame.py
+msgid "Select Upload Excel"
+msgstr "Select Upload Excel"
+
+#: gui/frames/upload_frame.py
+msgid "No File"
+msgstr "No File"
+
+#: gui/frames/upload_frame.py
+msgid "Please select an Excel file to upload."
+msgstr "Please select an Excel file to upload."
+
+#: gui/frames/upload_frame.py
+msgid "Connecting to HANA..."
+msgstr "Connecting to HANA..."
+
+#: gui/frames/upload_frame.py
+msgid "Uploading..."
+msgstr "Uploading..."
+
+#: gui/frames/upload_frame.py
+#, python-brace-format
+msgid "Inserted {inserted} | Updated {updated} | Skipped {skipped} | Errors {errors}"
+msgstr "Inserted {inserted} | Updated {updated} | Skipped {skipped} | Errors {errors}"
+
+#: gui/frames/upload_frame.py
+msgid "Upload done ✓"
+msgstr "Upload done ✓"
+
+#: gui/frames/upload_frame.py
+msgid "Upload Done"
+msgstr "Upload Done"
+
+#: gui/frames/upload_frame.py
+msgid "Upload Failed"
+msgstr "Upload Failed"
+
+#: gui/frames/config_frame.py
+msgid "Config"
+msgstr "Config"
+
+#: gui/frames/config_frame.py
+msgid "Save Config"
+msgstr "Save Config"
+
+#: gui/frames/config_frame.py
+msgid "Proc Params"
+msgstr "Proc Params"
+
+#: gui/frames/config_frame.py
+msgid "AI Models"
+msgstr "AI Models"
+
+#: gui/frames/config_frame.py
+msgid "OData Verify"
+msgstr "OData Verify"
+
+#: gui/frames/config_frame.py
+msgid "Auth URL"
+msgstr "Auth URL"
+
+#: gui/frames/config_frame.py
+msgid "Client ID"
+msgstr "Client ID"
+
+#: gui/frames/config_frame.py
+msgid "Client Secret"
+msgstr "Client Secret"
+
+#: gui/frames/config_frame.py
+msgid "Base URL"
+msgstr "Base URL"
+
+#: gui/frames/config_frame.py
+msgid "Resource Group"
+msgstr "Resource Group"
+
+#: gui/frames/config_frame.py
+msgid "Address"
+msgstr "Address"
+
+#: gui/frames/config_frame.py
+msgid "Port"
+msgstr "Port"
+
+#: gui/frames/config_frame.py
+msgid "User"
+msgstr "User"
+
+#: gui/frames/config_frame.py
+msgid "Password"
+msgstr "Password"
+
+#: gui/frames/config_frame.py
+msgid "Schema"
+msgstr "Schema"
+
+#: gui/frames/config_frame.py
+msgid "Schema (Cust)"
+msgstr "Schema (Cust)"
+
+#: gui/frames/config_frame.py
+msgid "LLM Batch Size"
+msgstr "LLM Batch Size"
+
+#: gui/frames/config_frame.py
+msgid "LLM Max Workers"
+msgstr "LLM Max Workers"
+
+#: gui/frames/config_frame.py
+msgid "File Max Workers"
+msgstr "File Max Workers"
+
+#: gui/frames/config_frame.py
+msgid "CF Threshold"
+msgstr "CF Threshold"
+
+#: gui/frames/config_frame.py
+msgid "Upload Mode"
+msgstr "Upload Mode"
+
+#: gui/frames/config_frame.py
+msgid "Match Number"
+msgstr "Match Number"
+
+#: gui/frames/config_frame.py
+msgid "Verify Flag"
+msgstr "Verify Flag"
+
+#: gui/frames/config_frame.py
+msgid "OData URL"
+msgstr "OData URL"
+
+#: gui/frames/config_frame.py
+msgid "OData User"
+msgstr "OData User"
+
+#: gui/frames/config_frame.py
+msgid "OData Password"
+msgstr "OData Password"
+
+#: gui/frames/config_frame.py
+msgid "Claude LLM Model"
+msgstr "Claude LLM Model"
+
+#: gui/frames/config_frame.py
+msgid "Gemini LLM Model"
+msgstr "Gemini LLM Model"
+
+#: gui/frames/config_frame.py
+msgid "OpenAI LLM Model"
+msgstr "OpenAI LLM Model"
+
+#: gui/frames/config_frame.py
+msgid "Embedding Model"
+msgstr "Embedding Model"
+
+#: gui/frames/config_frame.py
+msgid "Error"
+msgstr "Error"
+
+#: gui/frames/config_frame.py
+#, python-brace-format
+msgid ".env file not found: {}"
+msgstr ".env file not found: {}"
+
+#: gui/frames/config_frame.py
+#, python-brace-format
+msgid "Saved {} items ✓"
+msgstr "Saved {} items ✓"

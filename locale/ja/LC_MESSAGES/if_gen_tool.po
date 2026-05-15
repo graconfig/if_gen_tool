@@ -572,3 +572,377 @@ msgstr "Excelファイル: {}"
 msgid "Start Time: {}"
 msgstr "開始時刻: {}"
 
+
+# ── GUI strings ──────────────────────────────────────────────────────────────
+
+#: gui/app.py
+msgid "SAP IF Design Generation Tool"
+msgstr "SAP IF設計生成ツール"
+
+#: gui/app.py
+msgid "Process"
+msgstr "処理"
+
+#: gui/app.py
+msgid "KB Upload"
+msgstr "ナレッジベースアップロード"
+
+#: gui/app.py
+msgid "Config"
+msgstr "設定"
+
+#: gui/frames/process_frame.py
+msgid "IF File Processing"
+msgstr "IFファイル処理"
+
+#: gui/frames/process_frame.py
+msgid "Pending Files"
+msgstr "処理待ちファイル"
+
+#: gui/frames/process_frame.py
+msgid "+ Add Files"
+msgstr "+ ファイル追加"
+
+#: gui/frames/process_frame.py
+msgid "Open Dir"
+msgstr "フォルダを開く"
+
+#: gui/frames/process_frame.py
+msgid "Refresh"
+msgstr "更新"
+
+#: gui/frames/process_frame.py
+msgid "Options"
+msgstr "処理オプション"
+
+#: gui/frames/process_frame.py
+msgid "Language"
+msgstr "言語"
+
+#: gui/frames/process_frame.py
+msgid "AI Provider"
+msgstr "AIプロバイダー"
+
+#: gui/frames/process_frame.py
+msgid "▶  Start"
+msgstr "▶  処理開始"
+
+#: gui/frames/process_frame.py
+msgid "■  Stop"
+msgstr "■  停止"
+
+#: gui/frames/process_frame.py
+msgid "Ready"
+msgstr "待機中"
+
+#: gui/frames/process_frame.py
+msgid "Live Log"
+msgstr "リアルタイムログ"
+
+#: gui/frames/process_frame.py
+msgid "Clear"
+msgstr "クリア"
+
+#: gui/frames/process_frame.py
+msgid "Token: —"
+msgstr "Token: —"
+
+#: gui/frames/process_frame.py
+msgid "No files"
+msgstr "ファイルなし"
+
+#: gui/frames/process_frame.py
+msgid "Delete"
+msgstr "削除"
+
+#: gui/frames/process_frame.py
+msgid "Select Excel Files"
+msgstr "Excelファイルを選択"
+
+#: gui/frames/process_frame.py
+msgid "Excel Files"
+msgstr "Excelファイル"
+
+#: gui/frames/process_frame.py
+msgid "All Files"
+msgstr "すべてのファイル"
+
+#: gui/frames/process_frame.py
+#, python-brace-format
+msgid "Confirm Delete"
+msgstr "削除の確認"
+
+#: gui/frames/process_frame.py
+#, python-brace-format
+msgid "Delete file {}?"
+msgstr "ファイル {} を削除しますか？"
+
+#: gui/frames/process_frame.py
+msgid "No Files"
+msgstr "ファイルなし"
+
+#: gui/frames/process_frame.py
+msgid "Please add Excel files first."
+msgstr "処理するExcelファイルを追加してください。"
+
+#: gui/frames/process_frame.py
+msgid "Processing..."
+msgstr "処理中..."
+
+#: gui/frames/process_frame.py
+msgid "Stopping..."
+msgstr "停止中..."
+
+#: gui/frames/process_frame.py
+msgid "Stopped"
+msgstr "停止済み"
+
+#: gui/frames/process_frame.py
+#, python-brace-format
+msgid "Processing: {}"
+msgstr "処理中: {}"
+
+#: gui/frames/process_frame.py
+msgid "Done ✓"
+msgstr "完了 ✓"
+
+#: gui/frames/process_frame.py
+msgid "Done"
+msgstr "完了"
+
+#: gui/frames/process_frame.py
+msgid "All files processed. Output saved to data/excel_output/"
+msgstr "すべてのファイルの処理が完了しました。出力先: data/excel_output/"
+
+#: gui/frames/process_frame.py
+#, python-brace-format
+msgid "Error: {}"
+msgstr "エラー: {}"
+
+#: gui/frames/process_frame.py
+msgid "Processing Failed"
+msgstr "処理に失敗しました"
+
+#: gui/frames/process_frame.py
+#, python-brace-format
+msgid "Token:  Embed {embed} | LLM In {in_} | LLM Out {out} | Total {total}"
+msgstr "Token:  埋め込み {embed} | LLM 入力 {in_} | LLM 出力 {out} | 合計 {total}"
+
+#: gui/frames/upload_frame.py
+msgid "KB Upload"
+msgstr "ナレッジベースアップロード"
+
+#: gui/frames/upload_frame.py
+msgid "Upload File"
+msgstr "アップロードファイル"
+
+#: gui/frames/upload_frame.py
+msgid "Not selected"
+msgstr "未選択"
+
+#: gui/frames/upload_frame.py
+msgid "Browse"
+msgstr "参照"
+
+#: gui/frames/upload_frame.py
+msgid "Sheet Name\n(auto if blank)"
+msgstr "シート名\n(空白で自動検出)"
+
+#: gui/frames/upload_frame.py
+msgid "正本 (auto-detect)"
+msgstr "正本（自動検出）"
+
+#: gui/frames/upload_frame.py
+msgid "Upload Mode"
+msgstr "アップロードモード"
+
+#: gui/frames/upload_frame.py
+msgid "Overwrite (delete old data)"
+msgstr "上書き（旧データ削除）"
+
+#: gui/frames/upload_frame.py
+msgid "Upsert (keep old data)"
+msgstr "アップサート（旧データ保持）"
+
+#: gui/frames/upload_frame.py
+msgid "▶  Start Upload"
+msgstr "▶  アップロード開始"
+
+#: gui/frames/upload_frame.py
+msgid "Upload Log"
+msgstr "アップロードログ"
+
+#: gui/frames/upload_frame.py
+msgid "Select Upload Excel"
+msgstr "アップロードするExcelを選択"
+
+#: gui/frames/upload_frame.py
+msgid "No File"
+msgstr "ファイル未選択"
+
+#: gui/frames/upload_frame.py
+msgid "Please select an Excel file to upload."
+msgstr "アップロードするExcelファイルを選択してください。"
+
+#: gui/frames/upload_frame.py
+msgid "Connecting to HANA..."
+msgstr "HANA接続中..."
+
+#: gui/frames/upload_frame.py
+msgid "Uploading..."
+msgstr "アップロード中..."
+
+#: gui/frames/upload_frame.py
+#, python-brace-format
+msgid "Inserted {inserted} | Updated {updated} | Skipped {skipped} | Errors {errors}"
+msgstr "挿入 {inserted} | 更新 {updated} | スキップ {skipped} | エラー {errors}"
+
+#: gui/frames/upload_frame.py
+msgid "Upload done ✓"
+msgstr "アップロード完了 ✓"
+
+#: gui/frames/upload_frame.py
+msgid "Upload Done"
+msgstr "アップロード完了"
+
+#: gui/frames/upload_frame.py
+msgid "Upload Failed"
+msgstr "アップロードに失敗しました"
+
+#: gui/frames/config_frame.py
+msgid "Config"
+msgstr "設定"
+
+#: gui/frames/config_frame.py
+msgid "Save Config"
+msgstr "設定を保存"
+
+#: gui/frames/config_frame.py
+msgid "Proc Params"
+msgstr "処理パラメーター"
+
+#: gui/frames/config_frame.py
+msgid "AI Models"
+msgstr "AIモデル"
+
+#: gui/frames/config_frame.py
+msgid "OData Verify"
+msgstr "OData検証"
+
+#: gui/frames/config_frame.py
+msgid "Auth URL"
+msgstr "認証URL"
+
+#: gui/frames/config_frame.py
+msgid "Client ID"
+msgstr "クライアントID"
+
+#: gui/frames/config_frame.py
+msgid "Client Secret"
+msgstr "クライアントシークレット"
+
+#: gui/frames/config_frame.py
+msgid "Base URL"
+msgstr "ベースURL"
+
+#: gui/frames/config_frame.py
+msgid "Resource Group"
+msgstr "リソースグループ"
+
+#: gui/frames/config_frame.py
+msgid "Address"
+msgstr "アドレス"
+
+#: gui/frames/config_frame.py
+msgid "Port"
+msgstr "ポート"
+
+#: gui/frames/config_frame.py
+msgid "User"
+msgstr "ユーザー"
+
+#: gui/frames/config_frame.py
+msgid "Password"
+msgstr "パスワード"
+
+#: gui/frames/config_frame.py
+msgid "Schema"
+msgstr "スキーマ"
+
+#: gui/frames/config_frame.py
+msgid "Schema (Cust)"
+msgstr "スキーマ（カスタム）"
+
+#: gui/frames/config_frame.py
+msgid "AI Provider"
+msgstr "AIプロバイダー"
+
+#: gui/frames/config_frame.py
+msgid "LLM Batch Size"
+msgstr "LLMバッチサイズ"
+
+#: gui/frames/config_frame.py
+msgid "LLM Max Workers"
+msgstr "LLM最大ワーカー数"
+
+#: gui/frames/config_frame.py
+msgid "File Max Workers"
+msgstr "ファイル最大ワーカー数"
+
+#: gui/frames/config_frame.py
+msgid "CF Threshold"
+msgstr "カスタムフィールドしきい値"
+
+#: gui/frames/config_frame.py
+msgid "Upload Mode"
+msgstr "アップロードモード"
+
+#: gui/frames/config_frame.py
+msgid "Match Number"
+msgstr "マッチ数"
+
+#: gui/frames/config_frame.py
+msgid "Verify Flag"
+msgstr "検証フラグ"
+
+#: gui/frames/config_frame.py
+msgid "OData URL"
+msgstr "OData URL"
+
+#: gui/frames/config_frame.py
+msgid "OData User"
+msgstr "ODataユーザー"
+
+#: gui/frames/config_frame.py
+msgid "OData Password"
+msgstr "ODataパスワード"
+
+#: gui/frames/config_frame.py
+msgid "Claude LLM Model"
+msgstr "Claude LLMモデル"
+
+#: gui/frames/config_frame.py
+msgid "Gemini LLM Model"
+msgstr "Gemini LLMモデル"
+
+#: gui/frames/config_frame.py
+msgid "OpenAI LLM Model"
+msgstr "OpenAI LLMモデル"
+
+#: gui/frames/config_frame.py
+msgid "Embedding Model"
+msgstr "埋め込みモデル"
+
+#: gui/frames/config_frame.py
+msgid "Error"
+msgstr "エラー"
+
+#: gui/frames/config_frame.py
+#, python-brace-format
+msgid ".env file not found: {}"
+msgstr ".envファイルが見つかりません: {}"
+
+#: gui/frames/config_frame.py
+#, python-brace-format
+msgid "Saved {} items ✓"
+msgstr "{} 項目を保存しました ✓"

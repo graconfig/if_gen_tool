@@ -9,12 +9,13 @@ from tkinter import messagebox
 import customtkinter as ctk
 from dotenv import set_key
 
+from utils.i18n import _
 from core.config import ConfigurationManager
 
 
 _ENV_PATH = Path(__file__).parent.parent.parent / ".env"
 
-# (env_key, label, sensitive, placeholder)
+# (env_key, label_msgid, sensitive, placeholder)
 _AI_CORE_FIELDS = [
     ("AICORE_AUTH_URL",       "Auth URL",         False, "https://..."),
     ("AICORE_CLIENT_ID",      "Client ID",        False, "sb-..."),
@@ -23,33 +24,33 @@ _AI_CORE_FIELDS = [
     ("AICORE_RESOURCE_GROUP", "Resource Group",   False, "default"),
 ]
 _HANA_FIELDS = [
-    ("HANA_ADDRESS",      "Address",         False, "xxx.hanacloud.ondemand.com"),
-    ("HANA_PORT",         "Port",            False, "443"),
-    ("HANA_USER",         "User",            False, ""),
-    ("HANA_PASSWORD",     "Password",        True,  ""),
-    ("HANA_SCHEMA",       "Schema",          False, ""),
-    ("HANA_SCHEMA_CUST",  "Schema (Cust)",   False, ""),
+    ("HANA_ADDRESS",      "Address",       False, "xxx.hanacloud.ondemand.com"),
+    ("HANA_PORT",         "Port",          False, "443"),
+    ("HANA_USER",         "User",          False, ""),
+    ("HANA_PASSWORD",     "Password",      True,  ""),
+    ("HANA_SCHEMA",       "Schema",        False, ""),
+    ("HANA_SCHEMA_CUST",  "Schema (Cust)", False, ""),
 ]
 _PROC_FIELDS = [
-    ("AI_PROVIDER",       "AI Provider",         False, "claude"),
-    ("LANGUAGE",          "Language",            False, "ja"),
-    ("LLM_BATCH_SIZE",    "LLM Batch Size",      False, "30"),
-    ("LLM_MAX_WORKERS",   "LLM Max Workers",     False, "5"),
-    ("FILE_MAX_WORKERS",  "File Max Workers",    False, "5"),
-    ("CUSTOM_FIELD_THRESHOLD", "CF Threshold",   False, "0.75"),
-    ("UPLOAD_MODE",       "Upload Mode",         False, "overwrite"),
-    ("Match_Number",      "Match Number",        False, "3"),
+    ("AI_PROVIDER",            "AI Provider",      False, "claude"),
+    ("LANGUAGE",               "Language",         False, "ja"),
+    ("LLM_BATCH_SIZE",         "LLM Batch Size",   False, "30"),
+    ("LLM_MAX_WORKERS",        "LLM Max Workers",  False, "5"),
+    ("FILE_MAX_WORKERS",       "File Max Workers", False, "5"),
+    ("CUSTOM_FIELD_THRESHOLD", "CF Threshold",     False, "0.75"),
+    ("UPLOAD_MODE",            "Upload Mode",      False, "overwrite"),
+    ("Match_Number",           "Match Number",     False, "3"),
 ]
 _VERIFY_FIELDS = [
-    ("VERIFY_FLAG",     "Verify Flag",      False, "false"),
-    ("ODATA_URL",       "OData URL",        False, "https://..."),
-    ("ODATA_USER",      "OData User",       False, ""),
-    ("ODATA_PASSWORD",  "OData Password",   True,  ""),
+    ("VERIFY_FLAG",     "Verify Flag",    False, "false"),
+    ("ODATA_URL",       "OData URL",      False, "https://..."),
+    ("ODATA_USER",      "OData User",     False, ""),
+    ("ODATA_PASSWORD",  "OData Password", True,  ""),
 ]
 _MODEL_FIELDS = [
-    ("CLAUDE_LLM_MODEL",   "Claude LLM Model",    False, "anthropic--claude-4.6-sonnet"),
-    ("GEMINI_LLM_MODEL",   "Gemini LLM Model",    False, "gemini-2.5-pro"),
-    ("OPENAI_LLM_MODEL",   "OpenAI LLM Model",    False, "gpt-4o"),
+    ("CLAUDE_LLM_MODEL",     "Claude LLM Model",  False, "anthropic--claude-4.6-sonnet"),
+    ("GEMINI_LLM_MODEL",     "Gemini LLM Model",  False, "gemini-2.5-pro"),
+    ("OPENAI_LLM_MODEL",     "OpenAI LLM Model",  False, "gpt-4o"),
     ("TEXT_EMBEDDING_MODEL", "Embedding Model",   False, "text-embedding-ada-002"),
 ]
 
@@ -71,9 +72,9 @@ class ConfigFrame(ctk.CTkFrame):
         # Title + save button row
         hdr = ctk.CTkFrame(self, fg_color="transparent")
         hdr.grid(row=0, column=0, sticky="ew", padx=20, pady=(16, 8))
-        ctk.CTkLabel(hdr, text="配置",
+        ctk.CTkLabel(hdr, text=_("Config"),
                      font=ctk.CTkFont(size=18, weight="bold")).pack(side="left")
-        ctk.CTkButton(hdr, text="保存配置", width=110, height=32,
+        ctk.CTkButton(hdr, text=_("Save Config"), width=110, height=32,
                       command=self._save).pack(side="right")
         self._save_label = ctk.CTkLabel(hdr, text="", text_color="gray")
         self._save_label.pack(side="right", padx=(0, 10))
@@ -85,11 +86,11 @@ class ConfigFrame(ctk.CTkFrame):
         scroll.grid_columnconfigure(1, weight=1)
 
         groups = [
-            ("SAP AI Core", _AI_CORE_FIELDS),
-            ("HANA Cloud",  _HANA_FIELDS),
-            ("处理参数",     _PROC_FIELDS),
-            ("AI 模型",      _MODEL_FIELDS),
-            ("OData 验证",   _VERIFY_FIELDS),
+            ("SAP AI Core",  _AI_CORE_FIELDS),
+            ("HANA Cloud",   _HANA_FIELDS),
+            (_("Proc Params"), _PROC_FIELDS),
+            (_("AI Models"),   _MODEL_FIELDS),
+            (_("OData Verify"), _VERIFY_FIELDS),
         ]
 
         row = 0
@@ -111,7 +112,7 @@ class ConfigFrame(ctk.CTkFrame):
             row=0, column=0, columnspan=2, sticky="w", padx=12, pady=(10, 4))
 
         for i, (key, label, sensitive, placeholder) in enumerate(fields, start=1):
-            ctk.CTkLabel(card, text=label, anchor="w",
+            ctk.CTkLabel(card, text=_(label), anchor="w",
                          font=ctk.CTkFont(size=11)).grid(
                 row=i, column=0, sticky="w", padx=(12, 6), pady=2)
 
@@ -129,7 +130,6 @@ class ConfigFrame(ctk.CTkFrame):
 
             self._entries[key] = entry
 
-        # padding row
         ctk.CTkLabel(card, text="").grid(
             row=len(fields) + 1, column=0, pady=(0, 4))
         return card
@@ -138,7 +138,7 @@ class ConfigFrame(ctk.CTkFrame):
 
     def _save(self):
         if not _ENV_PATH.exists():
-            messagebox.showerror("错误", f".env 文件不存在：{_ENV_PATH}")
+            messagebox.showerror(_("Error"), _(".env file not found: {}").format(_ENV_PATH))
             return
 
         changed = 0
@@ -150,5 +150,5 @@ class ConfigFrame(ctk.CTkFrame):
                 changed += 1
 
         self._save_label.configure(
-            text=f"已保存 {changed} 项 ✓", text_color="#81c784")
+            text=_("Saved {} items ✓").format(changed), text_color="#81c784")
         self.after(3000, lambda: self._save_label.configure(text="", text_color="gray"))
