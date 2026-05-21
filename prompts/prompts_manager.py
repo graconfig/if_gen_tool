@@ -71,13 +71,15 @@ class PromptTemplateManager:
 # Global template manager functions for backward compatibility
 def get_field_matching_prompt(input_fields: List[Dict[str, Any]],
                               context: List[Dict[str, Any]],
+                              TerminologyMapping_df: pd.DataFrame,
                               language: str = None) -> str:
     """Get field matching prompt using current or specified language."""
-    return PromptTemplateManager.get_field_matching_prompt(input_fields, context, language)
+    return PromptTemplateManager.get_field_matching_prompt(input_fields, context, TerminologyMapping_df, language)
 
 
 def get_view_selection_prompt(candidate_views_df: pd.DataFrame,
+                              TerminologyMapping_df: pd.DataFrame,
                               input_fields: List[Dict[str, Any]],
                               language: str = None) -> str:
     """Get view selection prompt using current or specified language."""
-    return PromptTemplateManager.get_view_selection_prompt(candidate_views_df, input_fields, language)
+    return PromptTemplateManager.get_view_selection_prompt(candidate_views_df, TerminologyMapping_df, input_fields, language)

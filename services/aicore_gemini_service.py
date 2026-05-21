@@ -5,6 +5,7 @@ SAP AI Core Gemini服务实现
 import logging
 from typing import Dict, Any, List
 
+import pandas as pd
 from dotenv import load_dotenv
 from gen_ai_hub.proxy.core.proxy_clients import get_proxy_client
 from gen_ai_hub.proxy.native.google_vertexai.clients import GenerativeModel
@@ -124,23 +125,17 @@ class AICoreGeminiService:
             return []
 
     def get_rag_matching_prompt(
-        self, input_fields: List[Dict[str, Any]], context: List[Dict[str, Any]]
+        self, input_fields: List[Dict[str, Any]], context: List[Dict[str, Any]], TerminologyMapping_df: pd.DataFrame
     ) -> str:
         return PromptTemplateManager.get_field_matching_prompt(
-            input_fields,
-            context,
-            "en",
-            # input_fields, context, self.language
+            input_fields, context, TerminologyMapping_df, "en"
         )
 
     def get_view_selection_prompt(
-        self, candidate_views_df, input_fields: List[Dict[str, Any]]
+        self, candidate_views_df, TerminologyMapping_df: pd.DataFrame, input_fields: List[Dict[str, Any]]
     ) -> str:
         return PromptTemplateManager.get_view_selection_prompt(
-            candidate_views_df,
-            input_fields,
-            "en",
-            # candidate_views_df, input_fields, self.language
+            candidate_views_df, TerminologyMapping_df, input_fields, "en"
         )
 
     def get_view_selection_schema(self) -> Dict[str, Any]:
