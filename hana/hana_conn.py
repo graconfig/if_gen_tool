@@ -22,17 +22,17 @@ class HANADBClient:
         self.view_fields_table = "PWC_HAND_AI2REPORT_DEV_VIEWFIELDS"
         self.cust_fields_table = "PWC_HAND_AI2REPORT_DEV_CUSTFIELDS"
         self.TerminologyMapping = "PWC_HAND_AI2REPORT_DEV_TERMINOLOGYMAPPING"
-        
+
         # self.scenario_table = "PWC_HAND_IFGENRAG_BUSINESSSCENARIOS"
         # self.cds_view_table = "PWC_HAND_IFGENRAG_CDSVIEWS"
         # self.view_fields_table = "PWC_HAND_IFGENRAG_VIEWFIELDS"
         # self.cust_fields_table = "PWC_HAND_IFGENRAG_CUSTFIELDS"
         # self.TerminologyMapping = "PWC_HAND_IFGENRAG_TERMINOLOGYMAPPING"
-        
+
         self.db_addr = os.getenv("HANA_ADDRESS")
         self.db_user = os.getenv("HANA_USER")
         self.db_pwd = os.getenv("HANA_PASSWORD")
-        self._db_schema = os.getenv("HANA_SCHEMA")  
+        self._db_schema = os.getenv("HANA_SCHEMA")
         self._db_schema_cust = os.getenv("HANA_SCHEMA_CUST")
 
         self.hana_client: ConnectionContext = None
@@ -69,11 +69,15 @@ class HANADBClient:
             self.hana_client.close()
             logger.info(_("Database connection closed."))
 
-    def _format_in_clause(self, items: List[str]) -> str:
-        if not items:
-            return "('')"
-        formatted_items = [f"'{str(item).replace("'", "''")}'" for item in items]
-        return f"({', '.join(formatted_items)})"
+    def _query(self, sql: str, params: list = None) -> pd.DataFrame:
+        """Execute a parameterized SELECT and return a DataFrame."""
+        cursor = self.hana_client.connection.cursor()
+        try:
+            cursor.execute(sql, params or [])
+            cols = [d[0] for d in cursor.description]
+            return pd.DataFrame(cursor.fetchall(), columns=cols)
+        finally:
+            cursor.close()
 
     def run_vector_search(
         self,
@@ -89,20 +93,19 @@ class HANADBClient:
 
         sort = "ASC" if metric == "L2DISTANCE" else "DESC"
 
-        sql = """SELECT TOP {k}"ID","SCENARIO","DESCRIPTION","VIEWCATEGORY"
+        # schema/table/metric/sort are identifiers or keywords — not bind-able;
+        # query text is user data and must be a bind parameter to enable plan cache hits.
+        sql = """SELECT TOP {k} "ID","SCENARIO","DESCRIPTION","VIEWCATEGORY"
         FROM "{schema}"."{table}"
-        ORDER BY {metric}(VECTOR_EMBEDDING('{query}', 'QUERY', 'SAP_NEB.20240715'),"EMBEDDINGS") {sort}""".format(
+        ORDER BY {metric}(VECTOR_EMBEDDING(?, 'QUERY', 'SAP_NEB.20240715'),"EMBEDDINGS") {sort}""".format(
             k=k,
             metric=metric,
-            query=query,
             sort=sort,
             table=self.scenario_table,
             schema=self._db_schema,
         )
         try:
-            hdf = self.hana_client.sql(sql)
-            df_context = hdf.head(k).collect()
-            return df_context
+            return self._query(sql, [query])
         except HanaDbError as e:
             logger.error(_("SQL execution failed: {}").format(e), log_filename)
             return pd.DataFrame()
@@ -118,19 +121,19 @@ class HANADBClient:
             logger.warning(_("No valid categories provided"), log_filename)
             return pd.DataFrame()
 
-        category_sql = self._format_in_clause(categories)
-
+        placeholders = ", ".join(["?"] * len(categories))
         sql = """
              SELECT "VIEWNAME", "VIEWDESC"
             FROM "{schema}"."{table}"
-            WHERE "VIEWCATEGORY" IN {categories} 
+            WHERE "VIEWCATEGORY" IN ({placeholders})
             AND "ISACTIVE" = 'true'
         """.format(
-            schema=self._db_schema, table=self.cds_view_table, categories=category_sql
+            schema=self._db_schema,
+            table=self.cds_view_table,
+            placeholders=placeholders,
         )
         try:
-            result = self.hana_client.sql(sql).collect()
-            return result
+            return self._query(sql, categories)
         except HanaDbError as e:
             logger.error(
                 _("SQL error occurred while getting views: {}").format(e), log_filename
@@ -140,21 +143,19 @@ class HANADBClient:
     def get_fields(
         self, cds_views: List[str], log_filename: str = None
     ) -> Dict[str, List[Dict[str, Any]]]:
-        cds_views_sql = self._format_in_clause(cds_views)
-
+        placeholders = ", ".join(["?"] * len(cds_views))
         sql = """
             SELECT "TABLENAME","TABLEDESC","CONTENT"
             FROM "{schema}"."{table}"
-            WHERE "TABLENAME" IN {cds_views}
+            WHERE "TABLENAME" IN ({placeholders})
             AND "LANGU" = 'ja'
         """.format(
             schema=self._db_schema,
             table=self.view_fields_table,
-            cds_views=cds_views_sql,
+            placeholders=placeholders,
         )
         try:
-            fields_df = self.hana_client.sql(sql).collect()
-            # 初始化结果字典
+            fields_df = self._query(sql, list(cds_views))
             results = {view: [] for view in cds_views}
             if not fields_df.empty:
                 for _, row in fields_df.iterrows():
@@ -165,28 +166,24 @@ class HANADBClient:
                         continue
 
                     try:
-                        # 2. 解析字段
                         content_str_re = self.parse_fields(content_str)
-                        # 直接找到[[的位置
                         start_idx = content_str_re.find('[[')
                         end_idx = content_str_re.rfind(']]')
 
                         if start_idx != -1 and end_idx != -1:
-                             # 提取完整的内容（包含[[和]]）
                             full_content = content_str_re[start_idx:end_idx+2]
-                            
+
                         parsed_fields = json.loads(full_content)
-                        
-                        # 3. 将解析后的列表转换为结构化的字典列表
+
                         for field_data in parsed_fields:
                             if not isinstance(field_data, list) or len(field_data) < 7:
-                                continue  # Skip malformed entries
+                                continue
 
                             field_dict = {
                                 "field_name": field_data[0],
                                 "is_key": field_data[1],
                                 "field_desc": field_data[2],
-                                "data_element": field_data[3],  # Can be added if needed
+                                "data_element": field_data[3],
                                 "data_type": field_data[4],
                                 "length_total": field_data[5],
                                 "length_dec": field_data[6],
@@ -244,17 +241,14 @@ class HANADBClient:
             - 多条匹配时：({}, True)  ← 调用方应据此缩小向量检索范围
         """
 
-        clean_table = source_table.replace("'", "''") if source_table else ""
-        clean_field = source_field.replace("'", "''") if source_field else ""
-
-        # 空值用 IS NULL 匹配，非空值用 = 匹配
-        def _null_or_eq(col: str, val: str) -> str:
+        # Returns (sql_fragment, bind_params) — empty/null uses IS NULL, others use ?
+        def _null_or_eq(col: str, val: str) -> Tuple[str, list]:
             if not val or val.strip() in ("", "-"):
-                return f'("{col}" IS NULL OR "{col}" = \'\')'
-            return f'"{col}" = \'{val}\''
+                return f'("{col}" IS NULL OR "{col}" = \'\')', []
+            return f'"{col}" = ?', [val]
 
-        table_cond = _null_or_eq("SOURCETABLE", clean_table)
-        field_cond  = _null_or_eq("SOURCEFIELD",  clean_field)
+        table_cond, table_params = _null_or_eq("SOURCETABLE", source_table or "")
+        field_cond, field_params = _null_or_eq("SOURCEFIELD", source_field or "")
 
         sql = """
             SELECT TOP 2
@@ -273,11 +267,11 @@ class HANADBClient:
         )
 
         try:
-            result_df = self.hana_client.sql(sql).collect()
+            result_df = self._query(sql, table_params + field_params)
             if result_df.empty:
                 return {}, False
             if len(result_df) > 1:
-                return {}, True   # multiple rows found → caller should scope vector search
+                return {}, True
             return self._build_custom_field_result(result_df.iloc[0]), False
         except HanaDbError as e:
             logger.error(
@@ -312,20 +306,24 @@ class HANADBClient:
         comparison_op = ">" if sort.upper() == "DESC" else "<"
         threshold = float(os.getenv("CUSTOM_FIELD_THRESHOLD", 0.75))
 
-        clean_query = field_query.replace("'", "''").replace('"', '""')
-
-        # 当精确匹配命中多条时，追加 SOURCETABLE / SOURCEFIELD 过滤条件（兼容 NULL）
-        def _scope_cond(col: str, val: str) -> str:
+        # Returns (sql_fragment, bind_params)
+        def _scope_cond(col: str, val: str) -> Tuple[str, list]:
             if not val or val.strip() in ("", "-"):
-                return f'("{col}" IS NULL OR "{col}" = \'\')'
-            return f'"{col}" = \'{val.replace(chr(39), chr(39)*2)}\''
+                return f'("{col}" IS NULL OR "{col}" = \'\')', []
+            return f'"{col}" = ?', [val]
 
         scope_filter = ""
+        scope_params = []
         if source_table is not None:
-            scope_filter += f' AND {_scope_cond("SOURCETABLE", source_table)}'
+            cond, params = _scope_cond("SOURCETABLE", source_table)
+            scope_filter += f" AND {cond}"
+            scope_params.extend(params)
         if source_field is not None:
-            scope_filter += f' AND {_scope_cond("SOURCEFIELD", source_field)}'
+            cond, params = _scope_cond("SOURCEFIELD", source_field)
+            scope_filter += f" AND {cond}"
+            scope_params.extend(params)
 
+        # Bind order: [field_query] + scope_params + [threshold]
         sql = """
             SELECT TOP 1
                 "TARGETTABLE", "TARGETFIELD", "TARGETDESC",
@@ -337,25 +335,23 @@ class HANADBClient:
                     "TARGETTABLE", "TARGETFIELD", "TARGETDESC",
                     "TARGETTYPE", "TARGETLENGTH", "TARGETDECIMALS",
                     "KEYFLAG", "OBLIGATORY", "ALLOWEDVALUES", "NOTES", "COLOR",
-                    {metric}(VECTOR_EMBEDDING('{query}', 'QUERY', 'SAP_NEB.20240715'), "EMBEDDINGS") AS SIMILARITY_SCORE
+                    {metric}(VECTOR_EMBEDDING(?, 'QUERY', 'SAP_NEB.20240715'), "EMBEDDINGS") AS SIMILARITY_SCORE
                 FROM "{schema}"."{table}"
                 WHERE "ISACTIVE" = 0{scope_filter}
             ) AS T
-            WHERE SIMILARITY_SCORE {op} {threshold}
+            WHERE SIMILARITY_SCORE {op} ?
             ORDER BY SIMILARITY_SCORE {sort}
         """.format(
             metric=metric,
-            query=clean_query,
             sort=sort,
             op=comparison_op,
-            threshold=threshold,
             schema=self._db_schema_cust,
             table=self.cust_fields_table,
             scope_filter=scope_filter,
         )
 
         try:
-            result_df = self.hana_client.sql(sql).collect()
+            result_df = self._query(sql, [field_query] + scope_params + [threshold])
             if result_df.empty:
                 return {}
             return self._build_custom_field_result(result_df.iloc[0])
@@ -409,15 +405,17 @@ class HANADBClient:
                 pass
             return ""
 
-        def _val(v):
+        def _str_or_none(v) -> str | None:
             if v is None:
-                return "NULL"
-            return "'" + str(v).replace("'", "''") + "'"
+                return None
+            s = str(v).strip()
+            return s if s else None
 
-        def _eq_or_null(col, val):
+        # Returns (sql_fragment, bind_params) for WHERE conditions on nullable columns
+        def _eq_or_null(col: str, val: str | None) -> Tuple[str, list]:
             if not val:
-                return f'("{col}" IS NULL OR "{col}" = \'\')'
-            return f'"{col}" = \'{val.replace(chr(39), chr(39)*2)}\''
+                return f'("{col}" IS NULL OR "{col}" = \'\')', []
+            return f'"{col}" = ?', [val]
 
         rows_data = []
         for row in ws.iter_rows(min_row=2):
@@ -445,15 +443,15 @@ class HANADBClient:
             ]))
 
             rows_data.append({
-                "IFNAME":      str(if_name or "").strip(),
-                "SOURCEDESC":  str(source_desc or "").strip(),
+                "IFNAME":      _str_or_none(if_name),
+                "SOURCEDESC":  _str_or_none(source_desc),
                 "SOURCETABLE": st,
                 "SOURCEFIELD": sf,
-                "TARGETDESC":  str(target_desc or "").strip(),
-                "TARGETTABLE": str(target_table or "").strip(),
-                "TARGETFIELD": str(target_field or "").strip(),
-                "NOTES":       str(notes or "").strip(),
-                "COLOR":       color,
+                "TARGETDESC":  _str_or_none(target_desc),
+                "TARGETTABLE": _str_or_none(target_table),
+                "TARGETFIELD": _str_or_none(target_field),
+                "NOTES":       _str_or_none(notes),
+                "COLOR":       color or None,
                 "CONTENT":     content,
             })
 
@@ -481,125 +479,70 @@ class HANADBClient:
                 logger.error(_("Failed to delete existing records: {}").format(e), log_filename)
                 raise
 
+        insert_sql_new = """
+            INSERT INTO "{schema}"."{table}"
+                ("ID", "IFNAME", "SOURCEDESC", "SOURCETABLE", "SOURCEFIELD",
+                 "TARGETDESC", "TARGETTABLE", "TARGETFIELD",
+                 "NOTES", "COLOR", "ISACTIVE", "CONTENT")
+            VALUES (SYSUUID, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+        """.format(schema=self._db_schema_cust, table=self.cust_fields_table)
+
+        insert_sql_with_id = """
+            INSERT INTO "{schema}"."{table}"
+                ("ID", "IFNAME", "SOURCEDESC", "SOURCETABLE", "SOURCEFIELD",
+                 "TARGETDESC", "TARGETTABLE", "TARGETFIELD",
+                 "NOTES", "COLOR", "ISACTIVE", "CONTENT")
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+        """.format(schema=self._db_schema_cust, table=self.cust_fields_table)
+
+        delete_by_id_sql = """
+            DELETE FROM "{schema}"."{table}" WHERE "ID" = ?
+        """.format(schema=self._db_schema_cust, table=self.cust_fields_table)
+
+        def _row_values(r: dict) -> list:
+            return [
+                r["IFNAME"], r["SOURCEDESC"], r["SOURCETABLE"], r["SOURCEFIELD"],
+                r["TARGETDESC"], r["TARGETTABLE"], r["TARGETFIELD"],
+                r["NOTES"], r["COLOR"], r["CONTENT"],
+            ]
+
         for idx, row in enumerate(rows_data):
             try:
                 if upload_mode == "overwrite":
-                    # overwrite モードは常に INSERT
-                    insert_sql = """
-                        INSERT INTO "{schema}"."{table}"
-                            ("ID", "IFNAME", "SOURCEDESC", "SOURCETABLE", "SOURCEFIELD",
-                             "TARGETDESC", "TARGETTABLE", "TARGETFIELD",
-                             "NOTES", "COLOR", "ISACTIVE", "CONTENT")
-                        VALUES (
-                            SYSUUID,
-                            {ifname}, {sdesc}, {stable}, {sfield},
-                            {tdesc}, {ttable}, {tfield},
-                            {notes}, {color}, 0, {content}
-                        )
-                    """.format(
-                        schema=self._db_schema_cust,
-                        table=self.cust_fields_table,
-                        ifname=_val(row["IFNAME"]),
-                        sdesc=_val(row["SOURCEDESC"]),
-                        stable=_val(row["SOURCETABLE"]),
-                        sfield=_val(row["SOURCEFIELD"]),
-                        tdesc=_val(row["TARGETDESC"]),
-                        ttable=_val(row["TARGETTABLE"]),
-                        tfield=_val(row["TARGETFIELD"]),
-                        notes=_val(row["NOTES"]),
-                        color=_val(row["COLOR"]),
-                        content=_val(row["CONTENT"]),
-                    )
                     cursor = self.hana_client.connection.cursor()
-                    cursor.execute(insert_sql)
+                    cursor.execute(insert_sql_new, _row_values(row))
                     cursor.close()
                     stats["inserted"] += 1
 
                 else:
-                    # upsert モード：既存確認 → UPDATE or INSERT
+                    # upsert モード：既存確認 → DELETE+INSERT or INSERT
+                    st_cond, st_params = _eq_or_null("SOURCETABLE", row["SOURCETABLE"])
+                    sf_cond, sf_params = _eq_or_null("SOURCEFIELD", row["SOURCEFIELD"])
                     check_sql = """
                         SELECT "ID" FROM "{schema}"."{table}"
-                        WHERE {st} AND {sf} AND "TARGETFIELD" = '{tf}'
+                        WHERE {st} AND {sf} AND "TARGETFIELD" = ?
                         AND "ISACTIVE" = 0
                     """.format(
                         schema=self._db_schema_cust,
                         table=self.cust_fields_table,
-                        st=_eq_or_null("SOURCETABLE", row["SOURCETABLE"]),
-                        sf=_eq_or_null("SOURCEFIELD", row["SOURCEFIELD"]),
-                        tf=(row["TARGETFIELD"] or "").replace("'", "''"),
+                        st=st_cond,
+                        sf=sf_cond,
                     )
-                    existing = self.hana_client.sql(check_sql).collect()
+                    check_params = st_params + sf_params + [row["TARGETFIELD"] or ""]
+                    existing = self._query(check_sql, check_params)
 
                     if not existing.empty:
                         record_id = existing.iloc[0]["ID"]
                         # CAP managed entity 的 UPDATE 会触发钩子导致新增记录
                         # 改为先 DELETE 再 INSERT 以避免此问题
-                        delete_sql = """
-                            DELETE FROM "{schema}"."{table}" WHERE "ID" = '{rid}'
-                        """.format(
-                            schema=self._db_schema_cust,
-                            table=self.cust_fields_table,
-                            rid=record_id,
-                        )
-                        insert_sql = """
-                            INSERT INTO "{schema}"."{table}"
-                                ("ID", "IFNAME", "SOURCEDESC", "SOURCETABLE", "SOURCEFIELD",
-                                 "TARGETDESC", "TARGETTABLE", "TARGETFIELD",
-                                 "NOTES", "COLOR", "ISACTIVE", "CONTENT")
-                            VALUES (
-                                '{rid}',
-                                {ifname}, {sdesc}, {stable}, {sfield},
-                                {tdesc}, {ttable}, {tfield},
-                                {notes}, {color}, 0, {content}
-                            )
-                        """.format(
-                            schema=self._db_schema_cust,
-                            table=self.cust_fields_table,
-                            rid=record_id,
-                            ifname=_val(row["IFNAME"]),
-                            sdesc=_val(row["SOURCEDESC"]),
-                            stable=_val(row["SOURCETABLE"]),
-                            sfield=_val(row["SOURCEFIELD"]),
-                            tdesc=_val(row["TARGETDESC"]),
-                            ttable=_val(row["TARGETTABLE"]),
-                            tfield=_val(row["TARGETFIELD"]),
-                            notes=_val(row["NOTES"]),
-                            color=_val(row["COLOR"]),
-                            content=_val(row["CONTENT"]),
-                        )
                         cursor = self.hana_client.connection.cursor()
-                        cursor.execute(delete_sql)
-                        cursor.execute(insert_sql)
+                        cursor.execute(delete_by_id_sql, [record_id])
+                        cursor.execute(insert_sql_with_id, [record_id] + _row_values(row))
                         cursor.close()
                         stats["updated"] += 1
                     else:
-                        insert_sql = """
-                            INSERT INTO "{schema}"."{table}"
-                                ("ID", "IFNAME", "SOURCEDESC", "SOURCETABLE", "SOURCEFIELD",
-                                 "TARGETDESC", "TARGETTABLE", "TARGETFIELD",
-                                 "NOTES", "COLOR", "ISACTIVE", "CONTENT")
-                            VALUES (
-                                SYSUUID,
-                                {ifname}, {sdesc}, {stable}, {sfield},
-                                {tdesc}, {ttable}, {tfield},
-                                {notes}, {color}, 0, {content}
-                            )
-                        """.format(
-                            schema=self._db_schema_cust,
-                            table=self.cust_fields_table,
-                            ifname=_val(row["IFNAME"]),
-                            sdesc=_val(row["SOURCEDESC"]),
-                            stable=_val(row["SOURCETABLE"]),
-                            sfield=_val(row["SOURCEFIELD"]),
-                            tdesc=_val(row["TARGETDESC"]),
-                            ttable=_val(row["TARGETTABLE"]),
-                            tfield=_val(row["TARGETFIELD"]),
-                            notes=_val(row["NOTES"]),
-                            color=_val(row["COLOR"]),
-                            content=_val(row["CONTENT"]),
-                        )
                         cursor = self.hana_client.connection.cursor()
-                        cursor.execute(insert_sql)
+                        cursor.execute(insert_sql_new, _row_values(row))
                         cursor.close()
                         stats["inserted"] += 1
 
@@ -624,10 +567,10 @@ class HANADBClient:
             raise ConnectionError(error_msg)
 
         sql = """
-             SELECT "SOURCETERM", 
-                    "SOURCETERMALIAS", 
+             SELECT "SOURCETERM",
+                    "SOURCETERMALIAS",
                     "SOURCECONTEXT",
-                    "TARGETTERM", 
+                    "TARGETTERM",
                     "TARGETTERMALIAS",
                     "SAPMODULE",
                     "SAPTRANSACTION",
@@ -650,7 +593,7 @@ class HANADBClient:
                 _("SQL error occurred while getting views: {}").format(e), log_filename
             )
             return pd.DataFrame()
-            
+
     @staticmethod
     def parse_fields(content_str: str) -> str:
         result_chars = []
@@ -663,12 +606,9 @@ class HANADBClient:
 
             if char == '"':
                 if not in_string:
-                    # 字符串开头
                     in_string = True
                     result_chars.append(char)
                 else:
-                    # 字符串内部遇到了一个引号。
-                    # 查找下一个非空白字符
                     next_char_index = i + 1
                     while (
                         next_char_index < s_len
@@ -676,8 +616,6 @@ class HANADBClient:
                     ):
                         next_char_index += 1
 
-                    # 如果字符串后面就是逗号、方括号或字符串结尾，
-                    # 那么这个引号是合法的结束符。
                     if next_char_index == s_len or content_str[next_char_index] in [
                         ",",
                         "]",
@@ -686,10 +624,8 @@ class HANADBClient:
                         in_string = False
                         result_chars.append(char)
                     else:
-                        # 否则，这绝对是一个需要转义的内部引号。
                         result_chars.append('\\"')
             else:
-                # 对于所有其他字符，直接添加
                 result_chars.append(char)
 
             i += 1
@@ -704,7 +640,7 @@ if __name__ == "__main__":
     try:
         db = HANADBClient()
         db.connect()
-        
+
         logger.info(
             _("--- Step 1: Executing vector search for query '{}' ---").format(
                 query_text
