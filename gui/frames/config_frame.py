@@ -38,6 +38,7 @@ _PROC_FIELDS = [
     ("LLM_MAX_WORKERS",        "LLM Max Workers",  False, "5"),
     ("FILE_MAX_WORKERS",       "File Max Workers", False, "5"),
     ("CUSTOM_FIELD_THRESHOLD", "CF Threshold",     False, "0.75"),
+    ("MATCH_THRESHOLD",        "Match Threshold",  False, "0"),
     ("UPLOAD_MODE",            "Upload Mode",      False, "overwrite"),
     ("Match_Number",           "Match Number",     False, "3"),
 ]

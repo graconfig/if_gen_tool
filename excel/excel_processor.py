@@ -42,6 +42,7 @@ class ExcelProcessor:
         self.max_concurrent_batches = int(
             self.excel_config.get("max_concurrent_batches", 5)
         )
+        self.match_threshold = int(self.excel_config.get("match_threshold", 0))
         self.config_source = "environment variables"
 
     def process_file(self, file_path: Path) -> None:
@@ -762,6 +763,14 @@ class ExcelProcessor:
                 
             if field_name is None or field_name == '' or field_name == 'e':
                 continue
+
+            if self.match_threshold > 0 and match_result.get("source") != "custom":
+                try:
+                    match_val = int(match_result.get("match", 0))
+                except (ValueError, TypeError):
+                    match_val = 0
+                if match_val < self.match_threshold:
+                    continue
 
             if isverify != "○":
                 is_key = match_result.get("key_flag", "")

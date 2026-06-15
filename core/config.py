@@ -23,6 +23,7 @@ class ConfigurationManager:
             "input_system_col": "F",
             "input_system_row": 6,
             "custom_field_threshold": float(os.getenv("CUSTOM_FIELD_THRESHOLD", 0.75)),
+            "match_threshold": int(os.getenv("MATCH_THRESHOLD", 0)),
         }
 
     def get_file_config(self) -> Dict[str, Any]:
