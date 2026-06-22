@@ -4,16 +4,15 @@ Config page: visual editor for .env file, grouped by category.
 
 import os
 from pathlib import Path
-from tkinter import messagebox
+from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 from dotenv import set_key
 
 from utils.i18n import _
 from core.config import ConfigurationManager
-
-
-_ENV_PATH = Path(__file__).parent.parent.parent / ".env"
+from core.paths import get_base_path
+from core.work_dir import get_work_dir, set_work_dir
 
 # (env_key, label_msgid, sensitive, placeholder)
 _AI_CORE_FIELDS = [
@@ -86,6 +85,9 @@ class ConfigFrame(ctk.CTkFrame):
         scroll.grid_columnconfigure(0, weight=1)
         scroll.grid_columnconfigure(1, weight=1)
 
+        work_dir_card = self._build_work_dir_card(scroll)
+        work_dir_card.grid(row=0, column=0, columnspan=2, sticky="ew", padx=6, pady=6)
+
         groups = [
             ("SAP AI Core",  _AI_CORE_FIELDS),
             ("HANA Cloud",   _HANA_FIELDS),
@@ -94,7 +96,7 @@ class ConfigFrame(ctk.CTkFrame):
             (_("OData Verify"), _VERIFY_FIELDS),
         ]
 
-        row = 0
+        row = 1
         col = 0
         for group_name, fields in groups:
             card = self._make_group_card(scroll, group_name, fields)
@@ -103,6 +105,40 @@ class ConfigFrame(ctk.CTkFrame):
             if col > 1:
                 col = 0
                 row += 1
+
+    def _build_work_dir_card(self, parent) -> ctk.CTkFrame:
+        card = ctk.CTkFrame(parent)
+        card.grid_columnconfigure(1, weight=1)
+
+        ctk.CTkLabel(card, text=_("Work Directory"),
+                     font=ctk.CTkFont(weight="bold", size=13)).grid(
+            row=0, column=0, columnspan=3, sticky="w", padx=12, pady=(10, 4))
+
+        self._work_dir_var = ctk.StringVar(value=str(get_work_dir() or ""))
+        entry = ctk.CTkEntry(card, textvariable=self._work_dir_var,
+                             font=ctk.CTkFont(size=11), state="readonly")
+        entry.grid(row=1, column=0, columnspan=2, sticky="ew", padx=(12, 4), pady=4)
+
+        ctk.CTkButton(card, text=_("Browse"), width=70, height=28,
+                      command=self._browse_work_dir).grid(
+            row=1, column=2, padx=(0, 12), pady=4)
+
+        ctk.CTkLabel(card, text="").grid(row=2, column=0, pady=(0, 4))
+        return card
+
+    def _browse_work_dir(self):
+        chosen = filedialog.askdirectory(title=_("Select Work Directory"))
+        if chosen:
+            path = Path(chosen)
+            try:
+                test = path / ".write_test"
+                test.touch()
+                test.unlink()
+            except OSError:
+                messagebox.showerror(_("Error"), _("Cannot write to: {}").format(path))
+                return
+            set_work_dir(path)
+            self._work_dir_var.set(str(path))
 
     def _make_group_card(self, parent, title: str, fields: list) -> ctk.CTkFrame:
         card = ctk.CTkFrame(parent)
@@ -138,15 +174,16 @@ class ConfigFrame(ctk.CTkFrame):
     # ── Save ──────────────────────────────────────────────────────────────────
 
     def _save(self):
-        if not _ENV_PATH.exists():
-            messagebox.showerror(_("Error"), _(".env file not found: {}").format(_ENV_PATH))
+        env_path = get_base_path() / ".env"
+        if not env_path.exists():
+            messagebox.showerror(_("Error"), _(".env file not found: {}").format(env_path))
             return
 
         changed = 0
         for key, entry in self._entries.items():
             val = entry.get()
             if val:
-                set_key(str(_ENV_PATH), key, val)
+                set_key(str(env_path), key, val)
                 os.environ[key] = val
                 changed += 1
 
