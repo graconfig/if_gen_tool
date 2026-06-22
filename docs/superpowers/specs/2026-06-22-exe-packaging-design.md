@@ -29,29 +29,22 @@ Runtime-created (not shipped):
 
 ## Architecture
 
-### 1. Path Resolution (`utils/paths.py` — new file)
+### 1. Path Resolution (reuse `get_base_path()` in `main.py`)
 
-Single source of truth for the app root directory. PyInstaller frozen exes have `sys.executable` pointing to the exe file; dev runs use the project root.
-
-```python
-def get_app_dir() -> Path:
-    if getattr(sys, 'frozen', False):
-        return Path(sys.executable).parent
-    return Path(__file__).parent.parent
-```
-
-All `.env` loading and `config.json` read/write use `get_app_dir()`.
+`main.py` already has `get_base_path()` that handles the frozen/dev distinction. Move it to `core/paths.py` so it can be imported by GUI modules without importing `main.py`. All `.env` loading and `config.json` read/write use `get_base_path()`.
 
 ### 2. Work Directory Config (`core/work_dir.py` — new file)
 
-Manages `config.json` at `get_app_dir() / "config.json"`:
+Manages `config.json` at `get_base_path() / "config.json"`:
 - `get_work_dir() -> Path | None` — reads `work_dir` key
 - `set_work_dir(path: Path)` — writes `work_dir` key, creates subdirectories
+
+`setup_directories()` in `main.py` gains an optional `base_dir` parameter; when provided it uses that instead of `get_base_path() / "data"`.
 
 ### 3. Startup Flow (`gui_main.py` — modified)
 
 ```
-load_dotenv(get_app_dir() / ".env")
+load_dotenv(get_base_path() / ".env")
   → if .env missing: create empty one
 get_work_dir()
   → if None: show folder-picker dialog (blocking)
@@ -69,9 +62,9 @@ Add "Work Directory" card at the top with:
 
 Existing `.env` fields and save logic unchanged.
 
-### 5. Excel / HANA path references — audit required
+### 5. Excel / HANA path references
 
-Any hardcoded `"excel_input"` / `"excel_output"` / `"excel_archive"` / `"logs"` paths must be replaced with `get_work_dir() / <subdir>`.
+`process_frame.py` uses `self._base_dir / "data"` via its own `_get_base_dir()`; `main.py` CLI uses `setup_directories()`. Both must be updated to read from `get_work_dir()` instead of hardcoding `base_dir / "data"`. `_get_base_dir()` in `process_frame.py` will be replaced with a call to `get_work_dir()`.
 
 ### 6. PyInstaller Spec (`if_gen_tool.spec` — new file)
 
