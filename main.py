@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 
 from core.config import ConfigurationManager
+from core.paths import get_base_path
 from utils.i18n import initialize_i18n, _
 from utils.sap_logger import if_gen_logging, logger
 from excel.excel_processor import ExcelProcessor
@@ -20,17 +21,6 @@ from utils.token_statistics import (
     save_and_print_usage,
 )
 
-
-def get_base_path() -> Path:
-    """
-    Get the base path for the application, accommodating both script and frozen exe.
-    """
-    if getattr(sys, "frozen", False):
-        # If the application is run as a bundle (e.g., by PyInstaller)
-        return Path(sys.executable).parent
-    else:
-        # If the application is run as a script
-        return Path(__file__).parent
 
 
 def setup_directories() -> Path:
