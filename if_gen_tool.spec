@@ -1,20 +1,29 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules, collect_all
 
 block_cipher = None
 
 added_datas = []
-added_datas += collect_data_files('customtkinter')
+added_binaries = []
+
+ctk_datas, ctk_binaries, ctk_hidden = collect_all('customtkinter')
+added_datas += ctk_datas
+added_binaries += ctk_binaries
+
 added_datas += [('locale', 'locale')]
 
 hidden_imports = []
+hidden_imports += ctk_hidden
 hidden_imports += collect_submodules('hana_ml')
-hidden_imports += collect_submodules('sap_ai_sdk_gen')
+hidden_imports += collect_submodules('gen_ai_hub')
+hidden_imports += collect_submodules('ai_core_sdk')
 hidden_imports += collect_submodules('google.cloud.aiplatform')
 hidden_imports += collect_submodules('google.genai')
 hidden_imports += collect_submodules('aioboto3')
 hidden_imports += collect_submodules('aiobotocore')
+hidden_imports += collect_submodules('dotenv')
 hidden_imports += [
+    'dotenv',
     'pkg_resources.py2_warn',
     'charset_normalizer.md__mypyc',
     'grpc',
@@ -27,7 +36,7 @@ hidden_imports += [
 a = Analysis(
     ['gui_main.py'],
     pathex=[],
-    binaries=[],
+    binaries=added_binaries,
     datas=added_datas,
     hiddenimports=hidden_imports,
     hookspath=[],
