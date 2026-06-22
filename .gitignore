@@ -14,3 +14,4 @@ docs
 design_ja.md
 design.md
 .env*
+.worktrees/
