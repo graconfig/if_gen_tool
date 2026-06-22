@@ -14,6 +14,7 @@ import customtkinter as ctk
 from utils.i18n import _
 from core.config import ConfigurationManager
 from core.consts import AIProvider, Languages, Directories, FileExtensions
+from core.work_dir import get_work_dir
 
 
 class ProcessFrame(ctk.CTkFrame):
@@ -29,20 +30,10 @@ class ProcessFrame(ctk.CTkFrame):
         self._processing = False
         self._worker: threading.Thread | None = None
 
-        self._base_dir = self._get_base_dir()
-        self._data_dir = self._base_dir / "data"
-        self._input_dir = self._data_dir / Directories.EXCEL_INPUT
+        self._input_dir = get_work_dir() / Directories.EXCEL_INPUT
 
         self._build_ui()
         self._refresh_file_list()
-
-    # ── Helpers ──────────────────────────────────────────────────────────────
-
-    def _get_base_dir(self) -> Path:
-        import sys
-        if getattr(sys, "frozen", False):
-            return Path(sys.executable).parent
-        return Path(__file__).parent.parent.parent
 
     # ── UI construction ──────────────────────────────────────────────────────
 
@@ -239,18 +230,14 @@ class ProcessFrame(ctk.CTkFrame):
         self._status_label.configure(text=_("Stopping..."), text_color="orange")
 
     def _run_all(self):
-        from main import (
-            process_single_excel_file,
-            setup_directories,
-            get_base_path,
-        )
+        from main import process_single_excel_file
         from utils.token_statistics import initialize_token_tracker
         from hana.hana_conn import HANADBClient
+        from core.paths import get_base_path
 
         try:
-            base_dir = get_base_path()
-            data_dir = setup_directories()
-            initialize_token_tracker(base_dir)
+            data_dir = get_work_dir()
+            initialize_token_tracker(get_base_path())
 
             hana_client = HANADBClient()
             hana_client.connect()
@@ -308,7 +295,8 @@ class ProcessFrame(ctk.CTkFrame):
         self._update_token_stats()
         if success:
             self._status_label.configure(text=_("Done ✓"), text_color="#81c784")
-            messagebox.showinfo(_("Done"), _("All files processed. Output saved to data/excel_output/"))
+            messagebox.showinfo(_("Done"), _("All files processed. Output saved to: {}").format(
+                get_work_dir() / Directories.EXCEL_OUTPUT))
         else:
             self._status_label.configure(text=_("Error: {}").format(error[:40]), text_color="#ef9a9a")
             messagebox.showerror(_("Processing Failed"), str(error))
