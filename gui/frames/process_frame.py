@@ -237,6 +237,10 @@ class ProcessFrame(ctk.CTkFrame):
 
         try:
             data_dir = get_work_dir()
+            # Ensure all required subdirectories exist under work dir
+            for sub in [Directories.EXCEL_INPUT, Directories.EXCEL_OUTPUT,
+                        Directories.EXCEL_ARCHIVE, "logs", "upload"]:
+                (data_dir / sub).mkdir(parents=True, exist_ok=True)
             initialize_token_tracker(get_base_path())
 
             hana_client = HANADBClient()

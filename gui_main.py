@@ -1,9 +1,17 @@
 """GUI entry point for SAP IF Design Generation Tool."""
 
 import sys
+import os
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
+
+# In windowed (no-console) mode sys.stdout/stderr are None; redirect to devnull
+# to prevent 'NoneType has no attribute write' from any print/buffer.write calls
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w", encoding="utf-8")
 
 from core.paths import get_base_path
 from dotenv import load_dotenv
@@ -29,6 +37,13 @@ def main():
     # Ensure work directory is configured
     if get_work_dir() is None:
         prompt_work_dir()
+
+    # Re-point logger to work directory's logs/ folder
+    from utils.sap_logger import logger
+    work_dir = get_work_dir()
+    log_dir = str(work_dir / "logs")
+    logger.log_dir = log_dir
+    import os; os.makedirs(log_dir, exist_ok=True)
 
     app = App(config_manager, language)
     app.mainloop()
